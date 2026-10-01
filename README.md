@@ -58,7 +58,7 @@ With the official SDK and device profile installed:
 python tools/build.py --sdk /path/to/connectiq-sdk --key /private/path/developer.der --release
 ```
 
-Committed fonts and artwork are included. Optional design-preview generation uses Python and Pillow:
+Committed fonts and artwork are included. Optional design-preview generation uses Python, Pillow and locally installed DejaVu fonts:
 
 ```sh
 python tools/render_preview.py
