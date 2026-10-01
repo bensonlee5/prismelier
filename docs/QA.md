@@ -19,7 +19,7 @@ test has succeeded; there is still no installable artifact. See [CI setup](CI.md
 The CI unit fixtures test failure handling and never represent Garmin profiles or
 compiled programs.
 
-## Latest design result, 1 October 2026, 14:34 UTC
+## Latest design result, 1 October 2026, 14:58 UTC
 
 - SDK 9.2.0 and Pillow available: **49 tests passed**, including a fresh parser
   run against all source files, 52 API owner/method pairs and argument
@@ -28,10 +28,10 @@ compiled programs.
 - Standard-library-only run, with SDK environment variables removed and Python
   site packages disabled: **40 tests passed, 9 optional checks skipped**
 - Foundry background: one referenced **416×416, 256-color, opaque indexed PNG**,
-  **107,177 bytes** on disk. PNG structure, chunk checksums, palette, compressed
+  **119,661 bytes** on disk. PNG structure, chunk checksums, palette, compressed
   scanline payload, XML options, and awake-only reference use are checked
-- Circular artwork safety: **116,606 pixels** with maximum RGB channel above 8
-  lie within a **203.5055px radius**, passing the 204px guard inside the 208px
+- Circular artwork safety: **113,291 pixels** with maximum RGB channel above 8
+  lie within a **203.5154px radius**, passing the 204px guard inside the 208px
   screen radius. This checks the committed bitmap, not hardware rendering
 - Palette consistency: **4 themes × 67 color entries** match the committed
   `themes.json`; the ambient ink and black background are unchanged in every
@@ -41,6 +41,8 @@ compiled programs.
   135,948-pixel circular screen model, at `08:08`, including the conservative
   one-pixel halo. All 2,880 12/24-hour clock strings and all three bands were
   covered. The three all-times band unions were pairwise disjoint
+
+The selected ebony-inspired candidate is byte-identical to the committed Foundry texture. The Oct 24/Saturday native-size render is pixel-identical to the reviewed ebony study; only the chosen material changed. Fresh native-size, enlarged, unavailable/stale and extreme-value renders were visually reviewed. The manual CI workflow and all Monkey C sources remain unchanged from the calendar/gauge checkpoint.
 
 The latest parser check includes the implemented Foundry material bitmap,
 monoline live-data icons, circular Fahrenheit temperature band, weather and solar icons,
@@ -149,10 +151,10 @@ does not prevent eviction or guarantee a single decode; Garmin may reload it.
 The implementation requests the reference on layout or Foundry selection,
 releases it when selecting a different theme, and draws it only while awake.
 
-The source PNG is **107,177 bytes (about 104.7 KiB)**. That is compressed file size,
+The source PNG is **119,661 bytes (about 116.9 KiB)**. That is compressed file size,
 **not RAM usage**, compiled PRG size, or a measured graphics-pool footprint.
 Its SHA256 is
-`c30d986593aa4c3c49c63b02e5b17379440c4bacfcc96f91d766e410e0a200af`.
+`f9da729f8e2a1c66d35960f19ae08a2609bbae42428d4e2b6c44a4051b808ff4`.
 An uncompressed 8-bit 416×416 pixel plane is 173,056 bytes (169 KiB), before
 palette/alignment/metadata; a 16-bit plane would be 346,112 bytes (338 KiB).
 The compiler's actual encoding and runtime allocation remain unmeasured.

@@ -2,7 +2,7 @@
 
 **Impossible materials. An everyday time machine.**
 
-A bespoke, futuristic-steampunk digital watch face for the **Garmin Forerunner 265**. The default **Foundry** theme pairs warm ivory numerals with a circular speedometer-style Fahrenheit gauge and **hyperreal material textures from a real 416px bitmap resource**. Raised polished hardwood, gleaming patinated copper, petrol enamel and an asymmetric ceramic solar insert sit on a meticulously routed robotics backplane: pin headers, copper flex traces, actuator housings and a miniature processor package. A Sunday-first weekday rim highlights the current day, and a month/day window shows dates such as **Oct 24**. Main time stays digital; the needle belongs only to temperature.
+A bespoke, futuristic-steampunk digital watch face for the **Garmin Forerunner 265**. The default **Foundry** theme pairs warm ivory numerals with a circular speedometer-style Fahrenheit gauge and **hyperreal material textures from a real 416px bitmap resource**. Raised polished ebony-inspired wood with clear directional grain, gleaming patinated copper, petrol enamel and an asymmetric ceramic solar insert sit on a meticulously routed robotics backplane: pin headers, copper flex traces, actuator housings and a miniature processor package. A Sunday-first weekday rim highlights the current day, and a month/day window shows dates such as **Oct 24**. Main time stays digital; the needle belongs only to temperature.
 
 ![Prismelier design render, with illustrative values](docs/preview.png)
 
@@ -19,7 +19,7 @@ A bespoke, futuristic-steampunk digital watch face for the **Garmin Forerunner 2
 - **Body Battery score** (0–100) beside a distinct person/energy-bolt icon
 - **Next sunrise or sunset**, automatically switching to the next event, with distinct rising/sinking sun and up/down-arrow icons
 - **Recent heart rate** in BPM and the exact daily step count
-- Raised lacquered hardwood, machined copper/brass, deep patina and recessed ceramic wells; consistent highlights/contact shadows create convincing static 3D relief
+- Raised lacquered ebony-inspired wood, machined copper/brass, deep patina and recessed ceramic wells; consistent highlights/contact shadows create convincing static 3D relief
 - Textured circuit-board surfaces, exposed gearwork, fasteners, inlaid traces and actuator housings
 - Consistent thin-line weather, sunrise/sunset and metric pictograms drawn live over the texture
 - Sparse, dim, moving digital-time-only **always-on display**
