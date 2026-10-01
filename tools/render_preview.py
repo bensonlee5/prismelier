@@ -95,11 +95,28 @@ def architecture(c):
     for f in range(7):c.line((175+f*11,364),(181+f*11,364),'#334945')
     trace(c,[(92,360),(121,367),(150,367)],'#243f42');trace(c,[(324,361),(295,367),(270,367)],'#3f314c');screw(c,90,348,'#75513d');screw(c,326,348,'#365e59')
 
-def render(missing=False,fahrenheit=True,stale=False,ambient=None,up=False,time='10:08',temperature=72,heart=64,steps=8432,battery=78,clock=None,suffix=None,body_battery=76,theme=0):
+def robotics(c):
+    for x in (44,357):
+        c.rect(x,116,15,33,'#080f13',True,2);c.rect(x,116,15,33,'#334945',False,2)
+        for pin in range(5):c.rect(x+4,120+pin*5,7,2,'copper')
+    for ribbon in range(4):
+        trace(c,[(113+ribbon*4,68),(113+ribbon*4,74),(98+ribbon*4,87)],'#8b6544')
+        trace(c,[(285+ribbon*4,68),(285+ribbon*4,74),(300+ribbon*4,87)],'#335657')
+    for x in (52,335):c.rect(x,170,29,27,'#102226',True,4);c.rect(x,170,29,27,'#6b4839',False,4)
+    for pin in range(8):
+        c.line((179+pin*8,348),(179+pin*8,355),'#8b6544',2);c.line((179+pin*8,373),(179+pin*8,380),'#8b6544',2)
+    for row in range(3):
+        c.line((167,357+row*6),(175,357+row*6),'#335657',2);c.line((241,357+row*6),(249,357+row*6),'#335657',2)
+    c.rect(173,352,70,24,'#080f13',True,3);c.rect(173,352,70,24,'#6b4839',False,3);c.rect(189,357,38,14,'#224142');c.rect(189,357,38,14,'#3c6260',False)
+    for core in range(3):c.rect(193+core*11,360,7,8,'#3c6260',False)
+    c.circle(179,357,1,'copper',True)
+
+def render(missing=False,fahrenheit=True,stale=False,ambient=None,up=False,time='10:08',temperature=72,heart=64,steps=8432,battery=78,clock=None,suffix=None,body_battery=76,theme=1):
     c=Canvas(theme)
     if ambient is not None:
         c.text(208,92+86*ambient,'Ambient',time,'#606775'); return c.finish()
     architecture(c)
+    robotics(c)
     c.rect(45,184,326,110,'panel',True,17);c.rect(45,184,326,110,'#344741',False,17)
     for x in (42,374):
         c.line((x,207),(x,262),'#5d3527',7);c.line((x-1,207),(x-1,262),'copper',2)
@@ -139,11 +156,11 @@ def main():
     docs=ROOT/'docs'; docs.mkdir(exist_ok=True); face=render(); face.save(docs/'preview-416.png')
     hero=Image.new('RGB',(1200,780),'#0b111a'); d=ImageDraw.Draw(hero)
     from PIL import ImageFont
-    d.text((74,50),'PRISMELIER / REACTOR',font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',30),fill=COL['copper'])
+    d.text((74,50),'PRISMELIER / FOUNDRY',font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',30),fill=COL['copper'])
     d.text((74,102),'Impossible materials. Unapologetically digital.',font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-ExtraLight.ttf',23),fill=COL['ink'])
     hero.paste(face.resize((544,544),Image.Resampling.LANCZOS),(74,174))
-    d.text((686,223),'TEMPERATURE, REIMAGINED',font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',19),fill=COL['pink'])
-    d.text((686,264),'Liquid-violet Fahrenheit bar\nCopper, ceramic, otherworldly timber\nWeather and sun events, together\nNo hands. No labels. Just the essentials.',font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',17),fill=COL['ink'],spacing=16)
+    d.text((686,223),'A ROBOTICS BACKPLANE FOR YOUR WRIST',font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',19),fill='#6ab8aa')
+    d.text((686,264),'Patinated teal. Copper. Ceramic.\nConnector headers and copper flex traces\nProcessor cells and actuator housings\nBody Battery + device charge, distinct.',font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',17),fill=COL['ink'],spacing=16)
     d.text((686,477),'Forerunner 265 / 416 × 416',font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',16),fill=COL['cyan'])
     d.text((686,533),'DESIGN RENDER\nIllustrative data, not a simulator capture',font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',14),fill=COL['copper'],spacing=8)
     hero.save(docs/'preview.png')
@@ -152,20 +169,22 @@ def main():
         sheet.paste(im,(416*n,0));ds.text((416*n+24,438),label,fill=COL['ink'])
     sheet.save(docs/'states.png')
     render(time='12:59',temperature=-40,heart=220,steps=100000,battery=100,up=True,clock='11:59P',suffix='AM',body_battery=100).save(docs/'edge-case-416.png')
-    board=Image.new('RGB',(1120,1180),'#0b111a');bd=ImageDraw.Draw(board)
-    title_font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',29)
-    desc_font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',16)
-    note_font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',15)
-    bd.text((40,28),'PRISMELIER / FOUR COLOR STUDIES',font=title_font,fill='#e8e3d8')
-    bd.text((40,74),'Same composition. Fahrenheit. Body Battery added at the top right.',font=desc_font,fill='#a9b3be')
-    for index,t in enumerate(THEMES):
-        face=render(theme=index);face.save(docs/('theme-'+t['name'].lower()+'.png'))
-        x=60+(index%2)*550;y=123+(index//2)*502
-        bd.text((x,y),f'{index+1:02d}  '+t['name'].upper(),font=desc_font,fill='#'+t['colors']['D98B52'])
-        bd.text((x,y+26),t['description'],font=note_font,fill='#a9b3be')
-        board.paste(face,(x,y+61))
-    bd.text((40,1142),'DESIGN RENDERS / Illustrative values, not simulator or watch screenshots',font=note_font,fill='#a9b3be')
-    board.save(docs/'themes.png')
+    import sys
+    if '--refresh-studies' in sys.argv or not (docs/'themes.png').exists():
+        board=Image.new('RGB',(1120,1180),'#0b111a');bd=ImageDraw.Draw(board)
+        title_font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',29)
+        desc_font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',16)
+        note_font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',15)
+        bd.text((40,28),'PRISMELIER / FOUR COLOR STUDIES',font=title_font,fill='#e8e3d8')
+        bd.text((40,74),'Same composition. Fahrenheit. Body Battery added at the top right.',font=desc_font,fill='#a9b3be')
+        for index,t in enumerate(THEMES):
+            face=render(theme=index);face.save(docs/('theme-'+t['name'].lower()+'.png'))
+            x=60+(index%2)*550;y=123+(index//2)*502
+            bd.text((x,y),f'{index+1:02d}  '+t['name'].upper(),font=desc_font,fill='#'+t['colors']['D98B52'])
+            bd.text((x,y+26),t['description'],font=note_font,fill='#a9b3be')
+            board.paste(face,(x,y+61))
+        bd.text((40,1142),'DESIGN RENDERS / Illustrative values, not simulator or watch screenshots',font=note_font,fill='#a9b3be')
+        board.save(docs/'themes.png')
     for i in range(3):render(ambient=i).save(docs/f'ambient-{i}.png')
     print('Rendered design previews, NOT simulator screenshots')
 if __name__=='__main__':main()

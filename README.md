@@ -2,7 +2,7 @@
 
 **Impossible materials. An everyday time machine.**
 
-A bespoke, futuristic-steampunk digital watch face for the **Garmin Forerunner 265**. Acid-green numerals float above a liquid-violet Fahrenheit bar. Violet timber, ribbed copper, petrol enamel and an asymmetric porcelain solar insert turn the weather panel into an impossible little machine. The face contains no branding, date, word labels or outer clock indices.
+A bespoke, futuristic-steampunk digital watch face for the **Garmin Forerunner 265**. The default **Foundry** theme pairs warm ivory numerals with a patinated-teal Fahrenheit bar. Aged copper, petrol enamel and an asymmetric ceramic solar insert sit on a meticulously routed robotics backplane: pin headers, copper flex traces, actuator housings and a miniature processor package. The face contains no branding, date, word labels or outer clock indices.
 
 ![Prismelier design render, with illustrative values](docs/preview.png)
 
@@ -56,18 +56,18 @@ In 12-hour mode, the time has **AM/PM** and a solar time uses **A/P** (for examp
 
 ## Preferences
 
-Temperature defaults explicitly to **Fahrenheit**, regardless of the watch's unit setting. Time format follows the watch. Project properties also support optional Celsius/device units, explicit 12/24-hour format and four complete material/color palettes. [Settings instructions](docs/INSTALL.md#preferences) include the reliable source/simulator path for sideloaded builds. Phone settings for unpublished sideloaded apps are not guaranteed.
+Temperature defaults explicitly to **Fahrenheit**, regardless of the watch's unit setting. Time format follows the watch. Project properties also support optional Celsius/device units, explicit 12/24-hour format and four complete material/color palettes. **Foundry (`Palette = 1`) is the default.** [Settings instructions](docs/INSTALL.md#preferences) include the reliable source/simulator path for sideloaded builds. Phone settings for unpublished sideloaded apps are not guaranteed.
 
 ## Four color studies
 
 ![Four consistent theme studies, with illustrative readings](docs/themes.png)
 
 - **0 · Reactor**: the vivid original, lime / liquid violet / cyan
-- **1 · Foundry**: aged copper, warm timber and patinated teal
+- **1 · Foundry (default)**: aged copper, warm timber and patinated teal
 - **2 · Porcelain**: warm ivory, charcoal and brushed bronze
 - **3 · Nocturne**: midnight blue, amber and ice
 
-Every color study uses the same implemented layout, including the new Body Battery score. Select `Palette` in the project settings; see the [sideload settings notes](docs/INSTALL.md#preferences). Theme colors come from `resources/themes.json`, compiled into `source/PrismelierPalette.mc` by `tools/generate_palettes.py`, and used by the design renderer too. This keeps the comparison consistent with the source. The ambient time stays the same sparse, dim gray across themes.
+These preserved color studies show the shared composition with Body Battery before the final robotics-detail pass. The latest Foundry hero above shows the added connectors, actuator housings and processor package. Select `Palette` in the project settings; see the [sideload settings notes](docs/INSTALL.md#preferences). Theme colors come from `resources/themes.json`, compiled into `source/PrismelierPalette.mc` by `tools/generate_palettes.py`, and used by the design renderer too. This keeps the color definitions consistent with the source; the earlier study images are retained to document the design choice. The ambient time stays the same sparse, dim gray across themes. `python tools/render_preview.py --refresh-studies` regenerates the full study sheet against the newest geometry when explicitly desired.
 
 The **left top capsule** is device charge (`%`). The **right top capsule**, with the person/energy bolt, is Body Battery (a score, without `%`). It is a wellness estimate, not a medical measurement. [Official API and supported devices](https://developer.garmin.com/connect-iq/api-docs/Toybox/SensorHistory.html#getBodyBatteryHistory-instance_function).
 

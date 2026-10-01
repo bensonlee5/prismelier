@@ -151,7 +151,7 @@ class ProjectStructureTests(unittest.TestCase):
     def test_settings_contract(self):
         properties = ET.parse(ROOT / "resources/settings/properties.xml").getroot()
         values = {p.attrib["id"]: p.text for p in properties}
-        self.assertEqual(values, {"Palette": "0", "TimeFormat": "0", "TemperatureUnits": "2"})
+        self.assertEqual(values, {"Palette": "1", "TimeFormat": "0", "TemperatureUnits": "2"})
         settings = ET.parse(ROOT / "resources/settings/settings.xml").getroot()
         expected = {"Palette": {"0", "1", "2", "3"}, "TimeFormat": {"0", "1", "2"},
                     "TemperatureUnits": {"0", "1", "2"}}
@@ -326,11 +326,13 @@ class DataSourceContractTests(unittest.TestCase):
         # Background craftsmanship is awake-only. Guard its call site as well
         # as the sparse sleep body so later refactors cannot light it in AOD.
         update = view.split("function onUpdate(dc) {", 1)[1].split("\n    function ", 1)[0]
-        self.assertEqual(update.count("drawArchitecture(dc);"), 1)
-        self.assertNotIn("drawArchitecture(", before_branch)
         self.assertLess(update.index("return;"), update.index("data.refresh(false);"))
-        self.assertLess(update.index("data.refresh(false);"), update.index("drawArchitecture(dc);"))
-        self.assertEqual(view.count("drawArchitecture(dc);"), 1)
+        for method in ("drawArchitecture", "drawRobotics"):
+            call = method + "(dc);"
+            self.assertEqual(update.count(call), 1)
+            self.assertNotIn(method + "(", before_branch)
+            self.assertLess(update.index("data.refresh(false);"), update.index(call))
+            self.assertEqual(view.count(call), 1)
 
 
 @unittest.skipUnless(Image is not None, "Pillow not installed; optional font-asset raster checks skipped")

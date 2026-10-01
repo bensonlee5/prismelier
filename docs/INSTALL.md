@@ -109,7 +109,7 @@ The reliable options for a **sideloaded, unpublished** development build are:
 
 - Change the watch's **time format**; it is followed by default. Temperature defaults explicitly to **Fahrenheit**, independent of system units
 - Or edit `resources/settings/properties.xml` before rebuilding:
-  - `Palette`: `0` Reactor (lime/violet/cyan), `1` Foundry (copper/teal), `2` Porcelain (ivory/charcoal), `3` Nocturne (midnight/amber)
+  - `Palette`: `0` Reactor (lime/violet/cyan), `1` Foundry (copper/teal, default), `2` Porcelain (ivory/charcoal), `3` Nocturne (midnight/amber)
   - `TimeFormat`: `0` watch setting, `1` 12-hour, `2` 24-hour
   - `TemperatureUnits`: `2` Fahrenheit (default), `1` Celsius, `0` watch setting
 - In the simulator, use its app-settings editor to exercise the provided settings schema

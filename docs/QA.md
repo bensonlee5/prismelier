@@ -3,32 +3,34 @@
 Prismelier is a source project with design renders. It has not been built for a
 Forerunner 265, run in Garmin's simulator, or installed on physical hardware.
 
-## Recorded result, 1 October 2026, 05:35 UTC
+## Recorded result, 1 October 2026, 05:45 UTC
 
 - SDK 9.2.0 and Pillow available: **18 tests passed**, including a fresh parser
-  run against all source files, 52 API owner/method pairs and argument
+  run against all source files, 53 API owner/method pairs and argument
   counts, 61 module constants, and weather symbols checked against Garmin's
   bundled documentation
 - Standard-library-only run, with SDK environment variables removed and Python
   site packages disabled: **12 tests passed, 6 optional checks skipped**
 - Palette consistency: **4 themes × 67 color entries** match the committed
   `themes.json`; the ambient ink and black background are unchanged in every
-  palette. Settings and Data both accept all four theme indexes
+  palette. Settings and Data both accept all four theme indexes, with Foundry
+  (`Palette=1`) now the default
 - Ambient asset estimate: **2,582 lit pixels maximum**, **1.899%** of the
   135,948-pixel circular screen model, at `08:08`, including the conservative
   one-pixel halo. All 2,880 12/24-hour clock strings and all three bands were
   covered. The three all-times band unions were pairwise disjoint
 
-The latest parser check includes the revised vivid steampunk layout, default
+The latest parser check includes the selected Foundry robotics layout, default
 Fahrenheit temperature bar, grouped weather and solar icons, centered AM/PM,
 compact large step counts, asymmetric porcelain insert, and explicitly typed
 Gregorian weekday/month indexes. The final background uses chamfered ceramic
 substrates, fine copper/teal/violet circuit traces, asymmetric junctions,
 microbridges, and an engraved lower backplane. The battery readout uses the
-current 20px Small font. The new `drawArchitecture`, `trace`, and `junction`
-helpers were included in this parser and API check. A static guard confirms
-that background architecture is called only after the sleep branch returns;
-it is excluded from the time-only ambient display. No source changed during
+current 20px Small font. The new `drawRobotics` helper adds pin headers, parallel
+flex traces, actuator housings, and QFN processor cells. Its `dc.drawRectangle`
+calls pass the official SDK name/argument-count audit. Static guards confirm
+that both `drawArchitecture` and `drawRobotics` are called only after the sleep
+branch returns; they are excluded from the time-only ambient display. No source changed during
 that parser run. This run also covers timestamped local Body Battery history,
 its separate person-and-bolt score, and the Reactor, Foundry, Porcelain, and
 Nocturne palettes. Device charge remains a distinct percentage. The new local
@@ -41,7 +43,7 @@ Source fingerprints for that run:
 PrismelierApp.mc   e8696d7cd4acb9ec2ab2971572a5d1ee5a5d80017d23ff7c345fc0eb3dabbb14
 PrismelierData.mc  3568805c9c6fc492c46ff3661a01849705f46c7dd394f35c1b7a58cb42def084
 PrismelierPalette.mc  80d4f9049b5ef5f31f9f817dc25a5144644a1203f72a46aed3b7a60ede543239
-PrismelierView.mc  7d3d267f2dece4ce748ef08a0ad832c31ef5176c11d6ae383da6a70e672fc06a
+PrismelierView.mc  fa93e25343a6d36b7a9f885c03e6ffb58a2c4fdd99f9edb5dd00dfb82f073142
 ```
 
 ## Automated checks

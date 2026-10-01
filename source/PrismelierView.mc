@@ -103,6 +103,7 @@ class PrismelierView extends WatchUi.WatchFace {
         }
         data.refresh(false);
         drawArchitecture(dc);
+        drawRobotics(dc);
         drawMachine(dc);
         drawBattery(dc);
         drawBodyBattery(dc);
@@ -201,6 +202,58 @@ class PrismelierView extends WatchUi.WatchFace {
         trace(dc, [[324, 361], [295, 367], [270, 367]], 0x3F314C, 1);
         screw(dc, 90, 348, 0x75513D);
         screw(dc, 326, 348, 0x365E59);
+    }
+
+    function drawRobotics(dc) {
+        // Paired board-to-board headers: five exposed copper contacts each.
+        for (var side = 0; side < 2; side += 1) {
+            var x = side == 0 ? 44 : 357;
+            paint(dc, 0x080F13, Graphics.COLOR_TRANSPARENT);
+            dc.fillRoundedRectangle(x, 116, 15, 33, 2);
+            paint(dc, 0x334945, Graphics.COLOR_TRANSPARENT);
+            dc.drawRoundedRectangle(x, 116, 15, 33, 2);
+            for (var pin = 0; pin < 5; pin += 1) {
+                paint(dc, copper, Graphics.COLOR_TRANSPARENT);
+                dc.fillRectangle(x + 4, 120 + pin * 5, 7, 2);
+            }
+        }
+        // Parallel copper flex traces route behind the time aperture.
+        for (var ribbon = 0; ribbon < 4; ribbon += 1) {
+            trace(dc, [[113 + ribbon * 4, 68], [113 + ribbon * 4, 74],
+                [98 + ribbon * 4, 87]], 0x8B6544, 1);
+            trace(dc, [[285 + ribbon * 4, 68], [285 + ribbon * 4, 74],
+                [300 + ribbon * 4, 87]], 0x335657, 1);
+        }
+        // Motor housings around the thermal linear-actuator trunnions.
+        paint(dc, 0x102226, Graphics.COLOR_TRANSPARENT);
+        dc.fillRoundedRectangle(52, 170, 29, 27, 4);
+        dc.fillRoundedRectangle(335, 170, 29, 27, 4);
+        paint(dc, 0x6B4839, Graphics.COLOR_TRANSPARENT);
+        dc.drawRoundedRectangle(52, 170, 29, 27, 4);
+        dc.drawRoundedRectangle(335, 170, 29, 27, 4);
+        // A detailed QFN processor with real-looking pads, a ceramic die and
+        // three compute cells. No faux serial numbers or decorative wording.
+        for (var pin2 = 0; pin2 < 8; pin2 += 1) {
+            stroke(dc, 179 + pin2 * 8, 348, 179 + pin2 * 8, 355, 0x8B6544, 2);
+            stroke(dc, 179 + pin2 * 8, 373, 179 + pin2 * 8, 380, 0x8B6544, 2);
+        }
+        for (var row = 0; row < 3; row += 1) {
+            stroke(dc, 167, 357 + row * 6, 175, 357 + row * 6, 0x335657, 2);
+            stroke(dc, 241, 357 + row * 6, 249, 357 + row * 6, 0x335657, 2);
+        }
+        paint(dc, 0x080F13, Graphics.COLOR_TRANSPARENT);
+        dc.fillRoundedRectangle(173, 352, 70, 24, 3);
+        paint(dc, 0x6B4839, Graphics.COLOR_TRANSPARENT);
+        dc.drawRoundedRectangle(173, 352, 70, 24, 3);
+        paint(dc, 0x224142, Graphics.COLOR_TRANSPARENT);
+        dc.fillRectangle(189, 357, 38, 14);
+        paint(dc, 0x3C6260, Graphics.COLOR_TRANSPARENT);
+        dc.drawRectangle(189, 357, 38, 14);
+        for (var core = 0; core < 3; core += 1) {
+            dc.drawRectangle(193 + core * 11, 360, 7, 8);
+        }
+        paint(dc, copper, Graphics.COLOR_TRANSPARENT);
+        dc.fillCircle(179, 357, 1);
     }
 
     function drawMachine(dc) {
