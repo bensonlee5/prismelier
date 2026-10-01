@@ -127,7 +127,7 @@ Sideloaded apps may not appear with editable settings in Garmin Connect/Connect 
 | No watch storage visible | Data cable, USB mode, working MTP support, and no competing MTP application |
 | Face does not appear | Correct 265 build, `.prg` copied to `GARMIN/APPS`, completed transfer, disconnect and restart |
 | IQ error symbol | Return to a built-in face; inspect Garmin's developer error logs privately. Do not publish logs containing personal data |
-| Empty temperature band / `--°F` / crossed weather icon | Check native Weather glance, Garmin Connect sync, phone location permissions and watch time |
+| Empty temperature band / no needle / crossed weather icon | Check native Weather glance, Garmin Connect sync, phone location permissions and watch time |
 | Muted gauge, crossed weather icon and small crossed-ring warning | Cache is at least 2h old; readings disappear at 24h or when age cannot be verified |
 | Solar insert `--:--` | No usable weather location or no sunrise/sunset in the queried window; can occur in polar regions |
 | HR `--` | Watch not worn, wrist HR disabled, or no recent valid sample |

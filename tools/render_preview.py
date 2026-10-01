@@ -153,7 +153,7 @@ def render(missing=False,fahrenheit=True,stale=False,ambient=None,up=False,time=
     if suffix:c.text(309,179,'Label',suffix,'ink')
     temperature_gauge(c,temperature,fahrenheit,missing,stale)
     weather(c,284,228,'unknown' if missing else weather_kind,stale,up)
-    c.text(284,240,'Value',('--' if missing else str(temperature))+('°F' if fahrenheit else '°C'),'ink')
+    c.text(284,240,'Value','°F' if fahrenheit else '°C','ink')
     if stale:c.circle(337,252,3,'copper');c.line((335,254),(339,250),'copper')
     solar(c,up=up,missing=missing,stale=stale,clock=clock,photo=photo)
     dy=24

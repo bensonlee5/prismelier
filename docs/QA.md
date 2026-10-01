@@ -19,10 +19,10 @@ test has succeeded; there is still no installable artifact. See [CI setup](CI.md
 The CI unit fixtures test failure handling and never represent Garmin profiles or
 compiled programs.
 
-## Latest design result, 1 October 2026, 14:58 UTC
+## Latest design result, 1 October 2026, 15:34 UTC
 
 - SDK 9.2.0 and Pillow available: **49 tests passed**, including a fresh parser
-  run against all source files, 52 API owner/method pairs and argument
+  run against all source files, 51 API owner/method pairs and argument
   counts, 61 module constants, and weather symbols checked against Garmin's
   bundled documentation
 - Standard-library-only run, with SDK environment variables removed and Python
@@ -42,7 +42,7 @@ compiled programs.
   one-pixel halo. All 2,880 12/24-hour clock strings and all three bands were
   covered. The three all-times band unions were pairwise disjoint
 
-The selected ebony-inspired candidate is byte-identical to the committed Foundry texture. The Oct 24/Saturday native-size render is pixel-identical to the reviewed ebony study; only the chosen material changed. Fresh native-size, enlarged, unavailable/stale and extreme-value renders were visually reviewed. The manual CI workflow and all Monkey C sources remain unchanged from the calendar/gauge checkpoint.
+The selected ebony-inspired candidate remains byte-identical to the committed Foundry texture. The current-temperature number has been removed from both Monkey C and the preview compositor; the circular band, needle, scale labels and unit-only indicator remain. Fresh native-size, enlarged, unavailable/stale and extreme-value renders were visually reviewed. Regression checks verify that the numeric temperature overlay is absent and the digital-time overlay remains. The manual CI workflow and other Monkey C sources are unchanged.
 
 The latest parser check includes the implemented Foundry material bitmap,
 monoline live-data icons, circular Fahrenheit temperature band, weather and solar icons,
@@ -69,7 +69,7 @@ Source fingerprints for that run:
 PrismelierApp.mc   e8696d7cd4acb9ec2ab2971572a5d1ee5a5d80017d23ff7c345fc0eb3dabbb14
 PrismelierData.mc  69fc628a64097f9dc59cca703da2cc458b65d32862acb4135ee58c000a37bcae
 PrismelierPalette.mc  b29b08fb33d06c4c0b3f9b2554db9055a7dc2bd6da7ee1c68ce6f6ab12e3c2f4
-PrismelierView.mc  7cc794a61101b77392a2599da441a018f09ed9fbe231ab341e4344d889ec89af
+PrismelierView.mc  cd3a4a2526528f015643a2fc8c619f96fac9b435729c7ce799ccf14c08e09dbf
 ```
 
 ## Automated checks

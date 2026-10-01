@@ -58,7 +58,7 @@ class RevisionLayoutTests(unittest.TestCase):
         self.assertNotEqual(centers[2],centers[4])
 
     def test_worst_metrics_remain_inside_quiet_wells(self):
-        for text in ('130°F','-40°F','--°F','-100°F'):
+        for text in ('°F','°C'):
             self.inside('Value',text,284,240,(225,244,348,270))
         for text in ('11:59P','23:59','--:--'):
             self.inside('Small',text,307,278,(268,281,349,309))
@@ -77,7 +77,14 @@ class RevisionLayoutTests(unittest.TestCase):
         self.assertIn('var active = val != null',gauge)
         self.assertIn('if (val != null)',gauge)
         self.assertNotIn('fullWidth',gauge)
-        self.assertIn('Math.round(val).toNumber().format("%d")',gauge)
+        self.assertNotIn('Math.round(val)',gauge)
+        self.assertNotIn('var reading',gauge)
+        self.assertIn('text(dc, 284, 240, valueFont, fahrenheit ? "°F" : "°C", ink);',gauge)
+        self.assertIn('["0", "40", "80", "120"]',gauge)
+        self.assertIn('text(dc, 208, 77, timeFont, time, green);',code)
+        preview=(ROOT/'tools/render_preview.py').read_text()
+        self.assertIn("c.text(284,240,'Value','°F' if fahrenheit else '°C','ink')",preview)
+        self.assertNotIn('str(temperature)',preview)
         for reading,angle in ((-40,135),(0,135),(60,270),(120,405),(130,405)):
             self.assertEqual(135+270*max(0,min(1,reading/120)),angle)
         for method in ('drawCalendar(dc);','drawTemperature(dc);'):

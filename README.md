@@ -11,7 +11,7 @@ A bespoke, futuristic-steampunk digital watch face for the **Garmin Forerunner 2
 ## On the face
 
 - **Digital time**, following the watch's 12/24-hour preference by default
-- **Circular Fahrenheit temperature gauge** with a graduated 270° band, temperature needle and precise numeric reading
+- **Circular Fahrenheit temperature gauge** with a graduated 270° band, temperature needle and labeled scale; temperature is shown by the dial only
 - **S M T W T F S** around the upper exterior rim, highlighting the current weekday
 - **Month and day**, such as **Oct 24**, in the watch’s local time
 - **Weather icons**, beside the temperature and the next sun event, with clear stale/missing states
@@ -47,7 +47,7 @@ The face does not contain demo readings. Preview values exist only in `tools/ren
 |---|---|
 | Temperature/weather | `Weather.getCurrentConditions()`, which reads Garmin's existing cache; it cannot force a new observation |
 | Weather older than 2h | Reading retained; gauge muted, weather icon copper and crossed out, crossed-ring warning beside temperature |
-| Weather 24h old, timestamp missing, or future timestamp | Empty band, no needle, `--°F`, crossed-out weather icon; no invented reading |
+| Weather 24h old, timestamp missing, or future timestamp | Empty band, no needle, crossed-out weather icon; no invented reading |
 | Heart rate | Most recent valid `SensorHistory` measurement, no older than 120 seconds; a recent reading, not a continuously activated sensor |
 | Steps | Watch's daily activity-monitor count; missing data is `--`, while a genuine zero remains `0` |
 | Device battery | Watch's percentage, truncated to its integer portion |
@@ -56,7 +56,7 @@ The face does not contain demo readings. Preview values exist only in `tools/ren
 
 A small copper ring at the solar insert's lower right means the weather-derived location is at least two hours old. Solar location expires after 24h. When there is no location or no event available in today's/tomorrow's window (including polar conditions), the insert shows a muted horizon icon and `--:--`. An upward arrow and lifted sun means sunrise; a downward arrow and sinking sun means sunset. These age thresholds are this project's policy, not a Garmin update guarantee.
 
-In 12-hour mode, the time has **AM/PM** and a solar time uses **A/P** (for example, `6:42P`). The Fahrenheit dial spans 0–120°F (the optional Celsius setting uses −20–40°C). The band and needle clamp at the endpoints; an outward chevron signals an out-of-range value, while the numeric reading still shows the actual reported temperature.
+In 12-hour mode, the time has **AM/PM** and a solar time uses **A/P** (for example, `6:42P`). The Fahrenheit dial spans 0–120°F (the optional Celsius setting uses −20–40°C). The band and needle clamp at the endpoints; an outward chevron signals an out-of-range value. There is no separate numeric temperature reading; the unit indicator remains beside the weather icon.
 
 The seven weekday positions are indexed independently, so Tuesday/Thursday and Sunday/Saturday remain distinct despite shared initials. The date and highlight update from Garmin’s local Gregorian calendar before minute-cached sensor reads, including after midnight or a timezone change. Invalid calendar data shows `--` with no selected weekday. [Saturday example](docs/calendar-saturday.png).
 

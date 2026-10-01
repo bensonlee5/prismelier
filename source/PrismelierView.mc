@@ -365,9 +365,8 @@ class PrismelierView extends WatchUi.WatchFace {
             paint(dc, 0x091B23, Graphics.COLOR_TRANSPARENT);
             dc.fillCircle(137, 267, 2);
         }
-        var reading = val == null ? "--" : Math.round(val).toNumber().format("%d");
         drawWeather(dc, 284, 228, data.weatherKind);
-        text(dc, 284, 240, valueFont, reading + (fahrenheit ? "°F" : "°C"), ink);
+        text(dc, 284, 240, valueFont, fahrenheit ? "°F" : "°C", ink);
         if (data.weatherStale) {
             paint(dc, copper, Graphics.COLOR_TRANSPARENT);
             dc.drawCircle(337, 252, 3);
