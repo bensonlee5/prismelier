@@ -1,17 +1,17 @@
 # Foundry material asset and graphics budget
 
-The latest Foundry face uses an actual static raster resource, not a texture pasted only into a promotional mockup. All time, temperature, percentages, scores, steps and condition/event icons are overlaid live by Monkey C. The asset itself contains **no display readings or UI icons**.
+The latest Foundry face uses an actual static raster resource, not a texture pasted only into a promotional mockup. All time, temperature, weekdays, date, percentages, scores, steps and condition/event icons are overlaid live by Monkey C. The asset itself contains **no display readings or UI icons**.
 
 - Runtime source: `resources/textures/foundry-background-indexed.png`
 - Native dimensions: **416 × 416**, opaque 8-bit indexed PNG, at most **256 colors**
-- Source PNG file size: **84,734 bytes (82.7 KiB)**
+- Source PNG file size: **107,177 bytes (104.7 KiB)**
 - Resource: `Rez.Drawables.FoundryBackground`, declared in `resources/textures/textures.xml`
 - Resource settings: native/default packing, automatic palette, no dithering, compression, transparency disabled
 - Only Foundry uses the raster; the three alternate palettes retain the procedural artwork
 - Source-backed preview: `docs/preview-416.png`; the renderer loads the very same indexed file
 - Icon family: original 2px monoline pictograms at 416px, not platform emoji or baked-in imagery
 
-The artwork combines brushed/aged copper, patinated teal circuitry, satin dark ceramic, a worn ivory ceramic tile and minute laminate/grain details. Hardware contact shadows and bevels are static. Clean readout wells preserve legibility. Meaningful material pixels remain inside a 203px radius (the round display is 208px), avoiding clipped crown corners. Graphics remain motionless rather than animated.
+The artwork combines convex lacquered figured hardwood, raised machined copper/brass, deep teal patina, satin dark ceramic and an ivory ceramic solar tile. Raised inlays and rims use upper-left highlights and lower-right contact shadows/occlusion; recessed wells keep the live graphics clear. Hardware contact shadows and bevels are static. Clean readout wells preserve legibility. Meaningful material pixels remain inside a 204px radius (the round display is 208px), avoiding clipped crown corners. Graphics remain motionless rather than animated.
 
 ## What the memory numbers mean
 
@@ -22,7 +22,7 @@ Planning estimates for a single 416px pixel plane, before headers, palette and a
 - 8-bit indexed: **173,056 bytes / 169 KiB**
 - 16-bit RGB565: **346,112 bytes / 338 KiB**
 
-The 82.7 KiB PNG size is compressed storage, **not a runtime RAM measurement**. The actual compiler encoding, graphics-pool occupancy, app heap, decode cost and battery impact still require the official FR265 profile and simulator/hardware. No native memory-fit or battery-life claim is made.
+The 104.7 KiB PNG size is compressed storage, **not a runtime RAM measurement**. The actual compiler encoding, graphics-pool occupancy, app heap, decode cost and battery impact still require the official FR265 profile and simulator/hardware. No native memory-fit or battery-life claim is made.
 
 The implementation keeps one resource reference and loads it outside `onUpdate`. It never calls the reference's `get()` to pin pixel data and never creates another full-screen `BufferedBitmap`. Garmin may still evict/redecode the resource behind that reference. Recoverable resource load/draw errors attempt a procedural fallback; fatal VM memory errors are not claimed to be recoverable.
 
@@ -32,7 +32,7 @@ Sources: [FR265 device reference](https://developer.garmin.com/connect-iq/device
 
 ## Asset provenance and reproduction
 
-The background was generated with OpenAI's built-in image-generation tool from this project's procedural Foundry render as a geometry reference. It was then resized with Lanczos to a 384px interior, centered with 16px black padding inside a 416px canvas, and packed into an opaque 256-color indexed PNG with no dithering. The selected source image was 1254 × 1254. No stock texture, watch-brand image, personal health record or credential is included.
+The background was generated with OpenAI’s built-in image-generation tool from this project's updated procedural geometry guide and its earlier Foundry texture as references. A second focused pass strengthened raised relief, bevel depth and directional contact shadows without moving the readout wells. It was downsampled directly to 416 × 416 with Lanczos, then packed into an opaque 256-color indexed PNG with no dithering. The geometry guide already includes the black circular safe margin. The selected source image was 1254 × 1254. A user-supplied instrument reference informed the graduated band and calendar layout; that personal reference photo is **not** distributed with this project. No personal readings, credentials, third-party watch artwork or logos are baked into the asset.
 
 The committed native-resolution asset is sufficient to build. Optional deterministic packing of a newly selected source image:
 
@@ -40,8 +40,12 @@ The committed native-resolution asset is sufficient to build. Optional determini
 python tools/prepare_texture.py /path/to/selected-background.png
 ```
 
-Generation prompt, condensed without changing the art direction:
+Generation direction, condensed:
 
-> Create a hyperreal static background plate for a 416px digital Garmin watchface, preserving the attached Foundry layout. Straight-on orthographic macro material rendering, no watch case or strap. Remove all numbers, lettering, values and UI icons; leave calm dark readout wells and a pale ceramic solar tile. Keep the top capsules, large time aperture, horizontal temperature track, grouped weather/solar wells, bottom sensor wells and processor in their existing positions. Real aged/brushed copper with fine machining marks; patinated teal PCB solder mask with laminated edges and tiny vias; dark satin ceramic; subtle timber-laminate fused into metal; a worn ivory ceramic insert. Intricate connector pins, flex traces, miniature fasteners and actuator hardware. Raking soft light from upper left, realistic contact shadows and shallow bevels, no perspective tilt. Restrained aged-copper/teal/ivory/charcoal palette. No baked-in data, logos, text, analog clock marks, neon glow, toy plastic or watermark.
+> Preserve the exact geometry guide: two top metric capsules, large upper digital-time visor, small date plate, lower-left circular temperature well, right-side weather bay and pale solar tile, lower health readout and seven outer weekday pockets. Render polished figured walnut/cocobolo wood, copper/brass with gleaming rubbed edges and deep patina, petrol enamel and intricate robotics circuitry. Orthographic front view, no watch body or wrist. Leave all readout wells empty. No text, values, icons, clock indices, hands, temperature needle or band; these are live overlays.
 
-The original exact layout constraints additionally specified the quiet-zone coordinates on the 416px reference. Small live-render anchor adjustments were made to fit the resulting material wells; these same coordinates are used by the source and preview compositor. Always inspect a newly generated asset against every data state before replacing the runtime resource.
+Relief refinement direction:
+
+> Keep all panel positions and the silhouette unchanged. Give proud wood inlays and metal ribs substantial edge thickness, recessed display/gauge wells, undercut lips, raised fastener heads, upper-left specular bevel highlights and soft lower-right contact shadows. Preserve quiet, dark text wells and readable light ceramic. Static material relief, not animated 3D rendering.
+
+Live anchors were refined after visual review: time at y=77, month/day at y=175, temperature dial centered at (137,267), separate weather/°F reading to its right, and sensor values at y=338. The source and preview compositor use the same coordinates. Native-size and enlarged reviews covered missing/aged weather, endpoint overflow, long dates and extreme metric widths. Always inspect new artwork against every state before replacing the runtime resource.

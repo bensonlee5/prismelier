@@ -41,6 +41,6 @@ if __name__ == '__main__':
     d=Path(parser.parse_args().font_dir)
     build('Time', d/'DejaVuSansCondensed.ttf', 91, '0123456789:')
     build('Value', d/'DejaVuSans.ttf', 28, '0123456789-.,%°CF:AP')
-    build('Small', d/'DejaVuSans.ttf', 20, ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-:.,%°/*')
-    build('Label', d/'DejaVuSans.ttf', 15, ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-:.,%°/*')
+    build('Small', d/'DejaVuSans.ttf', 20, ' ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-:.,%°/*')
+    build('Label', d/'DejaVuSans.ttf', 15, ' ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-:.,%°/*')
     build('Ambient', d/'DejaVuSans-ExtraLight.ttf', 52, '0123456789:')

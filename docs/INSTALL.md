@@ -97,7 +97,7 @@ If absent, restart the watch once and recheck. If it still does not appear, use 
 - Pair the watch with **Garmin Connect on your iPhone**, and let it sync
 - Keep Bluetooth connected and allow Garmin Connect the background/location access it needs for Garmin's own weather feature. Choose the permissions yourself in iOS
 - First check the watch's **native Weather glance**. If Garmin itself has no current weather, this face cannot manufacture it
-- The bar is **outdoor weather temperature**, not the wrist/ambient sensor, which can be distorted by body heat
+- The gauge is **outdoor weather temperature**, not the wrist/ambient sensor, which can be distorted by body heat
 - Solar calculations use the weather observation's location; no GPS session is started by this face. A stale station/location can be wrong after travel
 - Wear the watch with wrist HR enabled. HR appears only when a valid, timestamped sample is at most two minutes old
 - Body Battery uses recent local watch history; keep wearing the watch for Garmin to establish a score. The top-right person/bolt value is a 0–100 score, not battery-charge percentage. It becomes `--` when no valid sample is available within 15 minutes
@@ -127,8 +127,8 @@ Sideloaded apps may not appear with editable settings in Garmin Connect/Connect 
 | No watch storage visible | Data cable, USB mode, working MTP support, and no competing MTP application |
 | Face does not appear | Correct 265 build, `.prg` copied to `GARMIN/APPS`, completed transfer, disconnect and restart |
 | IQ error symbol | Return to a built-in face; inspect Garmin's developer error logs privately. Do not publish logs containing personal data |
-| Empty temperature bar / `--°F` / crossed weather icon | Check native Weather glance, Garmin Connect sync, phone location permissions and watch time |
-| Muted bar, crossed weather icon and small crossed-ring warning | Cache is at least 2h old; readings disappear at 24h or when age cannot be verified |
+| Empty temperature band / `--°F` / crossed weather icon | Check native Weather glance, Garmin Connect sync, phone location permissions and watch time |
+| Muted gauge, crossed weather icon and small crossed-ring warning | Cache is at least 2h old; readings disappear at 24h or when age cannot be verified |
 | Solar insert `--:--` | No usable weather location or no sunrise/sunset in the queried window; can occur in polar regions |
 | HR `--` | Watch not worn, wrist HR disabled, or no recent valid sample |
 | Person/bolt Body Battery `--` | No valid score in the last 15 minutes, or its timestamp cannot be verified; check Garmin's native Body Battery glance |

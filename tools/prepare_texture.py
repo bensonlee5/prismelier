@@ -10,9 +10,8 @@ p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('input',type=Path,help='The selected source background image')
 p.add_argument('--output',type=Path,default=ROOT/'resources/textures/foundry-background-indexed.png')
 a=p.parse_args()
-art=Image.open(a.input).convert('RGB').resize((384,384),Image.Resampling.LANCZOS)
-im=Image.new('RGB',(416,416),'black')
-im.paste(art,(16,16)) # Deliberate inset for the round display's safe area
+art=Image.open(a.input).convert('RGB').resize((416,416),Image.Resampling.LANCZOS)
+im=art # The geometry guide already includes the circular safe-area margin
 im=im.quantize(colors=256,method=Image.Quantize.MEDIANCUT,dither=Image.Dither.NONE)
 a.output.parent.mkdir(parents=True,exist_ok=True)
 im.save(a.output,optimize=True)

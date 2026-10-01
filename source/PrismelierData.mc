@@ -35,7 +35,9 @@ class PrismelierData {
     var battery as Lang.Number or Null = null;
     var solarLabel as Lang.String = "SUN";
     var solarTime as Lang.String = "--:--";
-    var dateLabel as Lang.String = "";
+    // Local calendar values. Null means no weekday should be highlighted.
+    var weekdayIndex as Lang.Number or Null = null;
+    var dateLabel as Lang.String = "--";
     var timeSuffix as Lang.String = "";
     var palette as Lang.Number = 0;
 
@@ -102,6 +104,8 @@ class PrismelierData {
         var now = Time.now();
         var seconds = now.value();
         var minute = (seconds / 60).toNumber();
+        // Always use current local calendar info, even inside a cached minute:
+        // a timezone change can change the date without advancing UTC time.
         updateClockLabels(now);
 
         // Never keep an expired HR on screen until the next scheduled read.
@@ -130,14 +134,25 @@ class PrismelierData {
     }
 
     private function updateClockLabels(now as Time.Moment) as Void {
+        // info() uses the watch's local timezone. FORMAT_SHORT yields numeric
+        // weekday 1=Sunday..7=Saturday and month 1=January..12=December.
+        // https://developer.garmin.com/connect-iq/api-docs/Toybox/Time/Gregorian/Info.html
         var info = Gregorian.info(now, Time.FORMAT_SHORT);
-        var days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-        var months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
-                      "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-        var weekday = info.day_of_week as Lang.Number;
-        var month = info.month as Lang.Number;
-        dateLabel = days[weekday - 1] + " " + info.day.format("%02d") +
-            " " + months[month - 1];
+        var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        var weekday = info.day_of_week;
+        var month = info.month;
+        // Guard union-typed fields before arithmetic or array access. Invalid
+        // calendar values must not preserve a stale date or select Sunday.
+        weekdayIndex = null;
+        dateLabel = "--";
+        if (weekday instanceof Lang.Number && weekday >= 1 && weekday <= 7) {
+            weekdayIndex = weekday - 1;
+        }
+        if (month instanceof Lang.Number && month >= 1 && month <= 12 &&
+                info.day >= 1 && info.day <= 31) {
+            dateLabel = months[month - 1] + " " + info.day.format("%d");
+        }
         timeSuffix = is24Hour() ? "" : (info.hour < 12 ? "AM" : "PM");
     }
 

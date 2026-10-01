@@ -3,7 +3,7 @@
 Prismelier is a source project with design renders. It has not been built for a
 Forerunner 265, run in Garmin's simulator, or installed on physical hardware.
 
-## CI addition, 1 October 2026, 14:08 UTC
+## CI addition (historical checkpoint), 1 October 2026, 14:08 UTC
 
 The manually triggered GitHub Actions workflow is prepared for a dedicated,
 officially provisioned Linux x64 runner. It is restricted to the owner and trusted
@@ -19,20 +19,20 @@ test has succeeded; there is still no installable artifact. See [CI setup](CI.md
 The CI unit fixtures test failure handling and never represent Garmin profiles or
 compiled programs.
 
-## Recorded result, 1 October 2026, 06:12 UTC
+## Latest design result, 1 October 2026, 14:34 UTC
 
-- SDK 9.2.0 and Pillow available: **22 tests passed**, including a fresh parser
-  run against all source files, 54 API owner/method pairs and argument
+- SDK 9.2.0 and Pillow available: **49 tests passed**, including a fresh parser
+  run against all source files, 52 API owner/method pairs and argument
   counts, 61 module constants, and weather symbols checked against Garmin's
   bundled documentation
 - Standard-library-only run, with SDK environment variables removed and Python
-  site packages disabled: **14 tests passed, 8 optional checks skipped**
+  site packages disabled: **40 tests passed, 9 optional checks skipped**
 - Foundry background: one referenced **416×416, 256-color, opaque indexed PNG**,
-  **84,734 bytes** on disk. PNG structure, chunk checksums, palette, compressed
+  **107,177 bytes** on disk. PNG structure, chunk checksums, palette, compressed
   scanline payload, XML options, and awake-only reference use are checked
-- Circular artwork safety: **98,331 pixels** with maximum RGB channel above 8
-  lie within a **202.8657px radius**, passing the 204px guard inside the 208px
-  screen radius. This checks the committed inset bitmap, not hardware rendering
+- Circular artwork safety: **116,606 pixels** with maximum RGB channel above 8
+  lie within a **203.5055px radius**, passing the 204px guard inside the 208px
+  screen radius. This checks the committed bitmap, not hardware rendering
 - Palette consistency: **4 themes × 67 color entries** match the committed
   `themes.json`; the ambient ink and black background are unchanged in every
   palette. Settings and Data both accept all four theme indexes, with Foundry
@@ -43,9 +43,15 @@ compiled programs.
   covered. The three all-times band unions were pairwise disjoint
 
 The latest parser check includes the implemented Foundry material bitmap,
-monoline live-data icons, Fahrenheit temperature bar, weather and solar icons,
-centered AM/PM, and timestamped local Body Battery history. Body Battery remains
-a score and device charge a separate percentage. Both use the 20px Small font.
+monoline live-data icons, circular Fahrenheit temperature band, weather and solar icons,
+Sunday-first weekday highlight, title-case month/day, and timestamped local Body Battery history. Body Battery remains
+a score and device charge a separate percentage. Both use the 20px Small font. New calendar tests cover local midnight, DST,
+travel, fractional offsets, leap day and duplicate weekday initials. Font-bound
+tests cover every clock string, all month/day labels and wide metrics.
+Independent visual review approved the final 416px and enlarged renders after
+raising text away from material rims. The Oct 24/Saturday fixture and explicit
+overflow chevrons were also checked. These are source/layout tests, not native
+Monkey C execution.
 The texture is loaded as a retained resource reference for Foundry; other themes
 use the vector architecture and robotics. Static guards place `drawBitmap`,
 `drawArchitecture`, and `drawRobotics` after the sleep return, preserving the
@@ -59,9 +65,9 @@ Source fingerprints for that run:
 
 ```text
 PrismelierApp.mc   e8696d7cd4acb9ec2ab2971572a5d1ee5a5d80017d23ff7c345fc0eb3dabbb14
-PrismelierData.mc  3568805c9c6fc492c46ff3661a01849705f46c7dd394f35c1b7a58cb42def084
+PrismelierData.mc  69fc628a64097f9dc59cca703da2cc458b65d32862acb4135ee58c000a37bcae
 PrismelierPalette.mc  b29b08fb33d06c4c0b3f9b2554db9055a7dc2bd6da7ee1c68ce6f6ab12e3c2f4
-PrismelierView.mc  b8bc047daf1eb9261854724887f2b63e453a6e84d3037bdb154d53cba3a24049
+PrismelierView.mc  7cc794a61101b77392a2599da441a018f09ed9fbe231ab341e4344d889ec89af
 ```
 
 ## Automated checks
@@ -143,10 +149,10 @@ does not prevent eviction or guarantee a single decode; Garmin may reload it.
 The implementation requests the reference on layout or Foundry selection,
 releases it when selecting a different theme, and draws it only while awake.
 
-The source PNG is **84,734 bytes (about 82.7 KiB)**. That is compressed file size,
+The source PNG is **107,177 bytes (about 104.7 KiB)**. That is compressed file size,
 **not RAM usage**, compiled PRG size, or a measured graphics-pool footprint.
 Its SHA256 is
-`e84d33840a2fb49c26661ddead36da40cdf1744ff1680c634bf24d3f62a238fb`.
+`c30d986593aa4c3c49c63b02e5b17379440c4bacfcc96f91d766e410e0a200af`.
 An uncompressed 8-bit 416×416 pixel plane is 173,056 bytes (169 KiB), before
 palette/alignment/metadata; a 16-bit plane would be 346,112 bytes (338 KiB).
 The compiler's actual encoding and runtime allocation remain unmeasured.
@@ -154,7 +160,7 @@ No extra full-screen buffer or locked resource object is intentionally created.
 Static tests cover recoverable load/draw fallback to vector artwork; they do not
 inject real resource failures or establish recovery from fatal VM memory errors.
 The draw-error path clears black before drawing fallback vectors. The final
-background art is fitted into a 384px square centered inside the 416px canvas;
+background art is rendered from a circular geometry guide at native 416px;
 an optional Pillow test checks meaningful pixel centers against a 204px circular
 safe area. Dynamic text/icon collisions still require simulator/watch review.
 An official FR265 build, pool-pressure tests, wake/sleep tests, and hardware

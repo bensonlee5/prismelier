@@ -6,7 +6,7 @@ using Toybox.Time;
 using Toybox.WatchUi;
 
 // 416px FR265: one static Foundry material bitmap plus live vector overlays.
-// No on-face branding or word labels: icons, numbers and essential units only.
+// Digital time, Sunday-first calendar rim and live speedometer temperature band.
 class PrismelierView extends WatchUi.WatchFace {
     var data;
     var sleeping = false;
@@ -141,11 +141,12 @@ class PrismelierView extends WatchUi.WatchFace {
             drawRobotics(dc);
             drawMachine(dc);
         }
+        drawCalendar(dc);
         drawBattery(dc);
         drawBodyBattery(dc);
-        text(dc, 208, usesTexture() ? 78 : 77, timeFont, time, green);
+        text(dc, 208, 77, timeFont, time, green);
         if (!data.is24Hour()) {
-            text(dc, 208, 163, labelFont, clock.hour < 12 ? "AM" : "PM", ink);
+            text(dc, 309, 179, labelFont, clock.hour < 12 ? "AM" : "PM", ink);
         }
         drawTemperature(dc);
         drawVitals(dc);
@@ -187,153 +188,107 @@ class PrismelierView extends WatchUi.WatchFace {
     }
 
     function drawArchitecture(dc) {
-        // Layered ceramic substrate: chip-like chamfers, never an analog ring.
+        // The seven live weekday pockets are calendar positions, not clock indices.
         paint(dc, 0x071214, Graphics.COLOR_TRANSPARENT);
-        dc.fillPolygon([[121, 25], [283, 25], [350, 87], [350, 168], [67, 168], [67, 87]]);
-        trace(dc, [[111, 39], [137, 19], [279, 19], [301, 37]], 0x3D3433, 1);
-        trace(dc, [[118, 43], [141, 25], [275, 25], [294, 43]], 0x175452, 1);
-        trace(dc, [[137, 48], [151, 34], [264, 34], [280, 50]], 0x224142, 1);
-        trace(dc, [[100, 48], [65, 81], [65, 108], [53, 120], [53, 143]], 0x6E4B3A, 1);
-        trace(dc, [[109, 53], [74, 84], [74, 103], [62, 115]], 0x2F625C, 1);
-        trace(dc, [[303, 49], [342, 84], [342, 105], [356, 119], [356, 143]], 0x335657, 1);
-        trace(dc, [[309, 42], [350, 79], [350, 102], [365, 117]], 0x644154, 1);
-        junction(dc, 53, 145, 0x916B49);
-        junction(dc, 62, 116, 0x34877D);
-        junction(dc, 356, 145, 0x4F958B);
-        junction(dc, 366, 119, 0x86557A);
-        // Microbridges route into the battery plate without touching the digits.
+        dc.fillCircle(208, 208, 199);
+        paint(dc, 0x344741, Graphics.COLOR_TRANSPARENT);
+        dc.drawCircle(208, 208, 198);
         paint(dc, 0x102226, Graphics.COLOR_TRANSPARENT);
-        dc.fillRoundedRectangle(104, 39, 106, 31, 7);
-        stroke(dc, 114, 39, 200, 39, 0x3C6260, 1);
-        for (var b = 0; b < 5; b += 1) {
-            stroke(dc, 184 + b * 7, 29, 184 + b * 7, 34, 0x8B6544, 1);
+        dc.fillRoundedRectangle(102, 50, 106, 30, 7);
+        dc.fillRoundedRectangle(219, 50, 91, 30, 7);
+        // Black ceramic digital-time visor, polished timber/copper surrounds.
+        paint(dc, 0x452744, Graphics.COLOR_TRANSPARENT);
+        dc.fillRoundedRectangle(62, 84, 292, 94, 14);
+        for (var grain = 0; grain < 5; grain += 1) {
+            stroke(dc, 70, 88 + grain * 19, 346, 90 + grain * 19, 0x85506D, 1);
         }
-        paint(dc, 0x102226, Graphics.COLOR_TRANSPARENT);
-        dc.fillRoundedRectangle(219, 39, 91, 31, 7);
-        stroke(dc, 228, 39, 300, 39, 0x3C6260, 1);
-        junction(dc, 214, 55, 0x724060);
-        trace(dc, [[210, 55], [219, 55]], 0x724060, 1);
-        // Peripheral service channels have asymmetric joints, not hour ticks.
-        trace(dc, [[34, 129], [23, 157], [23, 252], [32, 274]], 0x22433F, 1);
-        trace(dc, [[29, 161], [29, 236]], 0x503949, 1);
-        trace(dc, [[383, 130], [393, 163], [393, 249], [384, 272]], 0x4D3C2E, 1);
-        trace(dc, [[387, 174], [387, 223], [381, 230]], 0x284D4D, 1);
-        for (var n = 0; n < 4; n += 1) {
-            stroke(dc, 20, 187 + n * 7, 28, 187 + n * 7, 0x326960, 1);
-            stroke(dc, 388, 240 + n * 6, 394, 240 + n * 6, 0x6F494D, 1);
-        }
-        // Deeply engraved lower backplane keeps the heart/steps row uncluttered.
         paint(dc, 0x080F13, Graphics.COLOR_TRANSPARENT);
-        dc.fillPolygon([[71, 312], [345, 312], [335, 352], [292, 374], [123, 374], [82, 352]]);
-        trace(dc, [[70, 315], [76, 348], [120, 373], [158, 373], [171, 386], [203, 386]], 0x6B4839, 1);
-        trace(dc, [[78, 351], [122, 379], [157, 379]], 0x263D3D, 1);
-        trace(dc, [[346, 315], [340, 349], [299, 373], [260, 373], [247, 386], [216, 386]], 0x295F5D, 1);
-        trace(dc, [[333, 356], [297, 379], [261, 379]], 0x69465B, 1);
-        junction(dc, 204, 386, 0xA16E4C);
-        junction(dc, 215, 386, 0x4B9D95);
-        for (var f = 0; f < 7; f += 1) {
-            stroke(dc, 175 + f * 11, 364, 181 + f * 11, 364, 0x334945, 1);
-        }
-        trace(dc, [[92, 360], [121, 367], [150, 367]], 0x243F42, 1);
-        trace(dc, [[324, 361], [295, 367], [270, 367]], 0x3F314C, 1);
-        screw(dc, 90, 348, 0x75513D);
-        screw(dc, 326, 348, 0x365E59);
+        dc.fillRoundedRectangle(69, 90, 278, 81, 9);
+        paint(dc, copper, Graphics.COLOR_TRANSPARENT);
+        dc.drawRoundedRectangle(62, 84, 292, 94, 14);
+        stroke(dc, 80, 85, 336, 85, 0xF2BF8C, 1);
+        paint(dc, 0x102226, Graphics.COLOR_TRANSPARENT);
+        dc.fillRoundedRectangle(160, 177, 96, 28, 5);
+        paint(dc, 0x3C6260, Graphics.COLOR_TRANSPARENT);
+        dc.drawRoundedRectangle(160, 177, 96, 28, 5);
+        // Companion weather bay and a light ceramic solar insert.
+        paint(dc, 0x122325, Graphics.COLOR_TRANSPARENT);
+        dc.fillRoundedRectangle(218, 209, 137, 115, 13);
+        paint(dc, copper, Graphics.COLOR_TRANSPARENT);
+        dc.drawRoundedRectangle(218, 209, 137, 115, 13);
+        paint(dc, 0xD6D9BF, Graphics.COLOR_TRANSPARENT);
+        dc.fillPolygon([[229, 273], [343, 273], [349, 280], [344, 310], [227, 310], [223, 303]]);
+        stroke(dc, 231, 275, 339, 275, 0xF5F5DB, 1);
+        paint(dc, 0x080F13, Graphics.COLOR_TRANSPARENT);
+        dc.fillRoundedRectangle(83, 342, 254, 38, 7);
+        paint(dc, 0x6B4839, Graphics.COLOR_TRANSPARENT);
+        dc.drawRoundedRectangle(83, 342, 254, 38, 7);
     }
 
     function drawRobotics(dc) {
-        // Paired board-to-board headers: five exposed copper contacts each.
         for (var side = 0; side < 2; side += 1) {
-            var x = side == 0 ? 44 : 357;
+            var x = side == 0 ? 31 : 373;
             paint(dc, 0x080F13, Graphics.COLOR_TRANSPARENT);
-            dc.fillRoundedRectangle(x, 116, 15, 33, 2);
-            paint(dc, 0x334945, Graphics.COLOR_TRANSPARENT);
-            dc.drawRoundedRectangle(x, 116, 15, 33, 2);
-            for (var pin = 0; pin < 5; pin += 1) {
-                paint(dc, copper, Graphics.COLOR_TRANSPARENT);
-                dc.fillRectangle(x + 4, 120 + pin * 5, 7, 2);
+            dc.fillRoundedRectangle(x, 162, 12, 44, 3);
+            for (var pin = 0; pin < 7; pin += 1) {
+                stroke(dc, x + 3, 166 + pin * 5, x + 9, 166 + pin * 5, copper, 2);
             }
         }
-        // Parallel copper flex traces route behind the time aperture.
         for (var ribbon = 0; ribbon < 4; ribbon += 1) {
-            trace(dc, [[113 + ribbon * 4, 68], [113 + ribbon * 4, 74],
-                [98 + ribbon * 4, 87]], 0x8B6544, 1);
-            trace(dc, [[285 + ribbon * 4, 68], [285 + ribbon * 4, 74],
-                [300 + ribbon * 4, 87]], 0x335657, 1);
+            trace(dc, [[82 + ribbon * 5, 73], [69 + ribbon * 5, 75], [49 + ribbon * 5, 94], [49 + ribbon * 5, 124]], 0x8B6544, 1);
+            trace(dc, [[334 - ribbon * 5, 73], [347 - ribbon * 5, 75], [367 - ribbon * 5, 94], [367 - ribbon * 5, 124]], 0x335657, 1);
         }
-        // Motor housings around the thermal linear-actuator trunnions.
-        paint(dc, 0x102226, Graphics.COLOR_TRANSPARENT);
-        dc.fillRoundedRectangle(52, 170, 29, 27, 4);
-        dc.fillRoundedRectangle(335, 170, 29, 27, 4);
-        paint(dc, 0x6B4839, Graphics.COLOR_TRANSPARENT);
-        dc.drawRoundedRectangle(52, 170, 29, 27, 4);
-        dc.drawRoundedRectangle(335, 170, 29, 27, 4);
-        // A detailed QFN processor with real-looking pads, a ceramic die and
-        // three compute cells. No faux serial numbers or decorative wording.
-        for (var pin2 = 0; pin2 < 8; pin2 += 1) {
-            stroke(dc, 179 + pin2 * 8, 348, 179 + pin2 * 8, 355, 0x8B6544, 2);
-            stroke(dc, 179 + pin2 * 8, 373, 179 + pin2 * 8, 380, 0x8B6544, 2);
-        }
-        for (var row = 0; row < 3; row += 1) {
-            stroke(dc, 167, 357 + row * 6, 175, 357 + row * 6, 0x335657, 2);
-            stroke(dc, 241, 357 + row * 6, 249, 357 + row * 6, 0x335657, 2);
-        }
+        trace(dc, [[27, 222], [31, 291], [66, 330], [78, 330]], 0x4F958B, 2);
+        trace(dc, [[386, 225], [382, 300], [347, 333], [328, 333]], 0x8B6544, 2);
+        gear(dc, 365, 239, 11, cyan);
+        screw(dc, 219, 333, copper);
+        screw(dc, 351, 322, copper);
         paint(dc, 0x080F13, Graphics.COLOR_TRANSPARENT);
-        dc.fillRoundedRectangle(173, 352, 70, 24, 3);
-        paint(dc, 0x6B4839, Graphics.COLOR_TRANSPARENT);
-        dc.drawRoundedRectangle(173, 352, 70, 24, 3);
-        paint(dc, 0x224142, Graphics.COLOR_TRANSPARENT);
-        dc.fillRectangle(189, 357, 38, 14);
+        dc.fillRoundedRectangle(181, 383, 54, 15, 3);
         paint(dc, 0x3C6260, Graphics.COLOR_TRANSPARENT);
-        dc.drawRectangle(189, 357, 38, 14);
-        for (var core = 0; core < 3; core += 1) {
-            dc.drawRectangle(193 + core * 11, 360, 7, 8);
+        dc.drawRoundedRectangle(181, 383, 54, 15, 3);
+        for (var p = 0; p < 6; p += 1) {
+            stroke(dc, 185 + p * 9, 380, 185 + p * 9, 383, copper, 2);
         }
-        paint(dc, copper, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(179, 357, 1);
     }
 
     function drawMachine(dc) {
-        // No clock indices or analog chapter ring. The perimeter stays quiet.
-        // A split ceramic housing carries offset copper capillaries.
-        paint(dc, 0x122325, Graphics.COLOR_TRANSPARENT);
-        dc.fillRoundedRectangle(45, 184, 326, 110, 17);
-        paint(dc, 0x344741, Graphics.COLOR_TRANSPARENT);
-        dc.drawRoundedRectangle(45, 184, 326, 110, 17);
-        for (var side = 0; side < 2; side += 1) {
-            var x = side == 0 ? 42 : 374;
-            stroke(dc, x, 207, x, 262, 0x5D3527, 7);
-            stroke(dc, x - 1, 207, x - 1, 262, copper, 2);
-            for (var k = 0; k < 6; k += 1) {
-                stroke(dc, x - 5, 214 + k * 8, x + 5, 214 + k * 8, 0xB56942, 2);
+        // A high-quality wood bezel carries the temperature instrument only.
+        paint(dc, 0x452744, Graphics.COLOR_TRANSPARENT);
+        dc.fillCircle(137, 267, 74);
+        paint(dc, 0x85506D, Graphics.COLOR_TRANSPARENT);
+        dc.drawCircle(137, 267, 71);
+        paint(dc, copper, Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(2);
+        dc.drawCircle(137, 267, 67);
+        dc.setPenWidth(1);
+        paint(dc, 0x091B23, Graphics.COLOR_TRANSPARENT);
+        dc.fillCircle(137, 267, 64);
+        screw(dc, 87, 213, copper);
+        screw(dc, 188, 213, copper);
+        screw(dc, 87, 322, copper);
+        screw(dc, 188, 322, copper);
+    }
+
+    function drawCalendar(dc) {
+        var initials = ["S", "M", "T", "W", "T", "F", "S"];
+        for (var i = 0; i < 7; i += 1) {
+            var pos = point(208, 208, 188, 210 + i * 20);
+            var current = data.weekdayIndex != null && data.weekdayIndex == i;
+            paint(dc, current ? 0x27645D : 0x071214, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(pos[0], pos[1], 12);
+            if (current) {
+                paint(dc, copper, Graphics.COLOR_TRANSPARENT);
+                dc.drawCircle(pos[0], pos[1], 12);
             }
+            text(dc, pos[0], pos[1] - 12, smallFont, initials[i], current ? 0xF2BF8C : 0x74ACA0);
         }
-        // Exposed violet/cyan gearing lives inside the machine, never as indices.
-        gear(dc, 67, 184, 11, pink);
-        gear(dc, 349, 184, 11, cyan);
-        screw(dc, 59, 282, copper);
-        screw(dc, 357, 282, copper);
-        // A porcelain insert is deliberately paired with violet timber and
-        // petrol enamel. Its irregular copper join is the material signature.
-        paint(dc, 0x050E12, Graphics.COLOR_TRANSPARENT);
-        dc.fillPolygon([[224, 249], [344, 249], [352, 256], [347, 286], [221, 286], [217, 278]]);
-        paint(dc, 0xD6D9BF, Graphics.COLOR_TRANSPARENT);
-        dc.fillPolygon([[224, 246], [344, 246], [352, 253], [347, 283], [221, 283], [217, 275]]);
-        stroke(dc, 227, 248, 341, 248, 0xF5F5DB, 1);
-        stroke(dc, 224, 246, 217, 275, copper, 2);
-        stroke(dc, 217, 275, 221, 283, copper, 2);
-        stroke(dc, 81, 288, 101, 288, 0x74ACA0, 1);
-        // Inlaid timber circuits meet ceramic at the bottom of the instrument.
-        stroke(dc, 84, 288, 105, 300, 0x805745, 2);
-        stroke(dc, 105, 300, 162, 300, 0x805745, 2);
-        stroke(dc, 253, 300, 310, 300, 0x487B72, 2);
-        stroke(dc, 310, 300, 331, 288, 0x487B72, 2);
-        screw(dc, 162, 300, pink);
-        screw(dc, 253, 300, cyan);
+        text(dc, 208, 175, smallFont, data.dateLabel, ink);
     }
 
     function drawBattery(dc) {
-        var dx = usesTexture() ? -5 : 0;
-        var dy = usesTexture() ? 2 : 0;
+        var dx = -5;
+        var dy = 6;
         paint(dc, cyan, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(2);
         dc.drawRoundedRectangle(121 + dx, 51 + dy, 17, 10, 2);
@@ -348,7 +303,7 @@ class PrismelierView extends WatchUi.WatchFace {
 
     function drawBodyBattery(dc) {
         // Original monoline person + energy bolt; a score, never a percentage.
-        var dy = usesTexture() ? 2 : 0;
+        var dy = 6;
         paint(dc, pink, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(2);
         dc.drawCircle(235, 47 + dy, 3);
@@ -362,79 +317,80 @@ class PrismelierView extends WatchUi.WatchFace {
     }
 
     function drawTemperature(dc) {
-        if (!usesTexture()) {
-            // Linear temperature bar in a violet woodgrain/copper instrument frame.
-            paint(dc, 0x452744, Graphics.COLOR_TRANSPARENT);
-            dc.fillRoundedRectangle(56, 192, 304, 54, 10);
-            for (var grain = 0; grain < 5; grain += 1) {
-                stroke(dc, 71, 197 + grain * 10, 345, 199 + grain * 10, grain % 2 == 0 ? 0x85506D : 0x5D3854, 1);
-            }
-            paint(dc, copper, Graphics.COLOR_TRANSPARENT);
-            dc.drawRoundedRectangle(56, 192, 304, 54, 10);
-            stroke(dc, 71, 193, 344, 193, 0xF2BF8C, 1);
-            stroke(dc, 71, 245, 344, 245, 0x3E211E, 2);
-            screw(dc, 64, 201, copper);
-            screw(dc, 352, 201, copper);
-            screw(dc, 64, 237, copper);
-            screw(dc, 352, 237, copper);
-            paint(dc, 0x091B23, Graphics.COLOR_TRANSPARENT);
-            dc.fillRoundedRectangle(73, 209, 270, 19, 4);
-        }
         var fahrenheit = data.isFahrenheit();
         var low = fahrenheit ? 0 : -20;
         var high = fahrenheit ? 120 : 40;
         var val = data.temperatureC;
         if (val != null && fahrenheit) { val = val * 9.0 / 5.0 + 32.0; }
-        if (val != null) {
-            var f = clamp((val - low).toFloat() / (high - low), 0.0, 1.0);
-            var start = usesTexture() ? 74 : 77;
-            var fullWidth = usesTexture() ? 268 : 262;
-            var width = (fullWidth * f).toNumber();
-            if (width > 0) {
-                paint(dc, data.weatherStale ? 0x80665C : pink, Graphics.COLOR_TRANSPARENT);
-                dc.fillRoundedRectangle(start, 214, width, 9, 3);
-                stroke(dc, start + 2, 215, start + width, 215, data.weatherStale ? copper : 0xFFC9FA, 1);
+        var f = val == null ? 0.0 : clamp((val - low).toFloat() / (high - low), 0.0, 1.0);
+        // Car-instrument sweep: 270 degrees, lower-left to lower-right.
+        // A continuous graduated band encodes the value; needle is temperature,
+        // never time. Color shifts from cool cyan through ivory to warm copper.
+        for (var j = 0; j < 72; j += 1) {
+            var angle = 135.0 + 270.0 * j / 72;
+            var end = 135.0 + 270.0 * (j + 1) / 72;
+            var active = val != null && (j + 0.5) / 72.0 <= f;
+            var bandColor = 0x224142;
+            if (active) {
+                bandColor = data.weatherStale ? 0x80665C :
+                    (j < 24 ? 0x6BE4DE : (j < 48 ? 0xD6D9BF : 0xD98B52));
             }
-            // A square piston instead of a needle. Endpoint clamped, reading exact.
-            paint(dc, ink, Graphics.COLOR_TRANSPARENT);
-            dc.fillRectangle(start - 2 + width, 211, 4, 17);
+            var p1 = point(137, 267, 59, angle);
+            var p2 = point(137, 267, 59, end);
+            stroke(dc, p1[0], p1[1], p2[0], p2[1], bandColor, 7);
         }
-        if (!usesTexture()) {
-            for (var t = 0; t <= 12; t += 1) {
-                var tx = 77 + (262 * t / 12).toNumber();
-                stroke(dc, tx, 202, tx, t % 3 == 0 ? 207 : 205, copper, 1);
-                stroke(dc, tx, 232, tx, t % 3 == 0 ? 238 : 235, copper, 1);
+        for (var tick = 0; tick <= 12; tick += 1) {
+            radial(dc, 137, 267, tick % 4 == 0 ? 48 : 51, 54,
+                135.0 + tick * 22.5, 0x74ACA0, 1);
+        }
+        var labels = fahrenheit ? ["0", "40", "80", "120"] : ["-20", "0", "20", "40"];
+        for (var label = 0; label < 4; label += 1) {
+            var lp = point(137, 267, 42, 135 + label * 90);
+            text(dc, lp[0], lp[1] - 9, labelFont, labels[label], ink);
+        }
+        if (val != null) {
+            var needleAngle = 135.0 + 270.0 * f;
+            radial(dc, 137, 267, -5, 30, needleAngle, data.weatherStale ? copper : 0xFFC9FA, 3);
+            radial(dc, 137, 267, 56, 63, needleAngle, ink, 2);
+            if (val < low || val > high) {
+                // Outward chevron explicitly signals a clamped scale endpoint.
+                var tip = point(137, 267, 65, needleAngle);
+                var left = point(137, 267, 59, needleAngle - 4);
+                var right = point(137, 267, 59, needleAngle + 4);
+                stroke(dc, left[0], left[1], tip[0], tip[1], ink, 2);
+                stroke(dc, right[0], right[1], tip[0], tip[1], ink, 2);
             }
+            paint(dc, copper, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(137, 267, 4);
+            paint(dc, 0x091B23, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(137, 267, 2);
         }
         var reading = val == null ? "--" : Math.round(val).toNumber().format("%d");
-        drawWeather(dc, 94, usesTexture() ? 272 : 265, data.weatherKind);
-        text(dc, 165, usesTexture() ? 254 : 247, valueFont, reading + (fahrenheit ? "°F" : "°C"), ink);
+        drawWeather(dc, 284, 228, data.weatherKind);
+        text(dc, 284, 240, valueFont, reading + (fahrenheit ? "°F" : "°C"), ink);
         if (data.weatherStale) {
-            // Small crossed ring = stale/unknown weather; explained in README.
             paint(dc, copper, Graphics.COLOR_TRANSPARENT);
-            var wx = usesTexture() ? 72 : 208;
-            var wy = usesTexture() ? 283 : 280;
-            dc.drawCircle(wx, wy, 3);
-            stroke(dc, wx - 2, wy + 2, wx + 2, wy - 2, copper, 1);
+            dc.drawCircle(337, 252, 3);
+            stroke(dc, 335, 254, 339, 250, copper, 1);
         }
         drawSolar(dc);
     }
 
     function drawVitals(dc) {
-        var dy = 0;
+        var dy = 24;
         // Heart outline and two footprint outlines share a 2px monoline weight.
         trace(dc, [[101, 341 + dy], [92, 332 + dy], [92, 327 + dy],
             [95, 324 + dy], [99, 324 + dy], [101, 327 + dy], [103, 324 + dy],
             [107, 324 + dy], [110, 327 + dy], [110, 332 + dy], [101, 341 + dy]], pink, 2);
-        text(dc, 149, 315 + dy, valueFont, data.heartRate == null ? "--" : data.heartRate.format("%d"), ink);
+        text(dc, 149, 338, valueFont, data.heartRate == null ? "--" : data.heartRate.format("%d"), ink);
         paint(dc, cyan, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(2);
-        dc.drawEllipse(220, 322 + dy, 6, 11);
-        dc.drawEllipse(229, 328 + dy, 6, 11);
-        dc.drawCircle(223, 318 + dy, 2);
-        dc.drawCircle(232, 324 + dy, 2);
+        dc.drawEllipse(220, 350, 6, 9);
+        dc.drawEllipse(229, 356, 6, 9);
+        dc.drawCircle(223, 346, 2);
+        dc.drawCircle(232, 352, 2);
         dc.setPenWidth(1);
-        text(dc, usesTexture() ? 284 : 288, 315 + dy, data.steps != null && data.steps >= 10000 ? smallFont : valueFont, data.steps == null ? "--" : formatSteps(data.steps), ink);
+        text(dc, 284, 338, data.steps != null && data.steps >= 1000000 ? labelFont : (data.steps != null && data.steps >= 10000 ? smallFont : valueFont), data.steps == null ? "--" : formatSteps(data.steps), ink);
     }
 
     function formatSteps(n) {
@@ -494,8 +450,8 @@ class PrismelierView extends WatchUi.WatchFace {
     }
 
     function drawSolar(dc) {
-        var x = 240;
-        var y = usesTexture() ? 277 : 269;
+        var x = 247;
+        var y = 295;
         var up = data.solarLabel.find("RISE") != null;
         var color = data.solarTime == "--:--" ? 0x777F70 : (up ? 0x27645D : 0xA04D30);
         var sunY = up ? y - 4 : y;
@@ -516,10 +472,10 @@ class PrismelierView extends WatchUi.WatchFace {
             stroke(dc, x + 12, baseY, x + 16, tipY, color, 2);
             stroke(dc, x + 20, baseY, x + 16, tipY, color, 2);
         }
-        text(dc, 302, usesTexture() ? 255 : 250, smallFont, data.solarTime, 0x183B3B);
+        text(dc, 307, 278, smallFont, data.solarTime, 0x183B3B);
         if (data.solarLabel.find("*") != null) {
             paint(dc, copper, Graphics.COLOR_TRANSPARENT);
-            dc.drawCircle(345, usesTexture() ? 285 : 278, 3);
+            dc.drawCircle(340, 307, 3);
         }
     }
 }
