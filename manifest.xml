@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<iq:manifest xmlns:iq="http://www.garmin.com/xml/connectiq" version="3">
+  <iq:application id="81c2a924768f4b9eb6ac52e438d0517f" type="watchface" name="@Strings.AppName" entry="PrismelierApp" launcherIcon="@Drawables.LauncherIcon" minApiLevel="4.2.0">
+    <iq:products><iq:product id="fr265" /></iq:products>
+    <iq:permissions>
+      <iq:uses-permission id="SensorHistory" />
+      <iq:uses-permission id="Positioning" />
+    </iq:permissions>
+    <iq:languages><iq:language>eng</iq:language></iq:languages>
+    <iq:barrels />
+  </iq:application>
+</iq:manifest>

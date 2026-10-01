@@ -1,0 +1,5 @@
+<properties>
+  <property id="Palette" type="number">0</property>
+  <property id="TimeFormat" type="number">0</property>
+  <property id="TemperatureUnits" type="number">2</property>
+</properties>

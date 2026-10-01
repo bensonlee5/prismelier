@@ -1,0 +1,383 @@
+using Toybox.ActivityMonitor;
+using Toybox.Application;
+using Toybox.Lang;
+using Toybox.Position;
+using Toybox.SensorHistory;
+using Toybox.System;
+using Toybox.Time;
+using Toybox.Time.Gregorian;
+using Toybox.Weather;
+
+// Cached, read-only watch-face data. No GPS activation or network requests.
+// Permissions: SensorHistory; Positioning exposes weather observation position.
+// https://developer.garmin.com/connect-iq/api-docs/Toybox/Weather/CurrentConditions.html
+// https://developer.garmin.com/connect-iq/api-docs/Toybox/Weather.html
+// https://developer.garmin.com/connect-iq/api-docs/Toybox/SensorHistory.html
+// https://developer.garmin.com/connect-iq/api-docs/Toybox/ActivityMonitor/Info.html
+// https://developer.garmin.com/connect-iq/api-docs/Toybox/System/Stats.html
+class PrismelierData {
+    // These are app policies, not Garmin refresh guarantees. Timestamp age is
+    // checked even when expensive reads are throttled to once per clock minute.
+    const WEATHER_STALE_SECONDS = 7200;
+    const WEATHER_EXPIRE_SECONDS = 86400;
+    const HEART_RATE_MAX_AGE_SECONDS = 120;
+
+    var temperatureC as Lang.Numeric or Null = null;
+    var weatherLabel as Lang.String = "NO WEATHER";
+    var weatherKind as Lang.String = "unknown";
+    var weatherStale as Lang.Boolean = false;
+    var heartRate as Lang.Number or Null = null;
+    var steps as Lang.Number or Null = null;
+    var battery as Lang.Number or Null = null;
+    var solarLabel as Lang.String = "SUN";
+    var solarTime as Lang.String = "--:--";
+    var dateLabel as Lang.String = "";
+    var timeSuffix as Lang.String = "";
+    var palette as Lang.Number = 0;
+
+    private var _timeFormat as Lang.Number = 0;
+    private var _temperatureUnits as Lang.Number = 0;
+    private var _lastRefreshMinute as Lang.Number = -1;
+    private var _heartRateAt as Lang.Number or Null = null;
+    private var _weatherPresent as Lang.Boolean = false;
+    private var _weatherAt as Lang.Number or Null = null;
+    private var _weatherTemperature as Lang.Numeric or Null = null;
+    private var _weatherCondition as Lang.Number or Null = null;
+    private var _location as Position.Location or Null = null;
+    private var _locationAt as Lang.Number or Null = null;
+    private var _solarEvents as Lang.Array = [];
+    private var _solarKinds as Lang.Array = [];
+
+    function initialize() {
+        loadSettings();
+        refresh(true);
+    }
+
+    // Call after an app-settings change; refresh(true) applies it immediately.
+    function loadSettings() as Void {
+        palette = readChoice("Palette", 1);
+        _timeFormat = readChoice("TimeFormat", 2);
+        _temperatureUnits = readChoice("TemperatureUnits", 2);
+        _lastRefreshMinute = -1;
+    }
+
+    private function readChoice(key as Lang.String, maximum as Lang.Number)
+            as Lang.Number {
+        var value = Application.Properties.getValue(key);
+        if (value instanceof Lang.Number && value >= 0 && value <= maximum) {
+            return value;
+        }
+        return 0;
+    }
+
+    function is24Hour() as Lang.Boolean {
+        if (_timeFormat == 1) { return false; }
+        if (_timeFormat == 2) { return true; }
+        return System.getDeviceSettings().is24Hour;
+    }
+
+    function isFahrenheit() as Lang.Boolean {
+        if (_temperatureUnits == 1) { return false; }
+        if (_temperatureUnits == 2) { return true; }
+        return System.getDeviceSettings().temperatureUnits == System.UNIT_STATUTE;
+    }
+
+    // Pure formatter: formatting a solar event must not overwrite timeSuffix.
+    function formatTime(hour as Lang.Number, minute as Lang.Number)
+            as Lang.String {
+        if (is24Hour()) {
+            return hour.format("%02d") + ":" + minute.format("%02d");
+        }
+        var h = hour % 12;
+        if (h == 0) { h = 12; }
+        return h.format("%d") + ":" + minute.format("%02d");
+    }
+
+    function refresh(force as Lang.Boolean) as Void {
+        var now = Time.now();
+        var seconds = now.value();
+        var minute = (seconds / 60).toNumber();
+        updateClockLabels(now);
+
+        // Never keep an expired HR on screen until the next scheduled read.
+        if (_heartRateAt == null || seconds < _heartRateAt ||
+                seconds - _heartRateAt > HEART_RATE_MAX_AGE_SECONDS) {
+            heartRate = null;
+            _heartRateAt = null;
+        }
+
+        if (force || minute != _lastRefreshMinute) {
+            _lastRefreshMinute = minute;
+            readActivity();
+            readHeartRate(seconds);
+            readWeather(seconds);
+            buildSolarEvents(now, seconds);
+        }
+
+        updateWeatherDisplay(seconds);
+        updateSolarDisplay(seconds);
+    }
+
+    private function updateClockLabels(now as Time.Moment) as Void {
+        var info = Gregorian.info(now, Time.FORMAT_SHORT);
+        var days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+        var months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+                      "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+        var weekday = info.day_of_week as Lang.Number;
+        var month = info.month as Lang.Number;
+        dateLabel = days[weekday - 1] + " " + info.day.format("%02d") +
+            " " + months[month - 1];
+        timeSuffix = is24Hour() ? "" : (info.hour < 12 ? "AM" : "PM");
+    }
+
+    private function readActivity() as Void {
+        steps = null;
+        battery = null;
+        try {
+            var info = ActivityMonitor.getInfo();
+            if (info.steps != null && info.steps >= 0) {
+                steps = info.steps;
+            }
+        } catch (e) {
+            // Missing tracking data is unavailable, not an invented zero.
+        }
+        try {
+            var value = System.getSystemStats().battery;
+            if (value >= 0 && value <= 100) {
+                battery = value.toNumber();
+            }
+        } catch (e) {
+            // Other complications can still render if a system read fails.
+        }
+    }
+
+    private function readHeartRate(nowSeconds as Lang.Number) as Void {
+        heartRate = null;
+        _heartRateAt = null;
+        try {
+            // A Duration is seconds; a Number here would mean sample count.
+            var history = SensorHistory.getHeartRateHistory({
+                :period => new Time.Duration(HEART_RATE_MAX_AGE_SECONDS),
+                :order => SensorHistory.ORDER_NEWEST_FIRST
+            });
+            var sample = history.next();
+            // This is a recent measurement, not an activated/live HR sensor.
+            while (sample != null) {
+                var age = nowSeconds - sample.when.value();
+                if (age > HEART_RATE_MAX_AGE_SECONDS) { break; }
+                if (age >= 0 && sample.data != null && sample.data > 0 &&
+                        sample.data != ActivityMonitor.INVALID_HR_SAMPLE) {
+                    heartRate = sample.data.toNumber();
+                    _heartRateAt = sample.when.value();
+                    break;
+                }
+                sample = history.next();
+            }
+        } catch (e) {
+            // No fallback to a value with an unverifiable observation time.
+        }
+    }
+
+    private function readWeather(nowSeconds as Lang.Number) as Void {
+        try {
+            var wx = Weather.getCurrentConditions();
+            if (wx == null) {
+                // A transient cache miss may retain our previous observation,
+                // but its ORIGINAL observation time is never extended.
+                return;
+            }
+            _weatherPresent = true;
+            _weatherTemperature = wx.temperature;
+            _weatherCondition = wx.condition;
+            _weatherAt = wx.observationTime == null ? null : wx.observationTime.value();
+
+            // Null may mean Positioning permission is absent; discard an old
+            // location rather than silently continuing to use it in that case.
+            _location = null;
+            _locationAt = null;
+            if (wx.observationLocationPosition != null && _weatherAt != null &&
+                    nowSeconds >= _weatherAt &&
+                    nowSeconds - _weatherAt < WEATHER_EXPIRE_SECONDS) {
+                _location = wx.observationLocationPosition;
+                _locationAt = _weatherAt;
+            }
+        } catch (e) {
+            // Retained cache is aged below, including when disconnected.
+        }
+    }
+
+    private function updateWeatherDisplay(nowSeconds as Lang.Number) as Void {
+        temperatureC = null;
+        weatherKind = "unknown";
+        weatherLabel = "NO WEATHER";
+        weatherStale = false;
+        if (!_weatherPresent) { return; }
+
+        // Without an observation timestamp, a 24-hour cutoff cannot be proven.
+        if (_weatherAt == null) {
+            weatherStale = true;
+            weatherLabel = "AGE UNKNOWN";
+            return;
+        }
+        var age = nowSeconds - _weatherAt;
+        if (age < 0) {
+            weatherStale = true;
+            weatherLabel = "CHECK TIME";
+            return;
+        }
+        if (age >= WEATHER_EXPIRE_SECONDS) {
+            weatherStale = true;
+            weatherLabel = "WX EXPIRED";
+            return;
+        }
+        temperatureC = _weatherTemperature;
+        setWeatherCondition(_weatherCondition);
+        if (age >= WEATHER_STALE_SECONDS) {
+            weatherStale = true;
+            weatherLabel = "AGED " + (age / 3600).toNumber().format("%d") + "H";
+        }
+    }
+
+    private function setWeatherCondition(condition as Lang.Number or Null) as Void {
+        weatherKind = "unknown";
+        weatherLabel = "UNKNOWN";
+        if (condition == null) { return; }
+        switch (condition) {
+            case Weather.CONDITION_CLEAR:
+            case Weather.CONDITION_FAIR:
+            case Weather.CONDITION_MOSTLY_CLEAR:
+                weatherKind = "sun"; weatherLabel = "CLEAR"; break;
+            case Weather.CONDITION_PARTLY_CLOUDY:
+            case Weather.CONDITION_PARTLY_CLEAR:
+            case Weather.CONDITION_THIN_CLOUDS:
+                weatherKind = "partly"; weatherLabel = "PARTLY"; break;
+            case Weather.CONDITION_MOSTLY_CLOUDY:
+            case Weather.CONDITION_CLOUDY:
+                weatherKind = "cloud"; weatherLabel = "CLOUDY"; break;
+            case Weather.CONDITION_WINDY:
+                weatherKind = "wind"; weatherLabel = "WINDY"; break;
+            case Weather.CONDITION_RAIN:
+            case Weather.CONDITION_LIGHT_RAIN:
+            case Weather.CONDITION_HEAVY_RAIN:
+            case Weather.CONDITION_SCATTERED_SHOWERS:
+            case Weather.CONDITION_LIGHT_SHOWERS:
+            case Weather.CONDITION_SHOWERS:
+            case Weather.CONDITION_HEAVY_SHOWERS:
+            case Weather.CONDITION_DRIZZLE:
+                weatherKind = "rain"; weatherLabel = "RAIN"; break;
+            case Weather.CONDITION_CHANCE_OF_SHOWERS:
+            case Weather.CONDITION_CLOUDY_CHANCE_OF_RAIN:
+                weatherKind = "rain"; weatherLabel = "RAIN CHANCE"; break;
+            case Weather.CONDITION_THUNDERSTORMS:
+            case Weather.CONDITION_SCATTERED_THUNDERSTORMS:
+            case Weather.CONDITION_TORNADO:
+            case Weather.CONDITION_SQUALL:
+            case Weather.CONDITION_HURRICANE:
+            case Weather.CONDITION_TROPICAL_STORM:
+                weatherKind = "storm"; weatherLabel = "STORM"; break;
+            case Weather.CONDITION_CHANCE_OF_THUNDERSTORMS:
+                weatherKind = "storm"; weatherLabel = "STORM RISK"; break;
+            case Weather.CONDITION_SNOW:
+            case Weather.CONDITION_LIGHT_SNOW:
+            case Weather.CONDITION_HEAVY_SNOW:
+            case Weather.CONDITION_FLURRIES:
+                weatherKind = "snow"; weatherLabel = "SNOW"; break;
+            case Weather.CONDITION_CHANCE_OF_SNOW:
+            case Weather.CONDITION_CLOUDY_CHANCE_OF_SNOW:
+                weatherKind = "snow"; weatherLabel = "SNOW CHANCE"; break;
+            case Weather.CONDITION_WINTRY_MIX:
+            case Weather.CONDITION_LIGHT_RAIN_SNOW:
+            case Weather.CONDITION_HEAVY_RAIN_SNOW:
+            case Weather.CONDITION_RAIN_SNOW:
+            case Weather.CONDITION_CHANCE_OF_RAIN_SNOW:
+            case Weather.CONDITION_CLOUDY_CHANCE_OF_RAIN_SNOW:
+            case Weather.CONDITION_FREEZING_RAIN:
+            case Weather.CONDITION_SLEET:
+            case Weather.CONDITION_ICE_SNOW:
+            case Weather.CONDITION_ICE:
+            case Weather.CONDITION_HAIL:
+                weatherKind = "snow"; weatherLabel = "ICY MIX"; break;
+            case Weather.CONDITION_FOG:
+            case Weather.CONDITION_MIST:
+                weatherKind = "fog"; weatherLabel = "FOG"; break;
+            case Weather.CONDITION_HAZY:
+            case Weather.CONDITION_HAZE:
+                weatherKind = "fog"; weatherLabel = "HAZE"; break;
+            case Weather.CONDITION_SMOKE:
+                weatherKind = "fog"; weatherLabel = "SMOKE"; break;
+            case Weather.CONDITION_DUST:
+            case Weather.CONDITION_SAND:
+            case Weather.CONDITION_SANDSTORM:
+            case Weather.CONDITION_VOLCANIC_ASH:
+                weatherKind = "fog"; weatherLabel = "DUST / ASH"; break;
+            case Weather.CONDITION_UNKNOWN_PRECIPITATION:
+                weatherKind = "rain"; weatherLabel = "PRECIP"; break;
+            default:
+                // An unknown condition is never silently drawn as sunshine.
+                break;
+        }
+    }
+
+    private function buildSolarEvents(now as Time.Moment, nowSeconds as Lang.Number)
+            as Void {
+        _solarEvents = [];
+        _solarKinds = [];
+        if (_location == null || _locationAt == null ||
+                nowSeconds < _locationAt ||
+                nowSeconds - _locationAt >= WEATHER_EXPIRE_SECONDS) {
+            _location = null;
+            _locationAt = null;
+            return;
+        }
+        try {
+            // Noon anchors avoid a midnight/DST boundary when stepping a day.
+            // today() is local midnight; both arguments remain UTC Moments.
+            var today = Time.today().add(new Time.Duration(43200));
+            var tomorrow = today.add(new Time.Duration(86400));
+            addSolarEvent(Weather.getSunrise(_location, today), "SUNRISE");
+            addSolarEvent(Weather.getSunset(_location, today), "SUNSET");
+            addSolarEvent(Weather.getSunrise(_location, tomorrow), "SUNRISE");
+            addSolarEvent(Weather.getSunset(_location, tomorrow), "SUNSET");
+        } catch (e) {
+            // Missing permission or polar/no-event results must not crash time.
+            _solarEvents = [];
+            _solarKinds = [];
+        }
+    }
+
+    private function addSolarEvent(event as Time.Moment or Null, label as Lang.String)
+            as Void {
+        if (event != null) {
+            _solarEvents.add(event);
+            _solarKinds.add(label);
+        }
+    }
+
+    private function updateSolarDisplay(nowSeconds as Lang.Number) as Void {
+        solarLabel = "SUN";
+        solarTime = "--:--";
+        if (_locationAt == null || nowSeconds < _locationAt ||
+                nowSeconds - _locationAt >= WEATHER_EXPIRE_SECONDS) {
+            return;
+        }
+        var best as Time.Moment or Null = null;
+        for (var i = 0; i < _solarEvents.size(); i += 1) {
+            var candidate = _solarEvents[i] as Time.Moment;
+            if (candidate.value() > nowSeconds &&
+                    (best == null || candidate.value() < best.value())) {
+                best = candidate;
+                solarLabel = _solarKinds[i] as Lang.String;
+            }
+        }
+        if (best == null) { return; }
+        // Asterisk = weather-derived location is at least two hours old.
+        if (nowSeconds - _locationAt >= WEATHER_STALE_SECONDS) {
+            solarLabel += "*";
+        }
+        var info = Gregorian.info(best, Time.FORMAT_SHORT);
+        solarTime = formatTime(info.hour, info.min);
+        if (!is24Hour()) {
+            solarTime += info.hour < 12 ? "A" : "P";
+        }
+    }
+}

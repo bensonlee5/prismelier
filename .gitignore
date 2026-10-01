@@ -1,0 +1,19 @@
+# Never publish developer credentials, SDK binaries, or personal watch logs.
+*.der
+*.pem
+*.key
+.env*
+keys/
+.sdk/
+build/
+bin/
+*.prg
+*.iq
+*.debug.xml
+*.mir
+*.fit
+*.bak
+*.log
+__pycache__/
+.pytest_cache/
+.DS_Store

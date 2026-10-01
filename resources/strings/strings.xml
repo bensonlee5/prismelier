@@ -1,0 +1,13 @@
+<resources>
+  <string id="AppName">Prismelier</string>
+  <string id="ThemeLabel">Instrument palette</string>
+  <string id="PrismTheme">Reactor: lime, violet, cyan, copper</string>
+  <string id="OrchardTheme">Afterburn: ice, orange, lilac</string>
+  <string id="TimeLabel">Time format</string>
+  <string id="DeviceSetting">Follow watch</string>
+  <string id="Time12">12 hour</string>
+  <string id="Time24">24 hour</string>
+  <string id="TemperatureLabel">Temperature units</string>
+  <string id="Celsius">Celsius</string>
+  <string id="Fahrenheit">Fahrenheit</string>
+</resources>

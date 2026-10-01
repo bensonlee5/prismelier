@@ -1,0 +1,484 @@
+"""Asset/source-contract QA, not a Monkey C runtime or Garmin simulator.
+
+Run: python -m unittest discover -s tests -v
+Optional: CONNECTIQ_SDK=/path/to/official/sdk enables API-symbol and parser checks.
+Pillow enables exhaustive font-asset AOD checks; no SDK or Pillow is required
+for the structural tests. Nothing is downloaded or installed by these tests.
+"""
+from pathlib import Path
+import html
+import hashlib
+import math
+import os
+import re
+import shlex
+import shutil
+import struct
+import subprocess
+import tempfile
+import unittest
+import xml.etree.ElementTree as ET
+
+try:
+    from PIL import Image, ImageChops, ImageFilter
+except ImportError:
+    Image = ImageChops = ImageFilter = None
+
+ROOT = Path(__file__).resolve().parents[1]
+NS = {"iq": "http://www.garmin.com/xml/connectiq"}
+SOURCE = ROOT / "source"
+SDK_VALUE = (os.environ.get("CONNECTIQ_SDK") or os.environ.get("CIQ_SDK") or
+             os.environ.get("CIQ_HOME"))
+SDK = Path(SDK_VALUE).expanduser() if SDK_VALUE else None
+
+
+def source_text(name):
+    return (SOURCE / name).read_text(encoding="utf-8")
+
+def without_comments(text):
+    return re.sub(r"//[^\n]*|/\*.*?\*/", "", text, flags=re.S)
+
+def font_metadata(name):
+    path = ROOT / "resources" / "fonts" / (name + ".fnt")
+    result = {"glyphs": {}, "pages": {}, "path": path}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        tokens = shlex.split(line)
+        if not tokens:
+            continue
+        values = dict(token.split("=", 1) for token in tokens[1:])
+        if tokens[0] == "char":
+            values = {key: int(value) for key, value in values.items()}
+            result["glyphs"][values["id"]] = values
+        elif tokens[0] == "page":
+            result["pages"][int(values["id"])] = path.parent / values["file"]
+        elif tokens[0] in ("common", "chars"):
+            result[tokens[0]] = {key: int(value) for key, value in values.items()}
+    return result
+
+def png_header(path):
+    with path.open("rb") as handle:
+        header = handle.read(33)
+    if header[:8] != b"\x89PNG\r\n\x1a\n" or header[12:16] != b"IHDR":
+        raise AssertionError("Not a PNG with an IHDR header: " + str(path))
+    return struct.unpack(">IIBBBBB", header[16:29])
+
+def clock_text(minute, use_24_hour):
+    """Independent test input generation, not execution of formatTime()."""
+    hour, minute = divmod(minute, 60)
+    return (f"{hour:02d}:{minute:02d}" if use_24_hour else
+            f"{hour % 12 or 12}:{minute:02d}")
+
+
+def argument_count(text, opening):
+    """Count top-level arguments from an observed '('; honor strings/brackets."""
+    stack = [")"]
+    pairs = {"(": ")", "[": "]", "{": "}"}
+    quote = None
+    escaped = False
+    count = 0
+    content = False
+    for char in text[opening + 1:]:
+        if quote:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+            continue
+        if char in ('"', "'"):
+            quote = char
+            content = True
+        elif char in pairs:
+            stack.append(pairs[char])
+            content = True
+        elif char == stack[-1]:
+            stack.pop()
+            if not stack:
+                return count + int(content)
+        elif char == "," and len(stack) == 1:
+            count += 1
+        elif not char.isspace():
+            content = True
+    raise AssertionError("Unclosed argument list")
+
+
+class ProjectStructureTests(unittest.TestCase):
+    def test_manifest_target_and_minimum_api(self):
+        manifest = ET.parse(ROOT / "manifest.xml").getroot()
+        app = manifest.find("iq:application", NS)
+        self.assertIsNotNone(app)
+        self.assertEqual(app.attrib["type"], "watchface")
+        self.assertEqual(app.attrib["entry"], "PrismelierApp")
+        self.assertEqual(app.attrib["minApiLevel"], "4.2.0")
+        self.assertEqual([p.attrib["id"] for p in app.findall("iq:products/iq:product", NS)],
+                         ["fr265"])
+        self.assertRegex(app.attrib["id"], r"^[0-9a-f]{32}$")
+
+    def test_permissions_and_no_active_sensor_or_network_calls(self):
+        manifest = ET.parse(ROOT / "manifest.xml").getroot()
+        permissions = {p.attrib["id"] for p in manifest.findall(".//iq:uses-permission", NS)}
+        self.assertEqual(permissions, {"SensorHistory", "Positioning"})
+        code = without_comments("\n".join(p.read_text() for p in SOURCE.glob("*.mc")))
+        for forbidden in ("Toybox.Communications", "makeWebRequest", "makeImageRequest",
+                          "enableLocationEvents", "enableSensorEvents", "registerSensorDataListener"):
+            self.assertNotIn(forbidden, code)
+        self.assertNotRegex(code, r"using\s+Toybox\.Sensor\s*;")
+
+    def test_resource_files_and_references(self):
+        ids = {"Strings": set(), "Properties": set(), "Fonts": set(), "Drawables": set()}
+        category = {"string": "Strings", "property": "Properties", "font": "Fonts", "bitmap": "Drawables"}
+        xml_paths = sorted((ROOT / "resources").rglob("*.xml"))
+        self.assertTrue(xml_paths)
+        for path in xml_paths:
+            for element in ET.parse(path).getroot().iter():
+                if element.tag in category:
+                    group = ids[category[element.tag]]
+                    self.assertNotIn(element.attrib["id"], group)
+                    group.add(element.attrib["id"])
+                if "filename" in element.attrib:
+                    target = (path.parent / element.attrib["filename"]).resolve()
+                    self.assertTrue(target.is_relative_to(ROOT.resolve()))
+                    self.assertTrue(target.is_file(), str(target))
+        text = "\n".join(p.read_text() for p in xml_paths + [ROOT / "manifest.xml"])
+        for group, name in re.findall(r"@(Strings|Properties|Fonts|Drawables)\.([A-Za-z0-9_]+)", text):
+            self.assertIn(name, ids[group], group + "." + name)
+        code = "\n".join(p.read_text() for p in SOURCE.glob("*.mc"))
+        for group, name in re.findall(r"Rez\.(Strings|Properties|Fonts|Drawables)\.([A-Za-z0-9_]+)", code):
+            self.assertIn(name, ids[group], group + "." + name)
+
+    def test_settings_contract(self):
+        properties = ET.parse(ROOT / "resources/settings/properties.xml").getroot()
+        values = {p.attrib["id"]: p.text for p in properties}
+        self.assertEqual(values, {"Palette": "0", "TimeFormat": "0", "TemperatureUnits": "2"})
+        settings = ET.parse(ROOT / "resources/settings/settings.xml").getroot()
+        expected = {"Palette": {"0", "1"}, "TimeFormat": {"0", "1", "2"},
+                    "TemperatureUnits": {"0", "1", "2"}}
+        for setting in settings:
+            key = setting.attrib["propertyKey"].split(".")[-1]
+            self.assertEqual({entry.attrib["value"] for entry in setting.findall(".//listEntry")}, expected.pop(key))
+        self.assertFalse(expected)
+
+    def test_font_pages_geometry_and_rgb_storage(self):
+        fonts = ET.parse(ROOT / "resources/fonts/fonts.xml").getroot()
+        for font in fonts:
+            with self.subTest(font=font.attrib["id"]):
+                self.assertEqual(font.attrib.get("antialias"), "true")
+                data = font_metadata(font.attrib["id"])
+                self.assertEqual(len(data["glyphs"]), data["chars"]["count"])
+                self.assertEqual(data["common"]["pages"], len(data["pages"]))
+                for page in data["pages"].values():
+                    width, height, depth, color_type, compression, filtering, interlace = png_header(page)
+                    self.assertEqual((width, height), (data["common"]["scaleW"], data["common"]["scaleH"]))
+                    self.assertEqual((depth, color_type), (8, 2), "Font atlases must be RGB intensity PNGs, without alpha")
+                for glyph in data["glyphs"].values():
+                    self.assertIn(glyph["page"], data["pages"])
+                    self.assertGreater(glyph["xadvance"], 0)
+                    self.assertGreater(glyph["width"], 0)
+                    self.assertGreater(glyph["height"], 0)
+                    self.assertGreaterEqual(glyph["x"], 0)
+                    self.assertGreaterEqual(glyph["y"], 0)
+                    self.assertLessEqual(glyph["x"] + glyph["width"], data["common"]["scaleW"])
+                    self.assertLessEqual(glyph["y"] + glyph["height"], data["common"]["scaleH"])
+
+    def test_font_glyph_coverage_including_stale_marker(self):
+        requirements = {
+            "Time": "0123456789:", "Ambient": "0123456789:",
+            "Value": "0123456789-,.%°CF", "Small": "0123456789-:°CFAP%,",
+            "Label": " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-:.,%°/*",
+        }
+        # Cover every uppercase display literal in the data and view sources.
+        display_literals = re.findall(r'"([A-Z0-9 *:/.,%-]+)"',
+            source_text("PrismelierData.mc") + source_text("PrismelierView.mc"))
+        requirements["Label"] += "".join(display_literals)
+        for name, characters in requirements.items():
+            glyphs = font_metadata(name)["glyphs"]
+            missing = sorted(set(characters) - {chr(code) for code in glyphs})
+            self.assertEqual(missing, [], name + " missing glyphs")
+
+
+class DataSourceContractTests(unittest.TestCase):
+    """Intentional static guards; they do not execute Monkey C API behavior."""
+    def setUp(self):
+        self.code = without_comments(source_text("PrismelierData.mc"))
+
+    def test_freshness_thresholds_and_timestamped_heart_rate(self):
+        for name, value in (("WEATHER_STALE_SECONDS", 7200),
+                            ("WEATHER_EXPIRE_SECONDS", 86400),
+                            ("HEART_RATE_MAX_AGE_SECONDS", 120)):
+            self.assertRegex(self.code, rf"const\s+{name}\s*=\s*{value}\s*;")
+        self.assertIn("SensorHistory.getHeartRateHistory", self.code)
+        self.assertIn("new Time.Duration(HEART_RATE_MAX_AGE_SECONDS)", self.code)
+        self.assertIn("SensorHistory.ORDER_NEWEST_FIRST", self.code)
+        self.assertIn("sample.when.value()", self.code)
+        self.assertIn("sample.data != ActivityMonitor.INVALID_HR_SAMPLE", self.code)
+        self.assertNotIn("currentHeartRate", self.code)
+        self.assertIn('weatherLabel = "AGE UNKNOWN"', self.code)
+        self.assertIn('weatherLabel = "WX EXPIRED"', self.code)
+        self.assertIn('weatherLabel = "CHECK TIME"', self.code)
+        self.assertLess(self.code.index("seconds - _heartRateAt > HEART_RATE_MAX_AGE_SECONDS"),
+                        self.code.index("if (force || minute != _lastRefreshMinute)"))
+
+    def test_time_and_units_follow_explicit_or_device_settings(self):
+        for fragment in ('_timeFormat == 1', '_timeFormat == 2',
+                         'System.getDeviceSettings().is24Hour',
+                         '_temperatureUnits == 1', '_temperatureUnits == 2',
+                         'System.getDeviceSettings().temperatureUnits == System.UNIT_STATUTE',
+                         'hour % 12', 'if (h == 0) { h = 12; }'):
+            self.assertIn(fragment, self.code)
+        self.assertIn('hour.format("%02d")', self.code)
+        self.assertIn('minute.format("%02d")', self.code)
+
+    def test_solar_location_timezone_selection_and_expiry_contract(self):
+        self.assertIn("wx.observationLocationPosition", self.code)
+        self.assertNotIn("new Position.Location", self.code)
+        self.assertIn("Time.today().add(new Time.Duration(43200))", self.code)
+        self.assertIn("today.add(new Time.Duration(86400))", self.code)
+        for event in ("Sunrise", "Sunset"):
+            for day in ("today", "tomorrow"):
+                self.assertIn(f"Weather.get{event}(_location, {day})", self.code)
+        self.assertIn("candidate.value() > nowSeconds", self.code)
+        self.assertIn("candidate.value() < best.value()", self.code)
+        self.assertIn("Gregorian.info(best, Time.FORMAT_SHORT)", self.code)
+        self.assertNotIn("Gregorian.utcInfo", self.code)
+        self.assertNotIn("timeZoneOffset", self.code)
+        self.assertIn("nowSeconds - _locationAt >= WEATHER_EXPIRE_SECONDS", self.code)
+        self.assertIn('solarLabel += "*"', self.code)
+        self.assertIn('solarTime = "--:--"', self.code)
+
+    def test_sleep_branch_is_sparse_and_time_only(self):
+        view = without_comments(source_text("PrismelierView.mc"))
+        branch = view.split("if (sleeping) {", 1)[1].split("data.refresh(false);", 1)[0]
+        self.assertEqual(len(re.findall(r"\btext\(", branch)), 1)
+        self.assertIn("ambientFont, time", branch)
+        self.assertIn("return;", branch)
+        self.assertNotIn("data.refresh(", branch)
+        self.assertNotRegex(branch, r"\bdraw[A-Z]")
+        self.assertNotIn("Timer", view)
+        before_branch = view.split("if (sleeping)", 1)[0]
+        self.assertIn("dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK)", before_branch)
+        self.assertIn("dc.clear()", before_branch)
+        # Background craftsmanship is awake-only. Guard its call site as well
+        # as the sparse sleep body so later refactors cannot light it in AOD.
+        update = view.split("function onUpdate(dc) {", 1)[1].split("\n    function ", 1)[0]
+        self.assertEqual(update.count("drawArchitecture(dc);"), 1)
+        self.assertNotIn("drawArchitecture(", before_branch)
+        self.assertLess(update.index("return;"), update.index("data.refresh(false);"))
+        self.assertLess(update.index("data.refresh(false);"), update.index("drawArchitecture(dc);"))
+        self.assertEqual(view.count("drawArchitecture(dc);"), 1)
+
+
+@unittest.skipUnless(Image is not None, "Pillow not installed; optional font-asset raster checks skipped")
+class AmbientAssetTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        view = source_text("PrismelierView.mc")
+        cls.base_y, cls.step = map(int, re.search(r"var y = (\d+) \+ slot \* (\d+)", view).groups())
+        cls.slots = int(re.search(r"var slot = .*? % (\d+);", view).group(1))
+        cls.font = font_metadata("Ambient")
+        with Image.open(cls.font["pages"][0]) as atlas:
+            cls.atlas = atlas.convert("L")
+        cls.width = cls.height = 416
+        cls.circle_pixels = sum((x + .5 - 208) ** 2 + (y + .5 - 208) ** 2 <= 208 ** 2
+                                for y in range(416) for x in range(416))
+
+    def mask_for_text(self, text):
+        # Use committed BMFont metrics and atlas, not a host system font.
+        glyphs = self.font["glyphs"]
+        width = sum(glyphs[ord(char)]["xadvance"] for char in text)
+        local_height = self.font["common"]["lineHeight"] + 4
+        result = Image.new("L", (416, local_height))
+        # Union floor/ceil centering, then a 1px halo, conservatively covers
+        # raster alignment uncertainty. This still is not Garmin rendering.
+        for rounding in (math.floor, math.ceil):
+            canvas = Image.new("L", result.size)
+            x = (416 - width) / 2
+            for char in text:
+                glyph = glyphs[ord(char)]
+                box = (glyph["x"], glyph["y"], glyph["x"] + glyph["width"],
+                       glyph["y"] + glyph["height"])
+                mask = self.atlas.crop(box)
+                canvas.paste(mask, (rounding(x + glyph["xoffset"]), 2 + glyph["yoffset"]))
+                x += glyph["xadvance"]
+            result = ImageChops.lighter(result, canvas)
+        return result.point([0] + [255] * 255).filter(ImageFilter.MaxFilter(3))
+
+    def test_atlas_has_antialias_intensities(self):
+        self.assertGreater(sum(self.atlas.histogram()[1:255]), 0)
+        self.assertGreater(self.atlas.histogram()[255], 0)
+
+    def test_every_minute_both_formats_under_ten_percent_and_disjoint_bands(self):
+        union = Image.new("L", (416, self.font["common"]["lineHeight"] + 4))
+        peak = 0
+        peak_time = ""
+        for mode in (True, False):
+            for minute in range(1440):
+                text = clock_text(minute, mode)
+                mask = self.mask_for_text(text)
+                lit = sum(mask.histogram()[1:])
+                if lit > peak:
+                    peak, peak_time = lit, text
+                self.assertLess(lit / self.circle_pixels, .10, (text, mode, lit))
+                union = ImageChops.lighter(union, mask)
+        # Union of ALL times in each band is stronger than checking only
+        # consecutive triplets: no displayed minute can overlap any other band.
+        bands = []
+        for slot in range(self.slots):
+            canvas = Image.new("L", (416, 416))
+            top = self.base_y + slot * self.step - 2
+            canvas.paste(union, (0, top))
+            self.assertEqual(sum(canvas.histogram()[1:]), sum(union.histogram()[1:]),
+                             "Ambient pixels clipped at a screen edge")
+            bounds = canvas.getbbox()
+            for x in (bounds[0], bounds[2] - 1):
+                for y in (bounds[1], bounds[3] - 1):
+                    self.assertLessEqual((x + .5 - 208) ** 2 + (y + .5 - 208) ** 2, 208 ** 2)
+            bands.append(canvas)
+        self.assertEqual(self.slots, 3)
+        for i in range(len(bands)):
+            for j in range(i + 1, len(bands)):
+                self.assertIsNone(ImageChops.multiply(bands[i], bands[j]).getbbox(), (i, j))
+        print(f"\nAOD asset estimate: 2,880 clock strings x 3 bands; peak {peak} lit pixels "
+              f"({peak / self.circle_pixels:.3%} of {self.circle_pixels} circular pixels), "
+              f"at {peak_time}; includes 1px halo; no firmware claim")
+
+
+@unittest.skipUnless(SDK is not None, "Set CONNECTIQ_SDK, CIQ_SDK, or CIQ_HOME for optional official SDK checks")
+class OfficialSdkChecks(unittest.TestCase):
+    def test_all_api_method_references_and_argument_counts(self):
+        # This is a name/arity audit, not type inference or device compilation.
+        # Fail closed on unfamiliar receivers so additions need explicit review.
+        receivers = {
+            "dc": ["Graphics.Dc"], "AppBase": ["Application.AppBase"],
+            "WatchFace": ["WatchUi.WatchFace"],
+            "_solarEvents": ["Lang.Array"], "_solarKinds": ["Lang.Array"],
+            "points": ["Lang.Array"],
+            "history": ["SensorHistory.SensorHistoryIterator"],
+            "best": ["Time.Moment"], "candidate": ["Time.Moment"],
+            "now": ["Time.Moment"], "today": ["Time.Moment"],
+            "sample.when": ["Time.Moment"], "wx.observationTime": ["Time.Moment"],
+            "data.solarLabel": ["Lang.String"],
+            "data.battery": ["Lang.Number"], "data.heartRate": ["Lang.Number"],
+            "h": ["Lang.Number"], "hour": ["Lang.Number"], "minute": ["Lang.Number"],
+            "n": ["Lang.Number"], "info.day": ["Lang.Number"],
+            "value": ["Lang.Number", "Lang.Float"],
+            "sample.data": ["Lang.Number", "Lang.Float"],
+        }
+        numeric = ["Lang.Number", "Lang.Float", "Lang.Long", "Lang.Double"]
+        chains = {"toNumber": numeric, "toFloat": numeric, "format": numeric,
+                  "add": ["Time.Moment"], "value": ["Time.Moment"]}
+        local_classes = {"data": "PrismelierData.mc", "view": "PrismelierView.mc"}
+        cache = {}
+        checked = set()
+        constants_checked = set()
+
+        def assert_documented(owner, method, argc):
+            if (owner, method) == ("Application.AppBase", "initialize"):
+                # This constructor has no method anchor in API docs, but the
+                # official SDK Analog watch-face sample invokes it verbatim.
+                sample = SDK / "samples/Analog/source/AnalogApp.mc"
+                self.assertTrue(sample.is_file(), str(sample))
+                self.assertIn("AppBase.initialize();", sample.read_text(encoding="utf-8"))
+                self.assertEqual(argc, 0)
+                checked.add((owner, method))
+                return
+            if owner not in cache:
+                path = SDK / "doc/Toybox" / (owner.replace(".", "/") + ".html")
+                self.assertTrue(path.is_file(), str(path))
+                cache[owner] = path.read_text(encoding="utf-8")
+            document = cache[owner]
+            anchor = method + "-instance_function"
+            match = re.search(r'<h3\b[^>]*\bid="' + re.escape(anchor) + r'"[^>]*>(.*?)</h3>',
+                              document, re.S)
+            self.assertIsNotNone(match, f"Undocumented SDK method {owner}.{method}")
+            signature = html.unescape(re.sub(r"<[^>]+>", "", match.group(1)))
+            # Generic argument types may themselves contain comma-separated
+            # tuples. Erase balanced <...> before counting signature parameters.
+            while re.search(r"<[^<>]*>", signature):
+                signature = re.sub(r"<[^<>]*>", "TYPE", signature)
+            expected = argument_count(signature, signature.index("("))
+            self.assertEqual(argc, expected, f"Argument count for {owner}.{method}: {signature.strip()}")
+            checked.add((owner, method))
+
+        for path in sorted(SOURCE.glob("*.mc")):
+            code = without_comments(path.read_text(encoding="utf-8"))
+            imports = {}
+            for full, alias in re.findall(r"using\s+Toybox\.([\w.]+)(?:\s+as\s+(\w+))?\s*;", code):
+                imports[alias or full.split(".")[-1]] = full
+            for module, constant in re.findall(r"\b([A-Z][A-Za-z]+)\.([A-Z][A-Z0-9_]+)\b", code):
+                if module not in imports:
+                    continue
+                owner = imports[module]
+                document_path = SDK / "doc/Toybox" / (owner.replace(".", "/") + ".html")
+                self.assertTrue(document_path.is_file(), str(document_path))
+                document = document_path.read_text(encoding="utf-8")
+                self.assertIn('id="' + constant + '-const"', document,
+                              f"Undocumented SDK constant {owner}.{constant}")
+                constants_checked.add((owner, constant))
+            for match in re.finditer(r"\b([A-Za-z_]\w*(?:\.\w+)*)\.([A-Za-z_]\w*)\s*\(", code):
+                receiver, method = match.groups()
+                argc = argument_count(code, match.end() - 1)
+                if receiver in local_classes:
+                    local = source_text(local_classes[receiver])
+                    definition = re.search(r"\bfunction\s+" + re.escape(method) + r"\s*\(", local)
+                    self.assertIsNotNone(definition, receiver + "." + method)
+                    self.assertEqual(argc, argument_count(local, definition.end() - 1))
+                    continue
+                root, *suffix = receiver.split(".")
+                if root in imports:
+                    owner = ".".join([imports[root]] + suffix)
+                    if method[0].isupper():
+                        # new Time.Duration(...) resolves to Duration.initialize.
+                        owner += "." + method
+                        method = "initialize"
+                    owners = [owner]
+                else:
+                    self.assertIn(receiver, receivers, "Unreviewed API receiver: " + receiver)
+                    owners = receivers[receiver]
+                for owner in owners:
+                    assert_documented(owner, method, argc)
+            for match in re.finditer(r"\)\.([A-Za-z_]\w*)\s*\(", code):
+                method = match.group(1)
+                self.assertIn(method, chains, "Unreviewed chained API method: " + method)
+                argc = argument_count(code, match.end() - 1)
+                for owner in chains[method]:
+                    assert_documented(owner, method, argc)
+        self.assertIn(("Lang.String", "find"), checked)
+        self.assertNotIn(("Math", "min"), checked)
+        self.assertNotIn(("Math", "max"), checked)
+        print(f"\nOfficial SDK method audit: {len(checked)} owner/method pairs verified; "
+              f"{len(constants_checked)} module constants verified; method IDs/arity checked, "
+              "AppBase constructor backed by official sample")
+
+    def test_weather_constants_exist_in_official_sdk_docs(self):
+        path = SDK / "doc/Toybox/Weather.html"
+        self.assertTrue(path.is_file(), str(path))
+        documented = set(re.findall(r"CONDITION_[A-Z_]+", path.read_text(encoding="utf-8")))
+        referenced = set(re.findall(r"Weather\.(CONDITION_[A-Z_]+)", source_text("PrismelierData.mc")))
+        self.assertTrue(referenced)
+        self.assertEqual(referenced - documented, set())
+
+    def test_official_monkeydoc_parser_no_diagnostics(self):
+        if shutil.which("java") is None:
+            self.skipTest("Java not installed; official parser check skipped")
+        parser = SDK / "bin/monkeydoc"
+        api = SDK / "bin/api.mir"
+        self.assertTrue(parser.is_file(), str(parser))
+        self.assertTrue(api.is_file(), str(api))
+        files = sorted(SOURCE.glob("*.mc"))
+        before = {p: hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
+        with tempfile.TemporaryDirectory(prefix="prismelier-parser-") as temp:
+            result = subprocess.run([str(parser), "-f", str(api), "-o", temp, *map(str, files)],
+                                    text=True, capture_output=True, timeout=60)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            # monkeydoc can print parser errors while returning zero.
+            self.assertEqual((result.stdout + result.stderr).strip(), "",
+                             "Unexpected parser diagnostics; inspect, do not trust exit code alone")
+            for name in ("PrismelierApp", "PrismelierView", "PrismelierData"):
+                self.assertTrue((Path(temp) / "Global" / (name + ".html")).is_file())
+        self.assertEqual(before, {p: hashlib.sha256(p.read_bytes()).hexdigest() for p in files},
+                         "Source changed during parser verification; rerun against final sources")
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

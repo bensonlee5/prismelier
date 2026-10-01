@@ -1,2 +1,82 @@
-# prismelier
-A vivid futuristic-steampunk digital watch face for Garmin Forerunner 265, with a Fahrenheit temperature bar and grouped weather instruments.
+# Prismelier
+
+**Impossible materials. An everyday time machine.**
+
+A bespoke, futuristic-steampunk digital watch face for the **Garmin Forerunner 265**. Acid-green numerals float above a liquid-violet Fahrenheit bar. Violet timber, ribbed copper, petrol enamel and an asymmetric porcelain solar insert turn the weather panel into an impossible little machine. The face contains no branding, date, word labels or outer clock indices.
+
+![Prismelier design render, with illustrative values](docs/preview.png)
+
+> **Source implementation, not yet an installable release.** The design images are generated layout previews with fictional data, not Garmin simulator or hardware screenshots. The official Garmin 9.2.0 parser accepts the source. A real FR265 compile is still blocked by missing official device profiles in the build environment; simulator and physical-watch testing have not run. No `.prg` is supplied or claimed to work. See [QA status](docs/QA.md).
+
+## On the face
+
+- **Digital time**, following the watch's 12/24-hour preference by default
+- **Linear Fahrenheit temperature bar** with a precise numeric reading
+- **Weather icons**, beside the temperature and the next sun event, with clear stale/missing states
+- **Battery percentage** and an icon
+- **Next sunrise or sunset**, automatically switching to the next event, with distinct rising/sinking sun and up/down-arrow icons
+- **Recent heart rate** in BPM and the exact daily step count
+- Exposed gearwork, copper fasteners, a luminous piston, inlaid circuits, chamfered ceramic panels, microbridges, junction vias and contrasting material edges
+- Sparse, dim, moving digital-time-only **always-on display**
+
+No clock hands or analog perimeter. The temperature is a **bar**, not a round dial. On-face text is limited to essential numbers, units and AM/PM when needed.
+
+**Device:** 416 × 416 AMOLED Forerunner 265 (`fr265`). The smaller 265S and other models are intentionally not declared compatible.
+
+## Load it onto your watch
+
+Start with the [step-by-step build and USB installation guide](docs/INSTALL.md). The short version:
+
+1. Install Garmin's official Connect IQ SDK Manager and Monkey C extension; use SDK Manager to install the SDK **and the Forerunner 265 device profile**
+2. Open this folder in VS Code and use **Monkey C: Build for Device → Forerunner 265**
+3. Copy the resulting `.prg` to the watch's `GARMIN/APPS` folder over a data-capable USB cable
+4. Disconnect safely, then hold **UP → Watch Face**, select **Prismelier**, and apply
+
+An iPhone can keep Garmin weather in sync, but the Connect IQ phone app does not import this raw development `.prg`. The initial sideload needs a computer. There is no Garmin Store listing.
+
+## Data honesty
+
+The face does not contain demo readings. Preview values exist only in `tools/render_preview.py`.
+
+| Complication | Source and limits |
+|---|---|
+| Temperature/weather | `Weather.getCurrentConditions()`, which reads Garmin's existing cache; it cannot force a new observation |
+| Weather older than 2h | Reading retained; bar muted, weather icon copper and crossed out, crossed-ring warning beside temperature |
+| Weather 24h old, timestamp missing, or future timestamp | Empty bar, `--°F`, crossed-out weather icon; no invented reading |
+| Heart rate | Most recent valid `SensorHistory` measurement, no older than 120 seconds; a recent reading, not a continuously activated sensor |
+| Steps | Watch's daily activity-monitor count; missing data is `--`, while a genuine zero remains `0` |
+| Battery | Watch's percentage, truncated to its integer portion |
+| Solar event | Garmin's sunrise/sunset calculation at the weather observation location, in the watch's local time; location may differ from your present position |
+
+A small copper ring at the solar insert's lower right means the weather-derived location is at least two hours old. Solar location expires after 24h. When there is no location or no event available in today's/tomorrow's window (including polar conditions), the insert shows a muted horizon icon and `--:--`. An upward arrow and lifted sun means sunrise; a downward arrow and sinking sun means sunset. These age thresholds are this project's policy, not a Garmin update guarantee.
+
+In 12-hour mode, the time has **AM/PM** and a solar time uses **A/P** (for example, `6:42P`). The Fahrenheit bar spans 0–120°F (the optional Celsius setting uses −20–40°C). Its piston clamps at the endpoints; the number still shows the actual reported temperature outside that range.
+
+## Preferences
+
+Temperature defaults explicitly to **Fahrenheit**, regardless of the watch's unit setting. Time format follows the watch. Project properties also support optional Celsius/device units, explicit 12/24-hour format and an alternate palette. [Settings instructions](docs/INSTALL.md#preferences) include the reliable source/simulator path for sideloaded builds. Phone settings for unpublished sideloaded apps are not guaranteed.
+
+## Privacy and power
+
+- No API key, account, subscription, backend, advertisements or network permission
+- No GPS activation, external health-data transmission or persistent location storage
+- `SensorHistory` reads recent HR; `Positioning` permits access to the existing weather observation position
+- Data cached in RAM, expensive reads once per minute; no timers or seconds animation
+- Full color on wake, dim digital time in three separate positions while asleep
+- This is a personal glance display, not a medical instrument or a source for safety-critical weather/navigation
+
+## Development
+
+```sh
+python -m unittest discover -s tests -v
+python tools/build.py --sdk /path/to/connectiq-sdk --key /private/path/developer.der --release
+```
+
+Committed BMFont atlases make builds independent of system fonts or Python. Optional preview/font regeneration uses Python + Pillow and locally installed DejaVu fonts:
+
+```sh
+python tools/generate_fonts.py --font-dir /usr/share/fonts/truetype/dejavu
+python tools/render_preview.py
+```
+
+Several actual-size visual refinements and an independent design critique informed the material treatment, sunrise/set iconography and worst-case spacing. See [QA](docs/QA.md) for what has actually been tested and the outstanding device checks. Font licensing is included in `resources/fonts/LICENSE-DejaVu.txt`. Original UI artwork consists of code-drawn primitives; no watch-brand artwork or logos are included. Garmin, Forerunner and Connect IQ are trademarks of Garmin; this is an independent project, not endorsed by Garmin.
