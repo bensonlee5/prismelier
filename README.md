@@ -1,111 +1,73 @@
 # Prismelier
 
-**Impossible materials. An everyday time machine.**
+A futuristic-steampunk digital watch face for the **Garmin Forerunner 265**. The default **Foundry** theme combines ebony-inspired wood grain, patinated copper, raised material relief and intricate robotics details.
 
-A bespoke, futuristic-steampunk digital watch face for the **Garmin Forerunner 265**. The default **Foundry** theme pairs warm ivory numerals with a circular speedometer-style Fahrenheit gauge and **hyperreal material textures from a real 416px bitmap resource**. Raised polished ebony-inspired wood with clear directional grain, gleaming patinated copper, petrol enamel and an asymmetric ceramic solar insert sit on a meticulously routed robotics backplane: pin headers, copper flex traces, actuator housings and a miniature processor package. A Sunday-first weekday rim highlights the current day, and a month/day window shows dates such as **Oct 24**. Main time stays digital; the needle belongs only to temperature.
+![Prismelier Foundry design render](docs/preview.png)
 
-![Prismelier design render, with illustrative values](docs/preview.png)
+*Source-backed design render with illustrative readings, not a Garmin simulator or watch screenshot.*
 
-> **Source implementation, not yet an installable release.** The design images are generated layout previews with fictional data, not Garmin simulator or hardware screenshots. The official Garmin 9.2.0 parser accepts the source. A real FR265 compile is still blocked by missing official device profiles in the build environment; simulator and physical-watch testing have not run. No `.prg` is supplied or claimed to work. See [QA status](docs/QA.md).
+> **Source-only project.** No installable `.prg` is available. A real FR265 build is blocked by the missing official device profile in the current build environment. Simulator and hardware testing remain outstanding. See [validation status](docs/QA.md).
 
-## On the face
+## Features
 
-- **Digital time**, following the watch's 12/24-hour preference by default
-- **Circular Fahrenheit temperature gauge** with a graduated 270° band, temperature needle and labeled scale; temperature is shown by the dial only
-- **S M T W T F S** around the upper exterior rim, highlighting the current weekday
-- **Month and day**, such as **Oct 24**, in the watch’s local time
-- **Weather icons**, beside the temperature and the next sun event, with clear stale/missing states
-- **Device battery percentage** and a battery icon
-- **Body Battery score** (0–100) beside a distinct person/energy-bolt icon
-- **Next sunrise or sunset**, automatically switching to the next event, with distinct rising/sinking sun and up/down-arrow icons
-- **Recent heart rate** in BPM and the exact daily step count
-- Raised lacquered ebony-inspired wood, machined copper/brass, deep patina and recessed ceramic wells; consistent highlights/contact shadows create convincing static 3D relief
-- Textured circuit-board surfaces, exposed gearwork, fasteners, inlaid traces and actuator housings
-- Consistent thin-line weather, sunrise/sunset and metric pictograms drawn live over the texture
-- Sparse, dim, moving digital-time-only **always-on display**
+- Prominent **digital time**, following the watch’s 12/24-hour preference
+- **Temperature dial** with a 270° band, needle and labeled 0–120°F scale; no separate numeric temperature reading
+- **Weekday rim** (`S M T W T F S`) with the current day highlighted, plus a local month/day display such as `Oct 24`
+- Monoline **weather icons** and the next **sunrise or sunset time**, with distinct event icons
+- **Device battery percentage** at top left and a separate **Body Battery score** at top right
+- Recent **heart rate** and daily **steps**
+- Sparse, dim, repositioning digital-time-only **always-on display**
 
-Digital time has no clock hands. The circular instrument and its needle show temperature. On-face text is limited to readings, units, requested calendar information and AM/PM when needed.
+The target is the **416 × 416 AMOLED Forerunner 265** (`fr265`). Compatibility with the 265S or other watches is not declared.
 
-**Device:** 416 × 416 AMOLED Forerunner 265 (`fr265`). The smaller 265S and other models are intentionally not declared compatible.
+## Build and install
 
-## Load it onto your watch
+Follow the [build and USB installation guide](docs/INSTALL.md) for Linux, Windows or macOS:
 
-Start with the [step-by-step build and USB installation guide](docs/INSTALL.md). The short version:
+1. Install Garmin’s official Connect IQ SDK, the **Forerunner 265 device profile** and the Monkey C tools
+2. Configure a private signing key, build for `fr265`, and validate in Garmin’s simulator
+3. Copy the resulting `.prg` to `GARMIN/APPS` over USB, disconnect safely and select Prismelier on the watch
 
-1. Install Garmin's official Connect IQ SDK Manager and Monkey C extension; use SDK Manager to install the SDK **and the Forerunner 265 device profile**
-2. Open this folder in VS Code and use **Monkey C: Build for Device → Forerunner 265**
-3. Copy the resulting `.prg` to the watch's `GARMIN/APPS` folder over a data-capable USB cable
-4. Disconnect safely, then hold **UP → Watch Face**, select **Prismelier**, and apply
+Sideloading requires a computer. The iPhone Connect IQ app cannot import a raw development `.prg`, and there is no Garmin Store listing. Keep signing keys outside the repository.
 
-An iPhone can keep Garmin weather in sync, but the Connect IQ phone app does not import this raw development `.prg`. The initial sideload needs a computer. There is no Garmin Store listing.
+### GitHub Actions
 
-## Data honesty
+[Compile Forerunner 265](https://github.com/bensonlee5/prismelier/actions/workflows/compile.yml) is a **manually triggered, owner-only** workflow for trusted `main`. It requires a dedicated Linux x64 runner with the official SDK, FR265 profile and local signing key already provisioned. It uploads a PRG and checksums only after a successful compile.
 
-The face does not contain demo readings. Preview values exist only in `tools/render_preview.py`.
+**Runner setup is still required; no successful CI build has been verified.** Read the [CI setup and security guide](docs/CI.md) before registering a runner for this public repository. The workflow does not automatically run pull requests.
 
-| Complication | Source and limits |
-|---|---|
-| Temperature/weather | `Weather.getCurrentConditions()`, which reads Garmin's existing cache; it cannot force a new observation |
-| Weather older than 2h | Reading retained; gauge muted, weather icon copper and crossed out, crossed-ring warning beside temperature |
-| Weather 24h old, timestamp missing, or future timestamp | Empty band, no needle, crossed-out weather icon; no invented reading |
-| Heart rate | Most recent valid `SensorHistory` measurement, no older than 120 seconds; a recent reading, not a continuously activated sensor |
-| Steps | Watch's daily activity-monitor count; missing data is `--`, while a genuine zero remains `0` |
-| Device battery | Watch's percentage, truncated to its integer portion |
-| Body Battery | Latest local timestamped `SensorHistory.getBodyBatteryHistory()` score, 0–100; missing, future or more-than-15-minute-old samples show `--` |
-| Solar event | Garmin's sunrise/sunset calculation at the weather observation location, in the watch's local time; location may differ from your present position |
+## Settings and data
 
-A small copper ring at the solar insert's lower right means the weather-derived location is at least two hours old. Solar location expires after 24h. When there is no location or no event available in today's/tomorrow's window (including polar conditions), the insert shows a muted horizon icon and `--:--`. An upward arrow and lifted sun means sunrise; a downward arrow and sinking sun means sunset. These age thresholds are this project's policy, not a Garmin update guarantee.
+Foundry and **Fahrenheit** are the defaults. Optional settings include Celsius/device units, explicit 12/24-hour time and three procedural color palettes: Reactor, Porcelain and Nocturne. See [settings instructions](docs/INSTALL.md#preferences); phone settings for unpublished sideloaded apps are not guaranteed.
 
-In 12-hour mode, the time has **AM/PM** and a solar time uses **A/P** (for example, `6:42P`). The Fahrenheit dial spans 0–120°F (the optional Celsius setting uses −20–40°C). The band and needle clamp at the endpoints; an outward chevron signals an out-of-range value. There is no separate numeric temperature reading; the unit indicator remains beside the weather icon.
+Weather uses Garmin’s existing cache; sunrise/sunset uses the weather observation location, which may differ from your current position. The face cannot force a fresh weather observation. Old data is marked, and unavailable values are not replaced with demo readings. Heart rate is a recent sample; Body Battery is a wellness estimate, not a medical measurement. See [data setup and troubleshooting](docs/INSTALL.md#6-get-weather-solar-heart-rate-and-body-battery-working).
 
-The seven weekday positions are indexed independently, so Tuesday/Thursday and Sunday/Saturday remain distinct despite shared initials. The date and highlight update from Garmin’s local Gregorian calendar before minute-cached sensor reads, including after midnight or a timezone change. Invalid calendar data shows `--` with no selected weekday. [Saturday example](docs/calendar-saturday.png).
-
-## Preferences
-
-Temperature defaults explicitly to **Fahrenheit**, regardless of the watch's unit setting. Time format follows the watch. Project properties also support optional Celsius/device units, explicit 12/24-hour format and four complete material/color palettes. **Foundry (`Palette = 1`) is the default.** [Settings instructions](docs/INSTALL.md#preferences) include the reliable source/simulator path for sideloaded builds. Phone settings for unpublished sideloaded apps are not guaranteed.
-
-## Four color studies
-
-![Four consistent theme studies, with illustrative readings](docs/themes.png)
-
-- **0 · Reactor**: the vivid original, lime / liquid violet / cyan
-- **1 · Foundry (default)**: aged copper, warm timber and patinated teal
-- **2 · Porcelain**: warm ivory, charcoal and brushed bronze
-- **3 · Nocturne**: midnight blue, amber and ice
-
-These preserved color studies show the shared composition with Body Battery before the final robotics-detail pass. The latest Foundry hero above shows the newer circular gauge, weekday/date displays, raised hardwood and three-dimensional metal relief. These older studies predate that layout revision. Select `Palette` in the project settings; see the [sideload settings notes](docs/INSTALL.md#preferences). Theme colors come from `resources/themes.json`, compiled into `source/PrismelierPalette.mc` by `tools/generate_palettes.py`, and used by the design renderer too. This keeps the color definitions consistent with the source; the earlier study images are retained to document the design choice. Foundry uses the actual bitmap resource; the other palettes keep procedural materials. The ambient time stays the same sparse, dim gray across themes. `python tools/render_preview.py --refresh-studies` regenerates the full study sheet against the newest geometry when explicitly desired.
-
-The **left top capsule** is device charge (`%`). The **right top capsule**, with the person/energy bolt, is Body Battery (a score, without `%`). It is a wellness estimate, not a medical measurement. [Official API and supported devices](https://developer.garmin.com/connect-iq/api-docs/Toybox/SensorHistory.html#getBodyBatteryHistory-instance_function).
-
-## Privacy and power
-
-- No API key, account, subscription, backend, advertisements or network permission
-- No GPS activation, external health-data transmission or persistent location storage
-- `SensorHistory` reads recent HR and Body Battery; `Positioning` permits access to the existing weather observation position
-- Data cached in RAM, expensive reads once per minute; no timers or seconds animation
-- One opaque native-resolution Foundry background reference, no full-screen buffer copies
-- Full color/materials on wake; the texture is never drawn in AOD, which uses dim digital time in three separate positions
-- This is a personal glance display, not a medical instrument or a source for safety-critical weather/navigation
-
-## Manual GitHub Actions build
-
-[**Compile Forerunner 265**](https://github.com/bensonlee5/prismelier/actions/workflows/compile.yml) is an owner-triggered workflow for trusted `main` on a dedicated Linux runner. It uses the pinned official SDK 9.2.0 compiler, builds `fr265`, and uploads a `.prg` plus checksums only after a successful compile. The signing key stays local to the runner.
-
-**Runner setup is still required; no successful CI compile or installable artifact has been verified.** Follow the [CI setup guide](docs/CI.md), including the public-repository runner security precautions. Adding this workflow does not register a runner or install Garmin's separate FR265 profile. It never runs untrusted pull requests automatically.
+The face has no backend, API key or network permission. It does not activate GPS or transmit health data. Data is cached in RAM, and the textured background is omitted from AOD. Runtime memory use and battery impact still need device validation.
 
 ## Development
 
+Run source and asset checks:
+
 ```sh
 python -m unittest discover -s tests -v
+```
+
+With the official SDK and device profile installed:
+
+```sh
 python tools/build.py --sdk /path/to/connectiq-sdk --key /private/path/developer.der --release
 ```
 
-Committed BMFont atlases make builds independent of system fonts or Python. Optional preview/font regeneration uses Python + Pillow and locally installed DejaVu fonts:
+Committed fonts and artwork are included. Optional design-preview generation uses Python and Pillow:
 
 ```sh
-python tools/generate_palettes.py
-python tools/generate_fonts.py --font-dir /usr/share/fonts/truetype/dejavu
 python tools/render_preview.py
 ```
 
-Several actual-size visual refinements and an independent design critique informed the material treatment, sunrise/set iconography and worst-case spacing. See [QA](docs/QA.md) for what has actually been tested and the outstanding device checks. Font licensing is included in `resources/fonts/LICENSE-DejaVu.txt`. The Foundry background is an AI-generated project asset; live icons and alternate material palettes are code-drawn. See [texture provenance and memory budget](docs/TEXTURE.md). No watch-brand artwork or logos are included. Garmin, Forerunner and Connect IQ are trademarks of Garmin; this is an independent project, not endorsed by Garmin.
+Passing source/parser checks does not establish native compilation or device compatibility. [QA details](docs/QA.md) document the checks performed and remaining validation.
+
+## Credits
+
+The Foundry texture is an AI-generated project asset; live icons and alternate-theme artwork are code-drawn. See [asset provenance and graphics budget](docs/TEXTURE.md). DejaVu font terms are included in the [font license](resources/fonts/LICENSE-DejaVu.txt).
+
+Garmin, Forerunner and Connect IQ are trademarks of Garmin. Prismelier is an independent project and is not endorsed by Garmin.
