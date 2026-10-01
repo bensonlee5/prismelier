@@ -3,6 +3,22 @@
 Prismelier is a source project with design renders. It has not been built for a
 Forerunner 265, run in Garmin's simulator, or installed on physical hardware.
 
+## CI addition, 1 October 2026, 14:08 UTC
+
+The manually triggered GitHub Actions workflow is prepared for a dedicated,
+officially provisioned Linux x64 runner. It is restricted to the owner and trusted
+`main`, pins GitHub actions and the official compiler JAR, builds the real `fr265`
+target, and uploads only a newly compiled PRG and its build record/checksums.
+
+**28 local checks passed** with official SDK 9.2.0 and Pillow: the existing 22
+source/API/parser/asset checks plus six CI guard/diagnostic/fingerprint/cleanup
+checks. Workflow YAML parsed successfully. A genuine preflight attempt with the
+installed compiler and an external local key correctly failed at the missing
+FR265 device profile. No actual CI job, FR265 compile, simulator run, or hardware
+test has succeeded; there is still no installable artifact. See [CI setup](CI.md).
+The CI unit fixtures test failure handling and never represent Garmin profiles or
+compiled programs.
+
 ## Recorded result, 1 October 2026, 06:12 UTC
 
 - SDK 9.2.0 and Pillow available: **22 tests passed**, including a fresh parser

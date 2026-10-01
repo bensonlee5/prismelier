@@ -82,6 +82,12 @@ The **left top capsule** is device charge (`%`). The **right top capsule**, with
 - Full color/materials on wake; the texture is never drawn in AOD, which uses dim digital time in three separate positions
 - This is a personal glance display, not a medical instrument or a source for safety-critical weather/navigation
 
+## Manual GitHub Actions build
+
+[**Compile Forerunner 265**](https://github.com/bensonlee5/prismelier/actions/workflows/compile.yml) is an owner-triggered workflow for trusted `main` on a dedicated Linux runner. It uses the pinned official SDK 9.2.0 compiler, builds `fr265`, and uploads a `.prg` plus checksums only after a successful compile. The signing key stays local to the runner.
+
+**Runner setup is still required; no successful CI compile or installable artifact has been verified.** Follow the [CI setup guide](docs/CI.md), including the public-repository runner security precautions. Adding this workflow does not register a runner or install Garmin's separate FR265 profile. It never runs untrusted pull requests automatically.
+
 ## Development
 
 ```sh

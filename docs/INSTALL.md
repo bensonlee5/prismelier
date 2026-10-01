@@ -4,6 +4,8 @@
 
 This repository contains the implemented source and assets. **There is no validated, installable `.prg` yet.** A build was attempted with the official Garmin Connect IQ 9.2.0 compiler, but the build environment lacked the separate FR265 device profile. The official source parser passed; that is not a compile, simulator run or hardware test.
 
+A [manual GitHub Actions workflow](CI.md) is also provided. It needs a dedicated, officially provisioned runner before it can produce a PRG; the first successful CI build is not yet verified.
+
 The following is Garmin's documented development/sideload workflow. It has not been performed on a physical watch for this project.
 
 ## 1. Set up Garmin's official tools
