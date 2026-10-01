@@ -7,11 +7,17 @@ from PIL import Image, ImageDraw
 import math, re, json
 ROOT = Path(__file__).resolve().parents[1]
 S = 3
+THEMES = json.loads((ROOT/'resources/themes.json').read_text())
 COL = dict(ink='#f2edd8',copper='#d98b52',green='#c7ff70',pink='#f474e8',cyan='#6be4de',muted='#786d82',panel='#122325')
 class Canvas:
-    def __init__(self):
+    def __init__(self, theme=0):
+        self.theme=THEMES[theme]['colors']
         self.im=Image.new('RGB',(416*S,416*S),'black'); self.d=ImageDraw.Draw(self.im); self.fonts={}; self.boxes=[]
-    def color(self,c): return COL.get(c,c)
+    def color(self,c):
+        value=COL.get(c,c)
+        if isinstance(value,str) and value.startswith('#'):
+            return '#'+self.theme.get(value[1:].upper(),value[1:])
+        return value
     def line(self,a,b,c,w=1): self.d.line(tuple(round(v*S) for v in (*a,*b)),fill=self.color(c),width=max(1,round(w*S)))
     def circle(self,x,y,r,c,fill=False,w=1):
         box=tuple(round(v*S) for v in (x-r,y-r,x+r,y+r)); self.d.ellipse(box,fill=self.color(c) if fill else None,outline=None if fill else self.color(c),width=w*S)
@@ -77,9 +83,9 @@ def architecture(c):
     paths=[([(111,39),(137,19),(279,19),(301,37)],'#3d3433'), ([(118,43),(141,25),(275,25),(294,43)],'#175452'), ([(137,48),(151,34),(264,34),(280,50)],'#224142'), ([(100,48),(65,81),(65,108),(53,120),(53,143)],'#6e4b3a'), ([(109,53),(74,84),(74,103),(62,115)],'#2f625c'), ([(303,49),(342,84),(342,105),(356,119),(356,143)],'#335657'), ([(309,42),(350,79),(350,102),(365,117)],'#644154')]
     for points,color in paths:trace(c,points,color)
     for x,y,color in [(53,145,'#916b49'),(62,116,'#34877d'),(356,145,'#4f958b'),(366,119,'#86557a')]:junction(c,x,y,color)
-    c.rect(149,39,104,31,'#102226',True,7);c.line((158,39),(241,39),'#3c6260')
+    c.rect(104,39,106,31,'#102226',True,7);c.line((114,39),(200,39),'#3c6260')
     for b in range(5):c.line((184+b*7,29),(184+b*7,34),'#8b6544')
-    junction(c,270,57,'#724060');trace(c,[(253,57),(264,57)],'#724060')
+    c.rect(219,39,91,31,'#102226',True,7);c.line((228,39),(300,39),'#3c6260');junction(c,214,55,'#724060');trace(c,[(210,55),(219,55)],'#724060')
     for points,color in [([(34,129),(23,157),(23,252),(32,274)],'#22433f'), ([(29,161),(29,236)],'#503949'), ([(383,130),(393,163),(393,249),(384,272)],'#4d3c2e'), ([(387,174),(387,223),(381,230)],'#284d4d')]:trace(c,points,color)
     for n in range(4):
         c.line((20,187+n*7),(28,187+n*7),'#326960');c.line((388,240+n*6),(394,240+n*6),'#6f494d')
@@ -89,8 +95,8 @@ def architecture(c):
     for f in range(7):c.line((175+f*11,364),(181+f*11,364),'#334945')
     trace(c,[(92,360),(121,367),(150,367)],'#243f42');trace(c,[(324,361),(295,367),(270,367)],'#3f314c');screw(c,90,348,'#75513d');screw(c,326,348,'#365e59')
 
-def render(missing=False,fahrenheit=True,stale=False,ambient=None,up=False,time='10:08',temperature=72,heart=64,steps=8432,battery=78,clock=None,suffix=None):
-    c=Canvas()
+def render(missing=False,fahrenheit=True,stale=False,ambient=None,up=False,time='10:08',temperature=72,heart=64,steps=8432,battery=78,clock=None,suffix=None,body_battery=76,theme=0):
+    c=Canvas(theme)
     if ambient is not None:
         c.text(208,92+86*ambient,'Ambient',time,'#606775'); return c.finish()
     architecture(c)
@@ -101,9 +107,10 @@ def render(missing=False,fahrenheit=True,stale=False,ambient=None,up=False,time=
     gear(c,67,184,11,'pink');gear(c,349,184,11,'cyan');screw(c,59,282);screw(c,357,282)
     c.polygon([(224,249),(344,249),(352,256),(347,286),(221,286),(217,278)],'#050e12');c.polygon([(224,246),(344,246),(352,253),(347,283),(221,283),(217,275)],'#d6d9bf');c.line((227,248),(341,248),'#f5f5db');c.line((224,246),(217,275),'copper',2);c.line((217,275),(221,283),'copper',2);c.line((81,288),(101,288),'#74aca0')
     c.line((84,288),(105,300),'#805745',2);c.line((105,300),(162,300),'#805745',2);c.line((253,300),(310,300),'#487b72',2);c.line((310,300),(331,288),'#487b72',2);screw(c,162,300,'pink');screw(c,253,300,'cyan')
-    c.rect(162,51,17,10,'cyan',False,2);c.rect(179,54,2,4,'cyan')
-    if not missing:c.rect(165,54,int(11*battery/100),4,'cyan')
-    c.text(217,42,'Small','--%' if missing else f'{battery}%','pink' if battery<=15 else 'cyan')
+    c.rect(121,51,17,10,'cyan',False,2);c.rect(138,54,2,4,'cyan')
+    if not missing:c.rect(124,54,int(11*battery/100),4,'cyan')
+    c.text(174,42,'Small','--%' if missing else f'{battery}%','pink' if battery<=15 else 'cyan')
+    c.circle(235,47,3,'pink',True);c.line((235,53),(235,60),'pink',2);c.line((230,55),(240,55),'pink',2);c.line((235,60),(231,66),'pink',2);c.line((235,60),(239,66),'pink',2);c.line((246,48),(242,55),'copper');c.line((242,55),(247,55),'copper');c.line((247,55),(243,62),'copper');c.text(280,42,'Small','--' if missing else str(body_battery),'ink')
     c.text(208,77,'Time',time,'green')
     if suffix:c.text(208,163,'Label',suffix,'ink')
     c.rect(56,192,304,54,'#452744',True,10)
@@ -141,10 +148,24 @@ def main():
     d.text((686,533),'DESIGN RENDER\nIllustrative data, not a simulator capture',font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',14),fill=COL['copper'],spacing=8)
     hero.save(docs/'preview.png')
     sheet=Image.new('RGB',(416*3,468),'#0b111a');ds=ImageDraw.Draw(sheet)
-    for n,(label,im) in enumerate([('Fahrenheit / sunset / illustrative data',render()),('Sunrise / aged data / high readings',render(stale=True,up=True,temperature=130,heart=199,steps=99999,battery=100,time='23:59')),('Unavailable data / honest placeholders',render(missing=True))]):
+    for n,(label,im) in enumerate([('Fahrenheit / sunset / illustrative data',render()),('Sunrise / aged data / high readings',render(stale=True,up=True,temperature=130,heart=199,steps=99999,battery=100,body_battery=100,time='23:59')),('Unavailable data / honest placeholders',render(missing=True))]):
         sheet.paste(im,(416*n,0));ds.text((416*n+24,438),label,fill=COL['ink'])
     sheet.save(docs/'states.png')
-    render(time='12:59',temperature=-40,heart=220,steps=100000,battery=100,up=True,clock='11:59P',suffix='AM').save(docs/'edge-case-416.png')
+    render(time='12:59',temperature=-40,heart=220,steps=100000,battery=100,up=True,clock='11:59P',suffix='AM',body_battery=100).save(docs/'edge-case-416.png')
+    board=Image.new('RGB',(1120,1180),'#0b111a');bd=ImageDraw.Draw(board)
+    title_font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',29)
+    desc_font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',16)
+    note_font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',15)
+    bd.text((40,28),'PRISMELIER / FOUR COLOR STUDIES',font=title_font,fill='#e8e3d8')
+    bd.text((40,74),'Same composition. Fahrenheit. Body Battery added at the top right.',font=desc_font,fill='#a9b3be')
+    for index,t in enumerate(THEMES):
+        face=render(theme=index);face.save(docs/('theme-'+t['name'].lower()+'.png'))
+        x=60+(index%2)*550;y=123+(index//2)*502
+        bd.text((x,y),f'{index+1:02d}  '+t['name'].upper(),font=desc_font,fill='#'+t['colors']['D98B52'])
+        bd.text((x,y+26),t['description'],font=note_font,fill='#a9b3be')
+        board.paste(face,(x,y+61))
+    bd.text((40,1142),'DESIGN RENDERS / Illustrative values, not simulator or watch screenshots',font=note_font,fill='#a9b3be')
+    board.save(docs/'themes.png')
     for i in range(3):render(ambient=i).save(docs/f'ambient-{i}.png')
     print('Rendered design previews, NOT simulator screenshots')
 if __name__=='__main__':main()

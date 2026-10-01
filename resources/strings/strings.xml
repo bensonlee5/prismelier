@@ -2,7 +2,9 @@
   <string id="AppName">Prismelier</string>
   <string id="ThemeLabel">Instrument palette</string>
   <string id="PrismTheme">Reactor: lime, violet, cyan, copper</string>
-  <string id="OrchardTheme">Afterburn: ice, orange, lilac</string>
+  <string id="FoundryTheme">Foundry: aged copper and teal</string>
+  <string id="PorcelainTheme">Porcelain: warm ivory and charcoal</string>
+  <string id="NocturneTheme">Nocturne: midnight blue and amber</string>
   <string id="TimeLabel">Time format</string>
   <string id="DeviceSetting">Follow watch</string>
   <string id="Time12">12 hour</string>

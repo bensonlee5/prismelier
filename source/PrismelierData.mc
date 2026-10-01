@@ -21,12 +21,16 @@ class PrismelierData {
     const WEATHER_STALE_SECONDS = 7200;
     const WEATHER_EXPIRE_SECONDS = 86400;
     const HEART_RATE_MAX_AGE_SECONDS = 120;
+    // Body Battery history spacing is device dependent. Fifteen minutes is
+    // this app's conservative expiry policy, not a live-reading guarantee.
+    const BODY_BATTERY_MAX_AGE_SECONDS = 900;
 
     var temperatureC as Lang.Numeric or Null = null;
     var weatherLabel as Lang.String = "NO WEATHER";
     var weatherKind as Lang.String = "unknown";
     var weatherStale as Lang.Boolean = false;
     var heartRate as Lang.Number or Null = null;
+    var bodyBattery as Lang.Number or Null = null;
     var steps as Lang.Number or Null = null;
     var battery as Lang.Number or Null = null;
     var solarLabel as Lang.String = "SUN";
@@ -39,6 +43,7 @@ class PrismelierData {
     private var _temperatureUnits as Lang.Number = 0;
     private var _lastRefreshMinute as Lang.Number = -1;
     private var _heartRateAt as Lang.Number or Null = null;
+    private var _bodyBatteryAt as Lang.Number or Null = null;
     private var _weatherPresent as Lang.Boolean = false;
     private var _weatherAt as Lang.Number or Null = null;
     private var _weatherTemperature as Lang.Numeric or Null = null;
@@ -55,7 +60,7 @@ class PrismelierData {
 
     // Call after an app-settings change; refresh(true) applies it immediately.
     function loadSettings() as Void {
-        palette = readChoice("Palette", 1);
+        palette = readChoice("Palette", 3);
         _timeFormat = readChoice("TimeFormat", 2);
         _temperatureUnits = readChoice("TemperatureUnits", 2);
         _lastRefreshMinute = -1;
@@ -105,11 +110,17 @@ class PrismelierData {
             heartRate = null;
             _heartRateAt = null;
         }
+        if (_bodyBatteryAt == null || seconds < _bodyBatteryAt ||
+                seconds - _bodyBatteryAt > BODY_BATTERY_MAX_AGE_SECONDS) {
+            bodyBattery = null;
+            _bodyBatteryAt = null;
+        }
 
         if (force || minute != _lastRefreshMinute) {
             _lastRefreshMinute = minute;
             readActivity();
             readHeartRate(seconds);
+            readBodyBattery(seconds);
             readWeather(seconds);
             buildSolarEvents(now, seconds);
         }
@@ -175,6 +186,37 @@ class PrismelierData {
             }
         } catch (e) {
             // No fallback to a value with an unverifiable observation time.
+        }
+    }
+
+    // Supported on FR265 in watch faces since API 3.3.0, using the existing
+    // SensorHistory permission. This is the on-watch 0-100 wellness score,
+    // not device charge, a percentage, or a score computed from other data.
+    // https://developer.garmin.com/connect-iq/api-docs/Toybox/SensorHistory.html#getBodyBatteryHistory-instance_function
+    private function readBodyBattery(nowSeconds as Lang.Number) as Void {
+        bodyBattery = null;
+        _bodyBatteryAt = null;
+        if (!(SensorHistory has :getBodyBatteryHistory)) { return; }
+        try {
+            var history = SensorHistory.getBodyBatteryHistory({
+                :period => new Time.Duration(BODY_BATTERY_MAX_AGE_SECONDS),
+                :order => SensorHistory.ORDER_NEWEST_FIRST
+            });
+            var sample = history.next();
+            while (sample != null) {
+                var age = nowSeconds - sample.when.value();
+                if (age > BODY_BATTERY_MAX_AGE_SECONDS) { break; }
+                // Zero is a valid reported score; null is unavailable.
+                if (age >= 0 && sample.data != null && sample.data >= 0 &&
+                        sample.data <= 100) {
+                    bodyBattery = sample.data.toNumber();
+                    _bodyBatteryAt = sample.when.value();
+                    break;
+                }
+                sample = history.next();
+            }
+        } catch (e) {
+            // No synthetic score, stale fallback, sensor activation or upload.
         }
     }
 

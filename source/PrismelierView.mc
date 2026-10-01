@@ -21,6 +21,7 @@ class PrismelierView extends WatchUi.WatchFace {
     var pink = 0xF474E8;
     var cyan = 0x6BE4DE;
     var muted = 0x786D82;
+    var theme = 0;
 
     function initialize() {
         WatchFace.initialize();
@@ -38,10 +39,7 @@ class PrismelierView extends WatchUi.WatchFace {
 
     function reloadSettings() {
         data.loadSettings();
-        var p = Application.Properties.getValue("Palette");
-        green = p == 1 ? 0x90E6FF : 0xC7FF70;
-        pink = p == 1 ? 0xFFB65D : 0xF474E8;
-        cyan = p == 1 ? 0xD59DFF : 0x6BE4DE;
+        theme = data.palette;
         data.refresh(true);
     }
 
@@ -56,13 +54,17 @@ class PrismelierView extends WatchUi.WatchFace {
         WatchUi.requestUpdate();
     }
 
+    function paint(dc, foreground, background) {
+        dc.setColor(PrismelierPalette.color(foreground, theme), background);
+    }
+
     function text(dc, x, y, font, s, color) {
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        paint(dc, color, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, y, font, s, Graphics.TEXT_JUSTIFY_CENTER);
     }
 
     function stroke(dc, x1, y1, x2, y2, color, width) {
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        paint(dc, color, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(width);
         dc.drawLine(x1, y1, x2, y2);
         dc.setPenWidth(1);
@@ -86,7 +88,7 @@ class PrismelierView extends WatchUi.WatchFace {
     }
 
     function onUpdate(dc) {
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+        paint(dc, Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
         dc.setAntiAlias(true);
         var clock = System.getClockTime();
@@ -103,6 +105,7 @@ class PrismelierView extends WatchUi.WatchFace {
         drawArchitecture(dc);
         drawMachine(dc);
         drawBattery(dc);
+        drawBodyBattery(dc);
         text(dc, 208, 77, timeFont, time, green);
         if (!data.is24Hour()) {
             text(dc, 208, 163, labelFont, clock.hour < 12 ? "AM" : "PM", ink);
@@ -112,7 +115,7 @@ class PrismelierView extends WatchUi.WatchFace {
     }
 
     function screw(dc, x, y, color) {
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        paint(dc, color, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(x, y, 3);
         stroke(dc, x - 2, y + 1, x + 2, y - 1, 0x241620, 1);
     }
@@ -121,7 +124,7 @@ class PrismelierView extends WatchUi.WatchFace {
         for (var i = 0; i < 12; i += 1) {
             radial(dc, x, y, r - 2, r + 3, i * 30, color, 4);
         }
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        paint(dc, color, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(3);
         dc.drawCircle(x, y, r - 3);
         dc.setPenWidth(1);
@@ -129,7 +132,7 @@ class PrismelierView extends WatchUi.WatchFace {
         for (var a = 0; a < 3; a += 1) {
             radial(dc, x, y, 4, r - 8, a * 120 + 25, color, 3);
         }
-        dc.setColor(0xD6D9BF, Graphics.COLOR_TRANSPARENT);
+        paint(dc, 0xD6D9BF, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(x, y, 4);
         screw(dc, x, y, copper);
     }
@@ -141,14 +144,14 @@ class PrismelierView extends WatchUi.WatchFace {
     }
 
     function junction(dc, x, y, color) {
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        paint(dc, color, Graphics.COLOR_TRANSPARENT);
         dc.drawCircle(x, y, 3);
         dc.fillCircle(x, y, 1);
     }
 
     function drawArchitecture(dc) {
         // Layered ceramic substrate: chip-like chamfers, never an analog ring.
-        dc.setColor(0x071214, Graphics.COLOR_TRANSPARENT);
+        paint(dc, 0x071214, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon([[121, 25], [283, 25], [350, 87], [350, 168], [67, 168], [67, 87]]);
         trace(dc, [[111, 39], [137, 19], [279, 19], [301, 37]], 0x3D3433, 1);
         trace(dc, [[118, 43], [141, 25], [275, 25], [294, 43]], 0x175452, 1);
@@ -162,14 +165,17 @@ class PrismelierView extends WatchUi.WatchFace {
         junction(dc, 356, 145, 0x4F958B);
         junction(dc, 366, 119, 0x86557A);
         // Microbridges route into the battery plate without touching the digits.
-        dc.setColor(0x102226, Graphics.COLOR_TRANSPARENT);
-        dc.fillRoundedRectangle(149, 39, 104, 31, 7);
-        stroke(dc, 158, 39, 241, 39, 0x3C6260, 1);
+        paint(dc, 0x102226, Graphics.COLOR_TRANSPARENT);
+        dc.fillRoundedRectangle(104, 39, 106, 31, 7);
+        stroke(dc, 114, 39, 200, 39, 0x3C6260, 1);
         for (var b = 0; b < 5; b += 1) {
             stroke(dc, 184 + b * 7, 29, 184 + b * 7, 34, 0x8B6544, 1);
         }
-        junction(dc, 270, 57, 0x724060);
-        trace(dc, [[253, 57], [264, 57]], 0x724060, 1);
+        paint(dc, 0x102226, Graphics.COLOR_TRANSPARENT);
+        dc.fillRoundedRectangle(219, 39, 91, 31, 7);
+        stroke(dc, 228, 39, 300, 39, 0x3C6260, 1);
+        junction(dc, 214, 55, 0x724060);
+        trace(dc, [[210, 55], [219, 55]], 0x724060, 1);
         // Peripheral service channels have asymmetric joints, not hour ticks.
         trace(dc, [[34, 129], [23, 157], [23, 252], [32, 274]], 0x22433F, 1);
         trace(dc, [[29, 161], [29, 236]], 0x503949, 1);
@@ -180,7 +186,7 @@ class PrismelierView extends WatchUi.WatchFace {
             stroke(dc, 388, 240 + n * 6, 394, 240 + n * 6, 0x6F494D, 1);
         }
         // Deeply engraved lower backplane keeps the heart/steps row uncluttered.
-        dc.setColor(0x080F13, Graphics.COLOR_TRANSPARENT);
+        paint(dc, 0x080F13, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon([[71, 312], [345, 312], [335, 352], [292, 374], [123, 374], [82, 352]]);
         trace(dc, [[70, 315], [76, 348], [120, 373], [158, 373], [171, 386], [203, 386]], 0x6B4839, 1);
         trace(dc, [[78, 351], [122, 379], [157, 379]], 0x263D3D, 1);
@@ -200,9 +206,9 @@ class PrismelierView extends WatchUi.WatchFace {
     function drawMachine(dc) {
         // No clock indices or analog chapter ring. The perimeter stays quiet.
         // A split ceramic housing carries offset copper capillaries.
-        dc.setColor(0x122325, Graphics.COLOR_TRANSPARENT);
+        paint(dc, 0x122325, Graphics.COLOR_TRANSPARENT);
         dc.fillRoundedRectangle(45, 184, 326, 110, 17);
-        dc.setColor(0x344741, Graphics.COLOR_TRANSPARENT);
+        paint(dc, 0x344741, Graphics.COLOR_TRANSPARENT);
         dc.drawRoundedRectangle(45, 184, 326, 110, 17);
         for (var side = 0; side < 2; side += 1) {
             var x = side == 0 ? 42 : 374;
@@ -219,9 +225,9 @@ class PrismelierView extends WatchUi.WatchFace {
         screw(dc, 357, 282, copper);
         // A porcelain insert is deliberately paired with violet timber and
         // petrol enamel. Its irregular copper join is the material signature.
-        dc.setColor(0x050E12, Graphics.COLOR_TRANSPARENT);
+        paint(dc, 0x050E12, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon([[224, 249], [344, 249], [352, 256], [347, 286], [221, 286], [217, 278]]);
-        dc.setColor(0xD6D9BF, Graphics.COLOR_TRANSPARENT);
+        paint(dc, 0xD6D9BF, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon([[224, 246], [344, 246], [352, 253], [347, 283], [221, 283], [217, 275]]);
         stroke(dc, 227, 248, 341, 248, 0xF5F5DB, 1);
         stroke(dc, 224, 246, 217, 275, copper, 2);
@@ -237,24 +243,38 @@ class PrismelierView extends WatchUi.WatchFace {
     }
 
     function drawBattery(dc) {
-        dc.setColor(cyan, Graphics.COLOR_TRANSPARENT);
-        dc.drawRoundedRectangle(162, 51, 17, 10, 2);
-        dc.fillRectangle(179, 54, 2, 4);
+        paint(dc, cyan, Graphics.COLOR_TRANSPARENT);
+        dc.drawRoundedRectangle(121, 51, 17, 10, 2);
+        dc.fillRectangle(138, 54, 2, 4);
         if (data.battery != null) {
-            dc.fillRectangle(165, 54, (11 * clamp(data.battery, 0, 100) / 100).toNumber(), 4);
+            dc.fillRectangle(124, 54, (11 * clamp(data.battery, 0, 100) / 100).toNumber(), 4);
         }
         var s = data.battery == null ? "--%" : data.battery.format("%d") + "%";
-        text(dc, 217, 42, smallFont, s, data.battery != null && data.battery <= 15 ? pink : cyan);
+        text(dc, 174, 42, smallFont, s, data.battery != null && data.battery <= 15 ? pink : cyan);
+    }
+
+    function drawBodyBattery(dc) {
+        // Person + energy bolt; score has no percent sign (not device charge).
+        paint(dc, pink, Graphics.COLOR_TRANSPARENT);
+        dc.fillCircle(235, 47, 3);
+        stroke(dc, 235, 53, 235, 60, pink, 2);
+        stroke(dc, 230, 55, 240, 55, pink, 2);
+        stroke(dc, 235, 60, 231, 66, pink, 2);
+        stroke(dc, 235, 60, 239, 66, pink, 2);
+        stroke(dc, 246, 48, 242, 55, copper, 1);
+        stroke(dc, 242, 55, 247, 55, copper, 1);
+        stroke(dc, 247, 55, 243, 62, copper, 1);
+        text(dc, 280, 42, smallFont, data.bodyBattery == null ? "--" : data.bodyBattery.format("%d"), ink);
     }
 
     function drawTemperature(dc) {
         // Linear temperature bar in a violet woodgrain/copper instrument frame.
-        dc.setColor(0x452744, Graphics.COLOR_TRANSPARENT);
+        paint(dc, 0x452744, Graphics.COLOR_TRANSPARENT);
         dc.fillRoundedRectangle(56, 192, 304, 54, 10);
         for (var grain = 0; grain < 5; grain += 1) {
             stroke(dc, 71, 197 + grain * 10, 345, 199 + grain * 10, grain % 2 == 0 ? 0x85506D : 0x5D3854, 1);
         }
-        dc.setColor(copper, Graphics.COLOR_TRANSPARENT);
+        paint(dc, copper, Graphics.COLOR_TRANSPARENT);
         dc.drawRoundedRectangle(56, 192, 304, 54, 10);
         stroke(dc, 71, 193, 344, 193, 0xF2BF8C, 1);
         stroke(dc, 71, 245, 344, 245, 0x3E211E, 2);
@@ -262,7 +282,7 @@ class PrismelierView extends WatchUi.WatchFace {
         screw(dc, 352, 201, copper);
         screw(dc, 64, 237, copper);
         screw(dc, 352, 237, copper);
-        dc.setColor(0x091B23, Graphics.COLOR_TRANSPARENT);
+        paint(dc, 0x091B23, Graphics.COLOR_TRANSPARENT);
         dc.fillRoundedRectangle(73, 209, 270, 19, 4);
         var fahrenheit = data.isFahrenheit();
         var low = fahrenheit ? 0 : -20;
@@ -273,12 +293,12 @@ class PrismelierView extends WatchUi.WatchFace {
             var f = clamp((val - low).toFloat() / (high - low), 0.0, 1.0);
             var width = (262 * f).toNumber();
             if (width > 0) {
-                dc.setColor(data.weatherStale ? 0x80665C : pink, Graphics.COLOR_TRANSPARENT);
+                paint(dc, data.weatherStale ? 0x80665C : pink, Graphics.COLOR_TRANSPARENT);
                 dc.fillRoundedRectangle(77, 213, width, 11, 3);
                 stroke(dc, 79, 214, 77 + width, 214, data.weatherStale ? copper : 0xFFC9FA, 1);
             }
             // A square piston instead of a needle. Endpoint clamped, reading exact.
-            dc.setColor(ink, Graphics.COLOR_TRANSPARENT);
+            paint(dc, ink, Graphics.COLOR_TRANSPARENT);
             dc.fillRectangle(75 + width, 209, 4, 19);
         }
         for (var t = 0; t <= 12; t += 1) {
@@ -291,7 +311,7 @@ class PrismelierView extends WatchUi.WatchFace {
         text(dc, 165, 247, valueFont, reading + (fahrenheit ? "°F" : "°C"), ink);
         if (data.weatherStale) {
             // Small crossed ring = stale/unknown weather; explained in README.
-            dc.setColor(copper, Graphics.COLOR_TRANSPARENT);
+            paint(dc, copper, Graphics.COLOR_TRANSPARENT);
             dc.drawCircle(208, 280, 4);
             stroke(dc, 205, 283, 211, 277, copper, 1);
         }
@@ -301,12 +321,12 @@ class PrismelierView extends WatchUi.WatchFace {
     function drawVitals(dc) {
         var x = 101;
         var y = 332;
-        dc.setColor(pink, Graphics.COLOR_TRANSPARENT);
+        paint(dc, pink, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(x - 4, y - 3, 5);
         dc.fillCircle(x + 4, y - 3, 5);
         dc.fillPolygon([[x - 9, y], [x + 9, y], [x, y + 9]]);
         text(dc, 149, 315, valueFont, data.heartRate == null ? "--" : data.heartRate.format("%d"), ink);
-        dc.setColor(cyan, Graphics.COLOR_TRANSPARENT);
+        paint(dc, cyan, Graphics.COLOR_TRANSPARENT);
         dc.fillEllipse(220, 322, 6, 11);
         dc.fillEllipse(229, 328, 6, 11);
         dc.fillCircle(223, 318, 2);
@@ -321,7 +341,7 @@ class PrismelierView extends WatchUi.WatchFace {
 
     function drawWeather(dc, x, y, kind) {
         var color = data.weatherStale ? copper : cyan;
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        paint(dc, color, Graphics.COLOR_TRANSPARENT);
         if (kind == "wind") {
             stroke(dc, x - 14, y - 5, x + 8, y - 5, color, 2);
             stroke(dc, x - 9, y + 1, x + 14, y + 1, color, 2);
@@ -330,7 +350,7 @@ class PrismelierView extends WatchUi.WatchFace {
             dc.drawCircle(x + 14, y + 4, 3);
         } else if (kind == "sun" && data.solarLabel.find("RISE") != null) {
             dc.fillCircle(x, y, 10);
-            dc.setColor(0x122325, Graphics.COLOR_TRANSPARENT);
+            paint(dc, 0x122325, Graphics.COLOR_TRANSPARENT);
             dc.fillCircle(x + 5, y - 4, 9);
             stroke(dc, x + 14, y - 9, x + 14, y - 3, color, 1);
             stroke(dc, x + 11, y - 6, x + 17, y - 6, color, 1);
@@ -343,12 +363,12 @@ class PrismelierView extends WatchUi.WatchFace {
             stroke(dc, x - 14, y + 7, x + 14, y + 7, color, 2);
         } else {
             if (kind == "partly") {
-                dc.setColor(copper, Graphics.COLOR_TRANSPARENT);
+                paint(dc, copper, Graphics.COLOR_TRANSPARENT);
                 dc.fillCircle(x + 8, y - 9, 7);
                 radial(dc, x + 8, y - 9, 10, 12, 270, copper, 1);
                 radial(dc, x + 8, y - 9, 10, 12, 315, copper, 1);
                 radial(dc, x + 8, y - 9, 10, 12, 0, copper, 1);
-                dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+                paint(dc, color, Graphics.COLOR_TRANSPARENT);
             }
             dc.fillCircle(x - 8, y, 6);
             dc.fillCircle(x, y - 5, 9);
@@ -379,9 +399,9 @@ class PrismelierView extends WatchUi.WatchFace {
         var up = data.solarLabel.find("RISE") != null;
         var color = data.solarTime == "--:--" ? 0x777F70 : (up ? 0x27645D : 0xA04D30);
         var sunY = up ? y - 5 : y + 2;
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        paint(dc, color, Graphics.COLOR_TRANSPARENT);
         dc.drawCircle(x, sunY, 8);
-        dc.setColor(0xD6D9BF, Graphics.COLOR_TRANSPARENT);
+        paint(dc, 0xD6D9BF, Graphics.COLOR_TRANSPARENT);
         dc.fillRectangle(x - 10, y + 1, 20, 14);
         stroke(dc, x - 14, y, x + 14, y, color, 2);
         radial(dc, x, sunY, 11, 14, 220, color, 1);
@@ -397,7 +417,7 @@ class PrismelierView extends WatchUi.WatchFace {
         }
         text(dc, 302, 250, smallFont, data.solarTime, 0x183B3B);
         if (data.solarLabel.find("*") != null) {
-            dc.setColor(copper, Graphics.COLOR_TRANSPARENT);
+            paint(dc, copper, Graphics.COLOR_TRANSPARENT);
             dc.drawCircle(345, 278, 3);
         }
     }

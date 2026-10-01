@@ -90,7 +90,7 @@ After unplugging, give the watch a moment to install the file. From the current 
 
 If absent, restart the watch once and recheck. If it still does not appear, use the troubleshooting checklist; do not copy random files into other system folders.
 
-## 6. Get weather, solar and heart rate working
+## 6. Get weather, solar, heart rate and Body Battery working
 
 - Pair the watch with **Garmin Connect on your iPhone**, and let it sync
 - Keep Bluetooth connected and allow Garmin Connect the background/location access it needs for Garmin's own weather feature. Choose the permissions yourself in iOS
@@ -98,6 +98,7 @@ If absent, restart the watch once and recheck. If it still does not appear, use 
 - The bar is **outdoor weather temperature**, not the wrist/ambient sensor, which can be distorted by body heat
 - Solar calculations use the weather observation's location; no GPS session is started by this face. A stale station/location can be wrong after travel
 - Wear the watch with wrist HR enabled. HR appears only when a valid, timestamped sample is at most two minutes old
+- Body Battery uses recent local watch history; keep wearing the watch for Garmin to establish a score. The top-right person/bolt value is a 0–100 score, not battery-charge percentage. It becomes `--` when no valid sample is available within 15 minutes
 - Allow the face to read the listed Sensor History/Positioning permissions during installation if prompted
 
 The watch, firmware and Garmin Connect decide weather refresh timing. Polling the API more often does not force an update.
@@ -108,7 +109,7 @@ The reliable options for a **sideloaded, unpublished** development build are:
 
 - Change the watch's **time format**; it is followed by default. Temperature defaults explicitly to **Fahrenheit**, independent of system units
 - Or edit `resources/settings/properties.xml` before rebuilding:
-  - `Palette`: `0` Reactor (lime/violet/cyan/copper); `1` Afterburn (ice/orange/lilac)
+  - `Palette`: `0` Reactor (lime/violet/cyan), `1` Foundry (copper/teal), `2` Porcelain (ivory/charcoal), `3` Nocturne (midnight/amber)
   - `TimeFormat`: `0` watch setting, `1` 12-hour, `2` 24-hour
   - `TemperatureUnits`: `2` Fahrenheit (default), `1` Celsius, `0` watch setting
 - In the simulator, use its app-settings editor to exercise the provided settings schema
@@ -128,6 +129,7 @@ Sideloaded apps may not appear with editable settings in Garmin Connect/Connect 
 | Muted bar, crossed weather icon and small crossed-ring warning | Cache is at least 2h old; readings disappear at 24h or when age cannot be verified |
 | Solar insert `--:--` | No usable weather location or no sunrise/sunset in the queried window; can occur in polar regions |
 | HR `--` | Watch not worn, wrist HR disabled, or no recent valid sample |
+| Person/bolt Body Battery `--` | No valid score in the last 15 minutes, or its timestamp cannot be verified; check Garmin's native Body Battery glance |
 | Screen becomes mostly empty | Normal low-power/AOD design; raise wrist to restore the full face |
 | AOD is off entirely | Watch display setting, sleep mode, firmware protection, or an AOD issue. This requires simulator/device validation |
 

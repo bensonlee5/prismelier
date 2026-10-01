@@ -13,7 +13,8 @@ A bespoke, futuristic-steampunk digital watch face for the **Garmin Forerunner 2
 - **Digital time**, following the watch's 12/24-hour preference by default
 - **Linear Fahrenheit temperature bar** with a precise numeric reading
 - **Weather icons**, beside the temperature and the next sun event, with clear stale/missing states
-- **Battery percentage** and an icon
+- **Device battery percentage** and a battery icon
+- **Body Battery score** (0–100) beside a distinct person/energy-bolt icon
 - **Next sunrise or sunset**, automatically switching to the next event, with distinct rising/sinking sun and up/down-arrow icons
 - **Recent heart rate** in BPM and the exact daily step count
 - Exposed gearwork, copper fasteners, a luminous piston, inlaid circuits, chamfered ceramic panels, microbridges, junction vias and contrasting material edges
@@ -45,7 +46,8 @@ The face does not contain demo readings. Preview values exist only in `tools/ren
 | Weather 24h old, timestamp missing, or future timestamp | Empty bar, `--°F`, crossed-out weather icon; no invented reading |
 | Heart rate | Most recent valid `SensorHistory` measurement, no older than 120 seconds; a recent reading, not a continuously activated sensor |
 | Steps | Watch's daily activity-monitor count; missing data is `--`, while a genuine zero remains `0` |
-| Battery | Watch's percentage, truncated to its integer portion |
+| Device battery | Watch's percentage, truncated to its integer portion |
+| Body Battery | Latest local timestamped `SensorHistory.getBodyBatteryHistory()` score, 0–100; missing, future or more-than-15-minute-old samples show `--` |
 | Solar event | Garmin's sunrise/sunset calculation at the weather observation location, in the watch's local time; location may differ from your present position |
 
 A small copper ring at the solar insert's lower right means the weather-derived location is at least two hours old. Solar location expires after 24h. When there is no location or no event available in today's/tomorrow's window (including polar conditions), the insert shows a muted horizon icon and `--:--`. An upward arrow and lifted sun means sunrise; a downward arrow and sinking sun means sunset. These age thresholds are this project's policy, not a Garmin update guarantee.
@@ -54,13 +56,26 @@ In 12-hour mode, the time has **AM/PM** and a solar time uses **A/P** (for examp
 
 ## Preferences
 
-Temperature defaults explicitly to **Fahrenheit**, regardless of the watch's unit setting. Time format follows the watch. Project properties also support optional Celsius/device units, explicit 12/24-hour format and an alternate palette. [Settings instructions](docs/INSTALL.md#preferences) include the reliable source/simulator path for sideloaded builds. Phone settings for unpublished sideloaded apps are not guaranteed.
+Temperature defaults explicitly to **Fahrenheit**, regardless of the watch's unit setting. Time format follows the watch. Project properties also support optional Celsius/device units, explicit 12/24-hour format and four complete material/color palettes. [Settings instructions](docs/INSTALL.md#preferences) include the reliable source/simulator path for sideloaded builds. Phone settings for unpublished sideloaded apps are not guaranteed.
+
+## Four color studies
+
+![Four consistent theme studies, with illustrative readings](docs/themes.png)
+
+- **0 · Reactor**: the vivid original, lime / liquid violet / cyan
+- **1 · Foundry**: aged copper, warm timber and patinated teal
+- **2 · Porcelain**: warm ivory, charcoal and brushed bronze
+- **3 · Nocturne**: midnight blue, amber and ice
+
+Every color study uses the same implemented layout, including the new Body Battery score. Select `Palette` in the project settings; see the [sideload settings notes](docs/INSTALL.md#preferences). Theme colors come from `resources/themes.json`, compiled into `source/PrismelierPalette.mc` by `tools/generate_palettes.py`, and used by the design renderer too. This keeps the comparison consistent with the source. The ambient time stays the same sparse, dim gray across themes.
+
+The **left top capsule** is device charge (`%`). The **right top capsule**, with the person/energy bolt, is Body Battery (a score, without `%`). It is a wellness estimate, not a medical measurement. [Official API and supported devices](https://developer.garmin.com/connect-iq/api-docs/Toybox/SensorHistory.html#getBodyBatteryHistory-instance_function).
 
 ## Privacy and power
 
 - No API key, account, subscription, backend, advertisements or network permission
 - No GPS activation, external health-data transmission or persistent location storage
-- `SensorHistory` reads recent HR; `Positioning` permits access to the existing weather observation position
+- `SensorHistory` reads recent HR and Body Battery; `Positioning` permits access to the existing weather observation position
 - Data cached in RAM, expensive reads once per minute; no timers or seconds animation
 - Full color on wake, dim digital time in three separate positions while asleep
 - This is a personal glance display, not a medical instrument or a source for safety-critical weather/navigation
@@ -75,6 +90,7 @@ python tools/build.py --sdk /path/to/connectiq-sdk --key /private/path/developer
 Committed BMFont atlases make builds independent of system fonts or Python. Optional preview/font regeneration uses Python + Pillow and locally installed DejaVu fonts:
 
 ```sh
+python tools/generate_palettes.py
 python tools/generate_fonts.py --font-dir /usr/share/fonts/truetype/dejavu
 python tools/render_preview.py
 ```

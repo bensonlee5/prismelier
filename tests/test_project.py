@@ -8,6 +8,7 @@ for the structural tests. Nothing is downloaded or installed by these tests.
 from pathlib import Path
 import html
 import hashlib
+import json
 import math
 import os
 import re
@@ -152,12 +153,48 @@ class ProjectStructureTests(unittest.TestCase):
         values = {p.attrib["id"]: p.text for p in properties}
         self.assertEqual(values, {"Palette": "0", "TimeFormat": "0", "TemperatureUnits": "2"})
         settings = ET.parse(ROOT / "resources/settings/settings.xml").getroot()
-        expected = {"Palette": {"0", "1"}, "TimeFormat": {"0", "1", "2"},
+        expected = {"Palette": {"0", "1", "2", "3"}, "TimeFormat": {"0", "1", "2"},
                     "TemperatureUnits": {"0", "1", "2"}}
         for setting in settings:
             key = setting.attrib["propertyKey"].split(".")[-1]
             self.assertEqual({entry.attrib["value"] for entry in setting.findall(".//listEntry")}, expected.pop(key))
         self.assertFalse(expected)
+        self.assertIn('palette = readChoice("Palette", 3);', source_text("PrismelierData.mc"))
+
+    def test_palette_source_matches_json_and_keeps_ambient_color(self):
+        themes = json.loads((ROOT / "resources/themes.json").read_text(encoding="utf-8"))
+        self.assertEqual([theme["name"] for theme in themes],
+                         ["Reactor", "Foundry", "Porcelain", "Nocturne"])
+        base = themes[0]["colors"]
+        self.assertTrue(base)
+        for theme in themes:
+            self.assertEqual(set(theme["colors"]), set(base))
+            for original, mapped in theme["colors"].items():
+                self.assertRegex(original, r"^[0-9A-F]{6}$")
+                self.assertRegex(mapped, r"^[0-9A-F]{6}$")
+            self.assertEqual(theme["colors"]["606775"], "606775")
+            self.assertEqual(theme["colors"].get("000000", "000000"), "000000")
+        self.assertTrue(all(key == value for key, value in base.items()))
+        palette = without_comments(source_text("PrismelierPalette.mc"))
+        self.assertIn("module PrismelierPalette", palette)
+        self.assertRegex(palette, r"function\s+color\(value, theme\)")
+        self.assertIn("if (theme == 0) { return value; }", palette)
+        blocks = re.findall(r"case 0x([0-9A-F]{6}):(.*?)break;", palette, re.S)
+        self.assertEqual(len(blocks), len(base))
+        self.assertEqual({key for key, _ in blocks}, set(base))
+        for original, body in blocks:
+            entries = re.findall(r"if \(theme == ([1-3])\) \{ return 0x([0-9A-F]{6}); \}", body)
+            self.assertEqual(len(entries), 3)
+            self.assertEqual(dict(entries), {str(i): themes[i]["colors"][original] for i in range(1, 4)})
+        self.assertRegex(palette, r"}\s*return value;\s*}\s*}\s*$")
+        view = without_comments(source_text("PrismelierView.mc"))
+        self.assertTrue(set(re.findall(r"0x([0-9A-F]{6})\b", view)) <= set(base),
+                        "Every literal artwork color must be in the theme map")
+        self.assertIn("theme = data.palette;", view)
+        self.assertIn("dc.setColor(PrismelierPalette.color(foreground, theme), background);", view)
+        self.assertEqual(view.count("dc.setColor("), 1, "Artwork bypasses the palette helper")
+        print(f"\nPalette source audit: {len(themes)} themes x {len(base)} color entries match JSON; "
+              "ambient ink and black remain unchanged")
 
     def test_font_pages_geometry_and_rgb_storage(self):
         fonts = ET.parse(ROOT / "resources/fonts/fonts.xml").getroot()
@@ -229,6 +266,34 @@ class DataSourceContractTests(unittest.TestCase):
         self.assertIn('hour.format("%02d")', self.code)
         self.assertIn('minute.format("%02d")', self.code)
 
+    def test_body_battery_local_timestamped_score_contract(self):
+        self.assertRegex(self.code, r"var\s+bodyBattery\s+as\s+Lang\.Number\s+or\s+Null\s*=\s*null;")
+        self.assertRegex(self.code, r"const\s+BODY_BATTERY_MAX_AGE_SECONDS\s*=\s*900;")
+        self.assertLess(self.code.index("seconds - _bodyBatteryAt > BODY_BATTERY_MAX_AGE_SECONDS"),
+                        self.code.index("if (force || minute != _lastRefreshMinute)"))
+        refresh = self.code.split("if (force || minute != _lastRefreshMinute)", 1)[1].split("updateWeatherDisplay", 1)[0]
+        self.assertEqual(refresh.count("readBodyBattery(seconds);"), 1)
+        body = self.code.split("private function readBodyBattery", 1)[1].split("private function readWeather", 1)[0]
+        for fragment in ("bodyBattery = null;", "_bodyBatteryAt = null;",
+                         "SensorHistory has :getBodyBatteryHistory",
+                         "SensorHistory.getBodyBatteryHistory",
+                         "new Time.Duration(BODY_BATTERY_MAX_AGE_SECONDS)",
+                         "SensorHistory.ORDER_NEWEST_FIRST", "sample.when.value()",
+                         "age > BODY_BATTERY_MAX_AGE_SECONDS", "age >= 0",
+                         "sample.data != null", "sample.data >= 0", "sample.data <= 100",
+                         "bodyBattery = sample.data.toNumber();",
+                         "_bodyBatteryAt = sample.when.value();"):
+            self.assertIn(fragment, body)
+        self.assertNotIn("getSystemStats", body)
+        self.assertNotIn("Complications", self.code)
+        view = without_comments(source_text("PrismelierView.mc"))
+        body_display = view.split("function drawBodyBattery(dc)", 1)[1].split("function drawTemperature", 1)[0]
+        device_display = view.split("function drawBattery(dc)", 1)[1].split("function drawBodyBattery", 1)[0]
+        self.assertIn('data.bodyBattery == null ? "--" : data.bodyBattery.format("%d")', body_display)
+        self.assertNotIn('"%"', body_display)
+        self.assertNotIn("data.battery", body_display)
+        self.assertIn('data.battery.format("%d") + "%"', device_display)
+
     def test_solar_location_timezone_selection_and_expiry_contract(self):
         self.assertIn("wx.observationLocationPosition", self.code)
         self.assertNotIn("new Position.Location", self.code)
@@ -256,7 +321,7 @@ class DataSourceContractTests(unittest.TestCase):
         self.assertNotRegex(branch, r"\bdraw[A-Z]")
         self.assertNotIn("Timer", view)
         before_branch = view.split("if (sleeping)", 1)[0]
-        self.assertIn("dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK)", before_branch)
+        self.assertIn("paint(dc, Graphics.COLOR_BLACK, Graphics.COLOR_BLACK)", before_branch)
         self.assertIn("dc.clear()", before_branch)
         # Background craftsmanship is awake-only. Guard its call site as well
         # as the sparse sleep body so later refactors cannot light it in AOD.
@@ -359,6 +424,7 @@ class OfficialSdkChecks(unittest.TestCase):
             "sample.when": ["Time.Moment"], "wx.observationTime": ["Time.Moment"],
             "data.solarLabel": ["Lang.String"],
             "data.battery": ["Lang.Number"], "data.heartRate": ["Lang.Number"],
+            "data.bodyBattery": ["Lang.Number"],
             "h": ["Lang.Number"], "hour": ["Lang.Number"], "minute": ["Lang.Number"],
             "n": ["Lang.Number"], "info.day": ["Lang.Number"],
             "value": ["Lang.Number", "Lang.Float"],
@@ -367,7 +433,8 @@ class OfficialSdkChecks(unittest.TestCase):
         numeric = ["Lang.Number", "Lang.Float", "Lang.Long", "Lang.Double"]
         chains = {"toNumber": numeric, "toFloat": numeric, "format": numeric,
                   "add": ["Time.Moment"], "value": ["Time.Moment"]}
-        local_classes = {"data": "PrismelierData.mc", "view": "PrismelierView.mc"}
+        local_classes = {"data": "PrismelierData.mc", "view": "PrismelierView.mc",
+                         "PrismelierPalette": "PrismelierPalette.mc"}
         cache = {}
         checked = set()
         constants_checked = set()
@@ -458,6 +525,24 @@ class OfficialSdkChecks(unittest.TestCase):
         self.assertTrue(referenced)
         self.assertEqual(referenced - documented, set())
 
+    def test_body_battery_documented_fr265_watchface_support(self):
+        document = (SDK / "doc/Toybox/SensorHistory.html").read_text(encoding="utf-8")
+        details = document.split('id="getBodyBatteryHistory-instance_function"', 1)[1].split('<h3 class="signature"', 1)[0]
+        plain = html.unescape(re.sub(r"<[^>]+>", " ", details))
+        self.assertIn("Forerunner® 265", plain)
+        self.assertIn("API Level 3.3.0", plain)
+        self.assertIn("0-100", plain)
+        self.assertIn("SensorHistory", document.split("Requires Permission:", 1)[1].split("Classes Under Namespace", 1)[0])
+        matrix = (SDK / "doc/docs/Connect_IQ_Basics/App_Types.html").read_text(encoding="utf-8")
+        table = next(t for t in re.findall(r"<table.*?</table>", matrix, re.S) if "Toybox.SensorHistory" in t)
+        rows = re.findall(r"<tr.*?</tr>", table, re.S)
+        def cells(row):
+            return [html.unescape(re.sub(r"<[^>]+>", "", c)).strip()
+                    for c in re.findall(r"<t[hd]\b[^>]*>(.*?)</t[hd]>", row, re.S)]
+        header = cells(rows[0])
+        row = cells(next(r for r in rows if "Toybox.SensorHistory" in r))
+        self.assertEqual(row[header.index("Watch Face")], "✓")
+
     def test_official_monkeydoc_parser_no_diagnostics(self):
         if shutil.which("java") is None:
             self.skipTest("Java not installed; official parser check skipped")
@@ -474,8 +559,11 @@ class OfficialSdkChecks(unittest.TestCase):
             # monkeydoc can print parser errors while returning zero.
             self.assertEqual((result.stdout + result.stderr).strip(), "",
                              "Unexpected parser diagnostics; inspect, do not trust exit code alone")
-            for name in ("PrismelierApp", "PrismelierView", "PrismelierData"):
-                self.assertTrue((Path(temp) / "Global" / (name + ".html")).is_file())
+            for path in files:
+                names = re.findall(r"\b(?:class|module)\s+(\w+)", without_comments(path.read_text()))
+                self.assertTrue(names, str(path))
+                for name in names:
+                    self.assertTrue((Path(temp) / "Global" / (name + ".html")).is_file(), name)
         self.assertEqual(before, {p: hashlib.sha256(p.read_bytes()).hexdigest() for p in files},
                          "Source changed during parser verification; rerun against final sources")
 

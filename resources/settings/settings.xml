@@ -1,5 +1,5 @@
 <settings>
-  <setting propertyKey="@Properties.Palette" title="@Strings.ThemeLabel"><settingConfig type="list"><listEntry value="0">@Strings.PrismTheme</listEntry><listEntry value="1">@Strings.OrchardTheme</listEntry></settingConfig></setting>
+  <setting propertyKey="@Properties.Palette" title="@Strings.ThemeLabel"><settingConfig type="list"><listEntry value="0">@Strings.PrismTheme</listEntry><listEntry value="1">@Strings.FoundryTheme</listEntry><listEntry value="2">@Strings.PorcelainTheme</listEntry><listEntry value="3">@Strings.NocturneTheme</listEntry></settingConfig></setting>
   <setting propertyKey="@Properties.TimeFormat" title="@Strings.TimeLabel"><settingConfig type="list"><listEntry value="0">@Strings.DeviceSetting</listEntry><listEntry value="1">@Strings.Time12</listEntry><listEntry value="2">@Strings.Time24</listEntry></settingConfig></setting>
   <setting propertyKey="@Properties.TemperatureUnits" title="@Strings.TemperatureLabel"><settingConfig type="list"><listEntry value="0">@Strings.DeviceSetting</listEntry><listEntry value="1">@Strings.Celsius</listEntry><listEntry value="2">@Strings.Fahrenheit</listEntry></settingConfig></setting>
 </settings>

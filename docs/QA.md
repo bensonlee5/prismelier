@@ -3,14 +3,17 @@
 Prismelier is a source project with design renders. It has not been built for a
 Forerunner 265, run in Garmin's simulator, or installed on physical hardware.
 
-## Recorded result, 1 October 2026, 05:16 UTC
+## Recorded result, 1 October 2026, 05:35 UTC
 
-- SDK 9.2.0 and Pillow available: **15 tests passed**, including a fresh parser
-  run against all final source files, 51 API owner/method pairs and argument
+- SDK 9.2.0 and Pillow available: **18 tests passed**, including a fresh parser
+  run against all source files, 52 API owner/method pairs and argument
   counts, 61 module constants, and weather symbols checked against Garmin's
   bundled documentation
 - Standard-library-only run, with SDK environment variables removed and Python
-  site packages disabled: **10 tests passed, 5 optional checks skipped**
+  site packages disabled: **12 tests passed, 6 optional checks skipped**
+- Palette consistency: **4 themes × 67 color entries** match the committed
+  `themes.json`; the ambient ink and black background are unchanged in every
+  palette. Settings and Data both accept all four theme indexes
 - Ambient asset estimate: **2,582 lit pixels maximum**, **1.899%** of the
   135,948-pixel circular screen model, at `08:08`, including the conservative
   one-pixel halo. All 2,880 12/24-hour clock strings and all three bands were
@@ -26,13 +29,19 @@ current 20px Small font. The new `drawArchitecture`, `trace`, and `junction`
 helpers were included in this parser and API check. A static guard confirms
 that background architecture is called only after the sleep branch returns;
 it is excluded from the time-only ambient display. No source changed during
-that parser run.
+that parser run. This run also covers timestamped local Body Battery history,
+its separate person-and-bolt score, and the Reactor, Foundry, Porcelain, and
+Nocturne palettes. Device charge remains a distinct percentage. The new local
+`PrismelierPalette.color(value, theme)` call is checked against its definition,
+and every generated color mapping is compared with JSON. Renew the fingerprints
+after any subsequent source revision.
 Source fingerprints for that run:
 
 ```text
 PrismelierApp.mc   e8696d7cd4acb9ec2ab2971572a5d1ee5a5d80017d23ff7c345fc0eb3dabbb14
-PrismelierData.mc  1fa7e7ecdfbc4093d089c49690288f489a0f10446b4cc7ae2facb704e7817afd
-PrismelierView.mc  bcfa0b9ed5f36e84e3a7fa60d3c2043f14c0c7e29c6a2d21c4342270624efad3
+PrismelierData.mc  3568805c9c6fc492c46ff3661a01849705f46c7dd394f35c1b7a58cb42def084
+PrismelierPalette.mc  80d4f9049b5ef5f31f9f817dc25a5144644a1203f72a46aed3b7a60ede543239
+PrismelierView.mc  7d3d267f2dece4ce748ef08a0ad832c31ef5176c11d6ae383da6a70e672fc06a
 ```
 
 ## Automated checks
@@ -83,12 +92,35 @@ perform type inference, app-context validation, or device-specific checking.
 The suite additionally runs the official `monkeydoc` parser against all project
 `.mc` files. No SDK is included, downloaded, or installed by the project or tests.
 
-The official SDK 9.2.0 parser generated documentation for all three source files
+The official SDK 9.2.0 parser generated documentation for all four source files
 without diagnostics during development. This establishes parser acceptance
 only. A deliberately wrong return type was also accepted by `monkeydoc`, so this
 is not a type check. A malformed-syntax negative control produced parser errors
 despite exit status 0; the test therefore inspects diagnostics as well as exit
 status. Re-run against the final sources after every source change.
+
+## Body Battery support and freshness
+
+The public `bodyBattery` field is a nullable 0–100 score, separate from the
+device-charge `battery` field. It reads
+[`SensorHistory.getBodyBatteryHistory`](https://developer.garmin.com/connect-iq/api-docs/Toybox/SensorHistory.html#getBodyBatteryHistory-instance_function),
+which lists the FR265 and API 3.3.0. The existing `SensorHistory` permission and
+minimum API 4.2.0 are sufficient. Garmin's SDK App Types matrix explicitly
+allows SensorHistory in watch faces; the optional SDK test checks that cell.
+
+The app asks for newest-first local history once per clock minute, or on an
+existing forced refresh. It only accepts scores from 0 through 100 with a
+non-future timestamp at most **900 seconds (15 minutes)** old. Zero remains a
+valid score; missing, expired, invalid, unsupported, or failed reads produce
+`null`, never an invented score. Cached timestamps are checked before the
+minute throttle, so clock regressions and expiry clear the value promptly.
+
+Fifteen minutes is this app's freshness policy, not a Garmin update guarantee.
+The official SDK's *Quantifying the User* chapter says history is recorded
+on-device, does not include synced data, and provides no guaranteed interval or
+range. This implementation activates no sensors and transmits no health data.
+The test suite checks these source contracts and official API support; actual
+Body Battery behavior on the watch still needs runtime validation.
 
 ## Build and runtime blockers
 
@@ -115,7 +147,8 @@ compiler profile, or proprietary SDK redistribution was used. See
 2. Build with warnings and type checking; resolve all device/resource errors
 3. Run Garmin's FR265 simulator, including its always-on screen/heat-map checks
 4. Test missing and disconnected weather, observations at 2h and 24h boundaries,
-   unknown/future timestamps, no recent HR, midnight, DST changes, travel,
+   unknown/future timestamps, no recent HR, Body Battery at 0/100/null and the
+   15-minute cutoff, midnight, DST changes, travel,
    unavailable/polar solar events, and settings changes
 5. Verify on an actual FR265: fonts, alignment, clipping, wrist activation,
    always-on transitions, freshness behavior, and sustained battery impact
