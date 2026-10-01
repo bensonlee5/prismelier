@@ -256,10 +256,9 @@ class ProjectStructureTests(unittest.TestCase):
             "packingFormat": "default", "automaticPalette": "true",
             "dithering": "none", "compress": "true",
         })
-        self.assertEqual(len(bitmap), 1)
-        self.assertEqual(bitmap[0].tag, "palette")
-        self.assertEqual(bitmap[0].attrib, {"disableTransparency": "true"})
-        self.assertEqual(len(bitmap[0]), 0)
+        # monkeyc rejects an explicit <palette> alongside automaticPalette="true";
+        # opacity is enforced by the source PNG (no tRNS) checked below.
+        self.assertEqual(len(bitmap), 0)
         texture = path.parent / bitmap.attrib["filename"]
         self.assertEqual(png_header(texture), (416, 416, 8, 3, 0, 0, 0))
         chunks = png_chunks(texture)

@@ -417,7 +417,7 @@ class PrismelierData {
                 nowSeconds - _locationAt >= WEATHER_EXPIRE_SECONDS) {
             return;
         }
-        var best as Time.Moment or Null = null;
+        var best = null as Time.Moment or Null;
         for (var i = 0; i < _solarEvents.size(); i += 1) {
             var candidate = _solarEvents[i] as Time.Moment;
             if (candidate.value() > nowSeconds &&
