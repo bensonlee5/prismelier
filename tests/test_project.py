@@ -18,6 +18,7 @@ import struct
 import subprocess
 import tempfile
 import unittest
+import zlib
 import xml.etree.ElementTree as ET
 
 try:
@@ -62,6 +63,31 @@ def png_header(path):
     if header[:8] != b"\x89PNG\r\n\x1a\n" or header[12:16] != b"IHDR":
         raise AssertionError("Not a PNG with an IHDR header: " + str(path))
     return struct.unpack(">IIBBBBB", header[16:29])
+
+def png_chunks(path):
+    """Read PNG chunks without Pillow, including indexed-image transparency."""
+    raw = path.read_bytes()
+    if raw[:8] != b"\x89PNG\r\n\x1a\n":
+        raise AssertionError("Not a PNG: " + str(path))
+    offset = 8
+    result = []
+    while offset + 12 <= len(raw):
+        length = struct.unpack(">I", raw[offset:offset + 4])[0]
+        kind = raw[offset + 4:offset + 8]
+        end = offset + 12 + length
+        if end > len(raw):
+            raise AssertionError("Truncated PNG chunk: " + str(path))
+        data = raw[offset + 8:offset + 8 + length]
+        crc = struct.unpack(">I", raw[offset + 8 + length:end])[0]
+        if zlib.crc32(kind + data) != crc:
+            raise AssertionError("Invalid PNG chunk CRC: " + str(path))
+        result.append((kind, data))
+        offset = end
+        if kind == b"IEND":
+            break
+    if offset != len(raw) or not result or result[-1][0] != b"IEND":
+        raise AssertionError("PNG missing IEND or has trailing data: " + str(path))
+    return result
 
 def clock_text(minute, use_24_hour):
     """Independent test input generation, not execution of formatTime()."""
@@ -218,6 +244,39 @@ class ProjectStructureTests(unittest.TestCase):
                     self.assertLessEqual(glyph["x"] + glyph["width"], data["common"]["scaleW"])
                     self.assertLessEqual(glyph["y"] + glyph["height"], data["common"]["scaleH"])
 
+    def test_foundry_texture_resource_is_one_opaque_indexed_416_bitmap(self):
+        path = ROOT / "resources/textures/textures.xml"
+        root = ET.parse(path).getroot()
+        self.assertEqual(root.tag, "resources")
+        self.assertEqual(len(root), 1)
+        bitmap = root[0]
+        self.assertEqual(bitmap.tag, "bitmap")
+        self.assertEqual(bitmap.attrib, {
+            "id": "FoundryBackground", "filename": "foundry-background-indexed.png",
+            "packingFormat": "default", "automaticPalette": "true",
+            "dithering": "none", "compress": "true",
+        })
+        self.assertEqual(len(bitmap), 1)
+        self.assertEqual(bitmap[0].tag, "palette")
+        self.assertEqual(bitmap[0].attrib, {"disableTransparency": "true"})
+        self.assertEqual(len(bitmap[0]), 0)
+        texture = path.parent / bitmap.attrib["filename"]
+        self.assertEqual(png_header(texture), (416, 416, 8, 3, 0, 0, 0))
+        chunks = png_chunks(texture)
+        kinds = [kind for kind, _ in chunks]
+        self.assertNotIn(b"tRNS", kinds, "Indexed source must have no transparent palette entries")
+        self.assertEqual(kinds.count(b"PLTE"), 1)
+        palette = next(data for kind, data in chunks if kind == b"PLTE")
+        self.assertEqual(len(palette) % 3, 0)
+        self.assertLessEqual(len(palette) // 3, 256)
+        self.assertGreater(len(palette), 0)
+        self.assertIn(b"IDAT", kinds)
+        decoded = zlib.decompress(b"".join(data for kind, data in chunks if kind == b"IDAT"))
+        self.assertEqual(len(decoded), 416 * (416 + 1))
+        self.assertTrue(all(decoded[row * 417] in range(5) for row in range(416)))
+        print(f"\nFoundry texture: 416x416, {len(palette) // 3} palette entries, opaque; "
+              f"source PNG {texture.stat().st_size:,} bytes (not runtime RAM)")
+
     def test_font_glyph_coverage_including_stale_marker(self):
         requirements = {
             "Time": "0123456789:", "Ambient": "0123456789:",
@@ -329,10 +388,44 @@ class DataSourceContractTests(unittest.TestCase):
         self.assertLess(update.index("return;"), update.index("data.refresh(false);"))
         for method in ("drawArchitecture", "drawRobotics"):
             call = method + "(dc);"
-            self.assertEqual(update.count(call), 1)
+            positions = [m.start() for m in re.finditer(re.escape(call), update)]
+            self.assertTrue(positions)
             self.assertNotIn(method + "(", before_branch)
-            self.assertLess(update.index("data.refresh(false);"), update.index(call))
-            self.assertEqual(view.count(call), 1)
+            self.assertTrue(all(update.index("data.refresh(false);") < p for p in positions))
+            self.assertEqual(view.count(call), len(positions))
+
+    def test_texture_reference_lifecycle_and_awake_only_draw(self):
+        view = without_comments(source_text("PrismelierView.mc"))
+        refresh = view.split("function refreshTexture()", 1)[1].split("function usesTexture()", 1)[0]
+        self.assertIn("if (theme != 1)", refresh)
+        self.assertIn("background = null;", refresh)
+        self.assertIn("background == null", refresh)
+        resource = "WatchUi.loadResource(Rez.Drawables.FoundryBackground)"
+        self.assertEqual(refresh.count(resource), 1)
+        self.assertEqual(view.count(resource), 1)
+        self.assertIn("try {", refresh)
+        self.assertRegex(refresh, r"catch\s*\(e\)\s*\{\s*background = null;")
+        layout = view.split("function onLayout(dc)", 1)[1].split("function reloadSettings()", 1)[0]
+        settings = view.split("function reloadSettings()", 1)[1].split("function refreshTexture()", 1)[0]
+        self.assertIn("refreshTexture();", layout)
+        self.assertIn("if (laidOut) { refreshTexture(); }", settings)
+        self.assertIn("return theme == 1 && background != null;", view)
+        update = view.split("function onUpdate(dc)", 1)[1].split("\n    function ", 1)[0]
+        draw = "dc.drawBitmap(0, 0, background);"
+        self.assertEqual(view.count(draw), 1)
+        self.assertLess(update.index("return;"), update.index(draw))
+        self.assertLess(update.index("data.refresh(false);"), update.index(draw))
+        self.assertNotIn("loadResource(", update)
+        self.assertNotIn("refreshTexture(", update)
+        self.assertNotRegex(view, r"\.get\s*\(")
+        self.assertNotIn("BufferedBitmap", view)
+        recovery = update.split(draw, 1)[1].split("} else {", 1)[0]
+        self.assertIn("catch (e)", recovery)
+        self.assertIn("background = null;", recovery)
+        self.assertIn("paint(dc, Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);", recovery)
+        self.assertLess(recovery.index("dc.clear();"), recovery.index("drawArchitecture(dc);"))
+        for call in ("drawArchitecture(dc);", "drawRobotics(dc);", "drawMachine(dc);"):
+            self.assertIn(call, recovery)
 
 
 @unittest.skipUnless(Image is not None, "Pillow not installed; optional font-asset raster checks skipped")
@@ -410,8 +503,58 @@ class AmbientAssetTests(unittest.TestCase):
               f"at {peak_time}; includes 1px halo; no firmware claim")
 
 
+@unittest.skipUnless(Image is not None, "Pillow not installed; optional texture safe-area check skipped")
+class TextureAssetTests(unittest.TestCase):
+    def test_meaningful_texture_pixels_inside_204px_safe_radius(self):
+        root = ET.parse(ROOT / "resources/textures/textures.xml").getroot()
+        path = ROOT / "resources/textures" / root[0].attrib["filename"]
+        with Image.open(path) as source:
+            self.assertEqual(source.size, (416, 416))
+            self.assertEqual(source.mode, "P")
+            self.assertNotIn("transparency", source.info)
+            pixels = source.convert("RGB")
+            max_distance_squared = 0
+            meaningful = 0
+            for y in range(416):
+                for x in range(416):
+                    # A dim near-black border is immaterial artwork; this is
+                    # an asset-coordinate test, not hardware clipping proof.
+                    if max(pixels.getpixel((x, y))) > 8:
+                        meaningful += 1
+                        distance_squared = (x + .5 - 208) ** 2 + (y + .5 - 208) ** 2
+                        max_distance_squared = max(max_distance_squared, distance_squared)
+                        self.assertLessEqual(distance_squared, 204 ** 2, (x, y))
+            self.assertGreater(meaningful, 0)
+            print(f"\nTexture safe area: {meaningful:,} pixels with max RGB > 8; "
+                  f"maximum center-based radius {math.sqrt(max_distance_squared):.4f}px <= 204px")
+
+
 @unittest.skipUnless(SDK is not None, "Set CONNECTIQ_SDK, CIQ_SDK, or CIQ_HOME for optional official SDK checks")
 class OfficialSdkChecks(unittest.TestCase):
+    def test_texture_xml_options_and_fr265_memory_against_official_sdk(self):
+        ns = {"xs": "http://www.w3.org/2001/XMLSchema"}
+        schema = ET.parse(SDK / "bin/resources.xsd").getroot()
+        texture_xml = ET.parse(ROOT / "resources/textures/textures.xml").getroot()
+        for element, type_name in ((texture_xml[0], "bitmapType"), (texture_xml[0][0], "paletteType")):
+            definition = schema.find(f"xs:complexType[@name='{type_name}']", ns)
+            self.assertIsNotNone(definition)
+            attributes = {a.attrib["name"]: a.attrib["type"]
+                          for a in definition.findall("xs:attribute", ns)}
+            self.assertTrue(set(element.attrib) <= set(attributes))
+            for name, value in element.attrib.items():
+                if attributes[name] == "xs:boolean":
+                    self.assertIn(value, ("true", "false"))
+        for name, value in (("packingFormat", texture_xml[0].attrib["packingFormat"]),
+                            ("dithering", texture_xml[0].attrib["dithering"])):
+            values = {e.attrib["value"] for e in schema.findall(
+                f"xs:simpleType[@name='{name}Enum']/xs:restriction/xs:enumeration", ns)}
+            self.assertIn(value, values)
+        device = (SDK / "doc/docs/Device_Reference/fr265.html").read_text(encoding="utf-8")
+        plain = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", device)))
+        self.assertRegex(plain, r"Watch Face\s+131072\b")
+        self.assertRegex(plain, r"Screen Size\s+416 x 416\b")
+        self.assertRegex(plain, r"Display Colors\s+65536\b")
+
     def test_all_api_method_references_and_argument_counts(self):
         # This is a name/arity audit, not type inference or device compilation.
         # Fail closed on unfamiliar receivers so additions need explicit review.

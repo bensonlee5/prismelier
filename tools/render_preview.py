@@ -10,9 +10,10 @@ S = 3
 THEMES = json.loads((ROOT/'resources/themes.json').read_text())
 COL = dict(ink='#f2edd8',copper='#d98b52',green='#c7ff70',pink='#f474e8',cyan='#6be4de',muted='#786d82',panel='#122325')
 class Canvas:
-    def __init__(self, theme=0):
+    def __init__(self, theme=0, photo=False):
         self.theme=THEMES[theme]['colors']
-        self.im=Image.new('RGB',(416*S,416*S),'black'); self.d=ImageDraw.Draw(self.im); self.fonts={}; self.boxes=[]
+        self.base=Image.open(ROOT/'resources/textures/foundry-background-indexed.png').convert('RGB') if photo else None
+        self.im=Image.new('RGBA',(416*S,416*S),(0,0,0,0)) if photo else Image.new('RGB',(416*S,416*S),'black'); self.d=ImageDraw.Draw(self.im); self.fonts={}; self.boxes=[]
     def color(self,c):
         value=COL.get(c,c)
         if isinstance(value,str) and value.startswith('#'):
@@ -37,7 +38,9 @@ class Canvas:
             g=f[ord(t)]; mask=atlas.crop((g['x'],g['y'],g['x']+g['width'],g['y']+g['height'])).resize((g['width']*S,g['height']*S))
             patch=Image.new('RGB',mask.size,self.color(c)); self.im.paste(patch,(round((px+g['xoffset'])*S),round((y+g['yoffset'])*S)),mask); px+=g['xadvance']
     def radial(self,cx,cy,inner,outer,a,c,w=1): self.line(point(cx,cy,inner,a),point(cx,cy,outer,a),c,w)
-    def finish(self): return self.im.resize((416,416),Image.Resampling.LANCZOS)
+    def finish(self):
+        layer=self.im.resize((416,416),Image.Resampling.LANCZOS)
+        return Image.alpha_composite(self.base.convert('RGBA'),layer).convert('RGB') if self.base is not None else layer
 def point(x,y,r,a): return x+math.cos(math.radians(a))*r,y+math.sin(math.radians(a))*r
 
 def screw(c,x,y,color='copper'):
@@ -47,34 +50,39 @@ def gear(c,x,y,r,color):
     c.circle(x,y,r-3,color,w=3); c.circle(x,y,r-8,color)
     for a in range(3):c.radial(x,y,4,r-8,a*120+25,color,3)
     c.circle(x,y,4,'#d6d9bf',True);screw(c,x,y)
-def weather(c,x,y,kind='partly',stale=False):
+def weather(c,x,y,kind='partly',stale=False,night=False):
     color='copper' if stale else 'cyan'
+    def path(points,col=color):trace(c,[(x+a,y+b) for a,b in points],col,2)
     if kind=='sun':
-        c.circle(x,y,7,color)
-        for i in range(8):c.radial(x,y,10,14,i*45,color)
+        if night:path([(-4,-11),(-10,-7),(-12,0),(-9,8),(-2,11),(6,8),(10,3),(3,4),(-3,0),(-5,-6),(-4,-11)])
+        else:
+            c.circle(x,y,7,color,w=2)
+            for a in range(8):c.radial(x,y,11,14,a*45,color,2)
+    elif kind=='wind':
+        path([(-14,-5),(7,-5),(10,-8),(8,-11),(5,-11)]);path([(-10,1),(14,1),(16,4),(13,7)]);c.line((x-14,y+7),(x+5,y+7),color,2)
     elif kind=='fog':
         for xx,yy in [(14,-5),(10,1),(14,7)]:c.line((x-xx,y+yy),(x+xx,y+yy),color,2)
     else:
         if kind=='partly':
-            c.circle(x+8,y-9,7,'copper',True)
-            for a in (270,315,0):c.radial(x+8,y-9,10,12,a,'copper')
-        for dx,dy,r in [(-8,0,6),(0,-5,9),(9,0,6)]:c.circle(x+dx,y+dy,r,color,True)
-        c.rect(x-9,y,19,5,color)
-        if kind in ('rain','storm'):
-            c.line((x-5,y+9),(x-9,y+14),color,2);c.line((x+6,y+9),(x+2,y+14),color,2)
-        if kind=='snow':
-            c.circle(x-6,y+12,2,color,True);c.circle(x+6,y+12,2,color,True)
-    if kind=='unknown' or stale:
-        c.line((x-16,y+15),(x+16,y-16),'black',5);c.line((x-16,y+15),(x+16,y-16),'copper',2)
-def solar(c,up=False,missing=False,stale=False,clock=None):
-    x,y=240,269; color='#777f70' if missing else '#27645d' if up else '#a04d30'; suny=y-5 if up else y+2
-    c.circle(x,suny,8,color);c.rect(x-10,y+1,20,14,'#d6d9bf');c.line((x-14,y),(x+14,y),color,2)
-    for a in (220,270,320):c.radial(x,suny,11,14,a,color)
+            path([(3,-13),(7,-16),(12,-15),(15,-11),(14,-6)],'copper')
+            for a in (270,315,0):c.radial(x+8,y-10,8,10,a,'copper',2)
+        path([(-12,7),(-15,4),(-15,0),(-12,-4),(-7,-5),(-5,-10),(0,-13),(6,-11),(9,-6),(10,-2),(14,0),(16,4),(13,7),(-12,7)])
+        if kind=='rain':
+            for a in (-7,2,11):c.line((x+a,y+11),(x+a-3,y+16),color,2)
+        elif kind=='storm':path([(3,9),(-2,15),(5,15),(0,16)])
+        elif kind=='snow':
+            c.line((x,y+10),(x,y+16),color,2);c.line((x-4,y+12),(x+4,y+17),color,2);c.line((x-4,y+17),(x+4,y+12),color,2)
+    if kind=='unknown' or stale:c.line((x-17,y+16),(x+17,y-17),'copper',2)
+def solar(c,up=False,missing=False,stale=False,clock=None,photo=False):
+    x,y=240,277 if photo else 269;color='#777f70' if missing else '#27645d' if up else '#a04d30';suny=y-4 if up else y
+    for a in range(180,360,15):c.line(point(x,suny,8,a),point(x,suny,8,a+15),color,2)
+    c.line((x-14,y),(x+12,y),color,2)
+    for a in (220,270,320):c.radial(x,suny,11,14,a,color,2)
     if not missing:
-        tipy=y-12 if up else y+10; basey=tipy+5 if up else tipy-5
+        tipy=y-12 if up else y+10;basey=tipy+5 if up else tipy-5
         c.line((x+16,y-12 if up else y+1),(x+16,y-3 if up else y+10),color,2);c.line((x+12,basey),(x+16,tipy),color,2);c.line((x+20,basey),(x+16,tipy),color,2)
-    c.text(302,250,'Small',clock or ('--:--' if missing else '06:48' if up else '18:42'),'#183b3b')
-    if stale:c.circle(345,278,3,'copper')
+    c.text(302,255 if photo else 250,'Small',clock or ('--:--' if missing else '06:48' if up else '18:42'),'#183b3b')
+    if stale:c.circle(345,285 if photo else 278,3,'copper')
 def trace(c,points,color,w=1):
     for a,b in zip(points,points[1:]):c.line(a,b,color,w)
 def junction(c,x,y,color):c.circle(x,y,3,color);c.circle(x,y,1,color,True)
@@ -111,45 +119,52 @@ def robotics(c):
     for core in range(3):c.rect(193+core*11,360,7,8,'#3c6260',False)
     c.circle(179,357,1,'copper',True)
 
-def render(missing=False,fahrenheit=True,stale=False,ambient=None,up=False,time='10:08',temperature=72,heart=64,steps=8432,battery=78,clock=None,suffix=None,body_battery=76,theme=1):
-    c=Canvas(theme)
+def render(missing=False,fahrenheit=True,stale=False,ambient=None,up=False,time='10:08',temperature=72,heart=64,steps=8432,battery=78,clock=None,suffix=None,body_battery=76,theme=1,texture=True,weather_kind='partly'):
+    photo=theme==1 and texture and ambient is None
+    c=Canvas(theme,photo)
     if ambient is not None:
-        c.text(208,92+86*ambient,'Ambient',time,'#606775'); return c.finish()
-    architecture(c)
-    robotics(c)
-    c.rect(45,184,326,110,'panel',True,17);c.rect(45,184,326,110,'#344741',False,17)
-    for x in (42,374):
-        c.line((x,207),(x,262),'#5d3527',7);c.line((x-1,207),(x-1,262),'copper',2)
-        for k in range(6):c.line((x-5,214+k*8),(x+5,214+k*8),'#b56942',2)
-    gear(c,67,184,11,'pink');gear(c,349,184,11,'cyan');screw(c,59,282);screw(c,357,282)
-    c.polygon([(224,249),(344,249),(352,256),(347,286),(221,286),(217,278)],'#050e12');c.polygon([(224,246),(344,246),(352,253),(347,283),(221,283),(217,275)],'#d6d9bf');c.line((227,248),(341,248),'#f5f5db');c.line((224,246),(217,275),'copper',2);c.line((217,275),(221,283),'copper',2);c.line((81,288),(101,288),'#74aca0')
-    c.line((84,288),(105,300),'#805745',2);c.line((105,300),(162,300),'#805745',2);c.line((253,300),(310,300),'#487b72',2);c.line((310,300),(331,288),'#487b72',2);screw(c,162,300,'pink');screw(c,253,300,'cyan')
-    c.rect(121,51,17,10,'cyan',False,2);c.rect(138,54,2,4,'cyan')
-    if not missing:c.rect(124,54,int(11*battery/100),4,'cyan')
-    c.text(174,42,'Small','--%' if missing else f'{battery}%','pink' if battery<=15 else 'cyan')
-    c.circle(235,47,3,'pink',True);c.line((235,53),(235,60),'pink',2);c.line((230,55),(240,55),'pink',2);c.line((235,60),(231,66),'pink',2);c.line((235,60),(239,66),'pink',2);c.line((246,48),(242,55),'copper');c.line((242,55),(247,55),'copper');c.line((247,55),(243,62),'copper');c.text(280,42,'Small','--' if missing else str(body_battery),'ink')
-    c.text(208,77,'Time',time,'green')
+        c.text(208,92+86*ambient,'Ambient',time,'#606775');return c.finish()
+    if not photo:
+        architecture(c);robotics(c)
+        c.rect(45,184,326,110,'panel',True,17);c.rect(45,184,326,110,'#344741',False,17)
+        for x in (42,374):
+            c.line((x,207),(x,262),'#5d3527',7);c.line((x-1,207),(x-1,262),'copper',2)
+            for k in range(6):c.line((x-5,214+k*8),(x+5,214+k*8),'#b56942',2)
+        gear(c,67,184,11,'pink');gear(c,349,184,11,'cyan');screw(c,59,282);screw(c,357,282)
+        c.polygon([(224,249),(344,249),(352,256),(347,286),(221,286),(217,278)],'#050e12');c.polygon([(224,246),(344,246),(352,253),(347,283),(221,283),(217,275)],'#d6d9bf');c.line((227,248),(341,248),'#f5f5db');c.line((224,246),(217,275),'copper',2);c.line((217,275),(221,283),'copper',2);c.line((81,288),(101,288),'#74aca0')
+        c.line((84,288),(105,300),'#805745',2);c.line((105,300),(162,300),'#805745',2);c.line((253,300),(310,300),'#487b72',2);c.line((310,300),(331,288),'#487b72',2);screw(c,162,300,'pink');screw(c,253,300,'cyan')
+    dx,dy=(-5,2) if photo else(0,0)
+    c.rect(121+dx,51+dy,17,10,'cyan',False,2);c.line((139+dx,54+dy),(139+dx,58+dy),'cyan',2)
+    if not missing:c.line((125+dx,56+dy),(125+dx+int(9*battery/100),56+dy),'cyan',2)
+    c.text(174+dx,42+dy,'Small','--%' if missing else f'{battery}%','pink' if battery<=15 else 'cyan')
+    c.circle(235,47+dy,3,'pink',w=2);c.line((235,53+dy),(235,60+dy),'pink',2);c.line((230,55+dy),(240,55+dy),'pink',2);c.line((235,60+dy),(231,66+dy),'pink',2);c.line((235,60+dy),(239,66+dy),'pink',2);trace(c,[(246,48+dy),(242,55+dy),(247,55+dy),(243,62+dy)],'copper');c.text(280,42+dy,'Small','--' if missing else str(body_battery),'ink')
+    c.text(208,78 if photo else 77,'Time',time,'green')
     if suffix:c.text(208,163,'Label',suffix,'ink')
-    c.rect(56,192,304,54,'#452744',True,10)
-    for grain in range(5):c.line((71,197+grain*10),(345,199+grain*10),'#85506d' if grain%2==0 else '#5d3854')
-    c.rect(56,192,304,54,'copper',False,10);c.line((71,193),(344,193),'#f2bf8c');c.line((71,245),(344,245),'#3e211e',2)
-    for x,y in [(64,201),(352,201),(64,237),(352,237)]:screw(c,x,y)
-    c.rect(73,209,270,19,'#091b23',True,4)
+    if not photo:
+        c.rect(56,192,304,54,'#452744',True,10)
+        for grain in range(5):c.line((71,197+grain*10),(345,199+grain*10),'#85506d' if grain%2==0 else '#5d3854')
+        c.rect(56,192,304,54,'copper',False,10);c.line((71,193),(344,193),'#f2bf8c');c.line((71,245),(344,245),'#3e211e',2)
+        for x,y in [(64,201),(352,201),(64,237),(352,237)]:screw(c,x,y)
+        c.rect(73,209,270,19,'#091b23',True,4)
     lo,hi=(0,120) if fahrenheit else(-20,40)
     if not missing:
-        width=int(262*max(0,min(1,(temperature-lo)/(hi-lo))))
+        start,full=(74,268) if photo else(77,262);width=int(full*max(0,min(1,(temperature-lo)/(hi-lo))))
         if width:
-            c.rect(77,213,width,11,'#80665c' if stale else 'pink',True,3);c.line((79,214),(77+width,214),'copper' if stale else '#ffc9fa')
-        c.rect(75+width,209,4,19,'ink')
-    for t in range(13):
-        x=77+int(262*t/12);c.line((x,202),(x,207 if t%3==0 else 205),'copper');c.line((x,232),(x,238 if t%3==0 else 235),'copper')
-    weather(c,94,265,'unknown' if missing else 'partly',stale)
-    c.text(165,247,'Value',('--' if missing else str(temperature))+('°F' if fahrenheit else '°C'),'ink')
-    if stale:c.circle(208,280,4,'copper');c.line((205,283),(211,277),'copper')
-    solar(c,up=up,missing=missing,stale=stale,clock=clock)
-    x,y=101,332
-    c.circle(x-4,y-3,5,'pink',True);c.circle(x+4,y-3,5,'pink',True);c.polygon([(x-9,y),(x+9,y),(x,y+9)],'pink');c.text(149,315,'Value','--' if missing else str(heart),'ink')
-    c.rect(220,322,6,11,'cyan',True,3);c.rect(229,328,6,11,'cyan',True,3);c.circle(223,318,2,'cyan',True);c.circle(232,324,2,'cyan',True);c.text(288,315,'Small' if steps>=10000 else 'Value','--' if missing else f'{steps:,}','ink')
+            c.rect(start,214,width,9,'#80665c' if stale else 'pink',True,3);c.line((start+2,215),(start+width,215),'copper' if stale else '#ffc9fa')
+        c.rect(start-2+width,211,4,17,'ink')
+    if not photo:
+        for t in range(13):
+            x=77+int(262*t/12);c.line((x,202),(x,207 if t%3==0 else 205),'copper');c.line((x,232),(x,238 if t%3==0 else 235),'copper')
+    weather(c,94,272 if photo else 265,'unknown' if missing else weather_kind,stale,up)
+    c.text(165,254 if photo else 247,'Value',('--' if missing else str(temperature))+('°F' if fahrenheit else '°C'),'ink')
+    if stale:
+        wx,wy=(72,283) if photo else (208,280);c.circle(wx,wy,3,'copper');c.line((wx-2,wy+2),(wx+2,wy-2),'copper')
+    solar(c,up=up,missing=missing,stale=stale,clock=clock,photo=photo)
+    dy=0
+    trace(c,[(101,341+dy),(92,332+dy),(92,327+dy),(95,324+dy),(99,324+dy),(101,327+dy),(103,324+dy),(107,324+dy),(110,327+dy),(110,332+dy),(101,341+dy)],'pink',2)
+    c.text(149,315+dy,'Value','--' if missing else str(heart),'ink')
+    c.d.ellipse(tuple(round(v*S) for v in (220,322+dy,226,333+dy)),outline=c.color('cyan'),width=2*S);c.d.ellipse(tuple(round(v*S) for v in (229,328+dy,235,339+dy)),outline=c.color('cyan'),width=2*S);c.circle(223,318+dy,2,'cyan',w=2);c.circle(232,324+dy,2,'cyan',w=2)
+    c.text(284 if photo else 288,315+dy,'Small' if steps>=10000 else 'Value','--' if missing else f'{steps:,}','ink')
     return c.finish()
 
 def main():
@@ -159,8 +174,8 @@ def main():
     d.text((74,50),'PRISMELIER / FOUNDRY',font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',30),fill=COL['copper'])
     d.text((74,102),'Impossible materials. Unapologetically digital.',font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-ExtraLight.ttf',23),fill=COL['ink'])
     hero.paste(face.resize((544,544),Image.Resampling.LANCZOS),(74,174))
-    d.text((686,223),'A ROBOTICS BACKPLANE FOR YOUR WRIST',font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',19),fill='#6ab8aa')
-    d.text((686,264),'Patinated teal. Copper. Ceramic.\nConnector headers and copper flex traces\nProcessor cells and actuator housings\nBody Battery + device charge, distinct.',font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',17),fill=COL['ink'],spacing=16)
+    d.text((686,223),'TACTILE MATERIALS. LIVE INSTRUMENTS.',font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',19),fill='#6ab8aa')
+    d.text((686,264),'Brushed copper and patinated circuitry\nWorn ceramic with real surface texture\nQuiet wells, live values, thin-line icons\nA static asset actually used by the code',font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',17),fill=COL['ink'],spacing=16)
     d.text((686,477),'Forerunner 265 / 416 × 416',font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',16),fill=COL['cyan'])
     d.text((686,533),'DESIGN RENDER\nIllustrative data, not a simulator capture',font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',14),fill=COL['copper'],spacing=8)
     hero.save(docs/'preview.png')

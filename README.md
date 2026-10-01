@@ -2,7 +2,7 @@
 
 **Impossible materials. An everyday time machine.**
 
-A bespoke, futuristic-steampunk digital watch face for the **Garmin Forerunner 265**. The default **Foundry** theme pairs warm ivory numerals with a patinated-teal Fahrenheit bar. Aged copper, petrol enamel and an asymmetric ceramic solar insert sit on a meticulously routed robotics backplane: pin headers, copper flex traces, actuator housings and a miniature processor package. The face contains no branding, date, word labels or outer clock indices.
+A bespoke, futuristic-steampunk digital watch face for the **Garmin Forerunner 265**. The default **Foundry** theme pairs warm ivory numerals with a patinated-teal Fahrenheit bar and **hyperreal material textures from a real 416px bitmap resource**. Aged copper, petrol enamel and an asymmetric ceramic solar insert sit on a meticulously routed robotics backplane: pin headers, copper flex traces, actuator housings and a miniature processor package. The face contains no branding, date, word labels or outer clock indices.
 
 ![Prismelier design render, with illustrative values](docs/preview.png)
 
@@ -17,7 +17,8 @@ A bespoke, futuristic-steampunk digital watch face for the **Garmin Forerunner 2
 - **Body Battery score** (0–100) beside a distinct person/energy-bolt icon
 - **Next sunrise or sunset**, automatically switching to the next event, with distinct rising/sinking sun and up/down-arrow icons
 - **Recent heart rate** in BPM and the exact daily step count
-- Exposed gearwork, copper fasteners, a luminous piston, inlaid circuits, chamfered ceramic panels, microbridges, junction vias and contrasting material edges
+- Brushed copper, worn ceramic and textured circuit-board surfaces, with exposed gearwork, fasteners, inlaid traces and actuator housings
+- Consistent thin-line weather, sunrise/sunset and metric pictograms drawn live over the texture
 - Sparse, dim, moving digital-time-only **always-on display**
 
 No clock hands or analog perimeter. The temperature is a **bar**, not a round dial. On-face text is limited to essential numbers, units and AM/PM when needed.
@@ -67,7 +68,7 @@ Temperature defaults explicitly to **Fahrenheit**, regardless of the watch's uni
 - **2 · Porcelain**: warm ivory, charcoal and brushed bronze
 - **3 · Nocturne**: midnight blue, amber and ice
 
-These preserved color studies show the shared composition with Body Battery before the final robotics-detail pass. The latest Foundry hero above shows the added connectors, actuator housings and processor package. Select `Palette` in the project settings; see the [sideload settings notes](docs/INSTALL.md#preferences). Theme colors come from `resources/themes.json`, compiled into `source/PrismelierPalette.mc` by `tools/generate_palettes.py`, and used by the design renderer too. This keeps the color definitions consistent with the source; the earlier study images are retained to document the design choice. The ambient time stays the same sparse, dim gray across themes. `python tools/render_preview.py --refresh-studies` regenerates the full study sheet against the newest geometry when explicitly desired.
+These preserved color studies show the shared composition with Body Battery before the final robotics-detail pass. The latest Foundry hero above shows the added connectors, actuator housings, processor package and final hyperreal material pass with monoline icons. Select `Palette` in the project settings; see the [sideload settings notes](docs/INSTALL.md#preferences). Theme colors come from `resources/themes.json`, compiled into `source/PrismelierPalette.mc` by `tools/generate_palettes.py`, and used by the design renderer too. This keeps the color definitions consistent with the source; the earlier study images are retained to document the design choice. Foundry uses the actual bitmap resource; the other palettes keep procedural materials. The ambient time stays the same sparse, dim gray across themes. `python tools/render_preview.py --refresh-studies` regenerates the full study sheet against the newest geometry when explicitly desired.
 
 The **left top capsule** is device charge (`%`). The **right top capsule**, with the person/energy bolt, is Body Battery (a score, without `%`). It is a wellness estimate, not a medical measurement. [Official API and supported devices](https://developer.garmin.com/connect-iq/api-docs/Toybox/SensorHistory.html#getBodyBatteryHistory-instance_function).
 
@@ -77,7 +78,8 @@ The **left top capsule** is device charge (`%`). The **right top capsule**, with
 - No GPS activation, external health-data transmission or persistent location storage
 - `SensorHistory` reads recent HR and Body Battery; `Positioning` permits access to the existing weather observation position
 - Data cached in RAM, expensive reads once per minute; no timers or seconds animation
-- Full color on wake, dim digital time in three separate positions while asleep
+- One opaque native-resolution Foundry background reference, no full-screen buffer copies
+- Full color/materials on wake; the texture is never drawn in AOD, which uses dim digital time in three separate positions
 - This is a personal glance display, not a medical instrument or a source for safety-critical weather/navigation
 
 ## Development
@@ -95,4 +97,4 @@ python tools/generate_fonts.py --font-dir /usr/share/fonts/truetype/dejavu
 python tools/render_preview.py
 ```
 
-Several actual-size visual refinements and an independent design critique informed the material treatment, sunrise/set iconography and worst-case spacing. See [QA](docs/QA.md) for what has actually been tested and the outstanding device checks. Font licensing is included in `resources/fonts/LICENSE-DejaVu.txt`. Original UI artwork consists of code-drawn primitives; no watch-brand artwork or logos are included. Garmin, Forerunner and Connect IQ are trademarks of Garmin; this is an independent project, not endorsed by Garmin.
+Several actual-size visual refinements and an independent design critique informed the material treatment, sunrise/set iconography and worst-case spacing. See [QA](docs/QA.md) for what has actually been tested and the outstanding device checks. Font licensing is included in `resources/fonts/LICENSE-DejaVu.txt`. The Foundry background is an AI-generated project asset; live icons and alternate material palettes are code-drawn. See [texture provenance and memory budget](docs/TEXTURE.md). No watch-brand artwork or logos are included. Garmin, Forerunner and Connect IQ are trademarks of Garmin; this is an independent project, not endorsed by Garmin.

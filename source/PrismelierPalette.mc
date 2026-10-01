@@ -69,7 +69,7 @@ module PrismelierPalette {
                 if (theme == 3) { return 0x15273D; }
                 break;
             case 0x27645D:
-                if (theme == 1) { return 0x35645A; }
+                if (theme == 1) { return 0x204C45; }
                 if (theme == 2) { return 0x445B58; }
                 if (theme == 3) { return 0x244A70; }
                 break;
@@ -274,7 +274,7 @@ module PrismelierPalette {
                 if (theme == 3) { return 0x91764D; }
                 break;
             case 0xA04D30:
-                if (theme == 1) { return 0xA0704E; }
+                if (theme == 1) { return 0x7D402C; }
                 if (theme == 2) { return 0x70462F; }
                 if (theme == 3) { return 0x735022; }
                 break;

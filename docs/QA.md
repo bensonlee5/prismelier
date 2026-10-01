@@ -3,14 +3,20 @@
 Prismelier is a source project with design renders. It has not been built for a
 Forerunner 265, run in Garmin's simulator, or installed on physical hardware.
 
-## Recorded result, 1 October 2026, 05:45 UTC
+## Recorded result, 1 October 2026, 06:12 UTC
 
-- SDK 9.2.0 and Pillow available: **18 tests passed**, including a fresh parser
-  run against all source files, 53 API owner/method pairs and argument
+- SDK 9.2.0 and Pillow available: **22 tests passed**, including a fresh parser
+  run against all source files, 54 API owner/method pairs and argument
   counts, 61 module constants, and weather symbols checked against Garmin's
   bundled documentation
 - Standard-library-only run, with SDK environment variables removed and Python
-  site packages disabled: **12 tests passed, 6 optional checks skipped**
+  site packages disabled: **14 tests passed, 8 optional checks skipped**
+- Foundry background: one referenced **416×416, 256-color, opaque indexed PNG**,
+  **84,734 bytes** on disk. PNG structure, chunk checksums, palette, compressed
+  scanline payload, XML options, and awake-only reference use are checked
+- Circular artwork safety: **98,331 pixels** with maximum RGB channel above 8
+  lie within a **202.8657px radius**, passing the 204px guard inside the 208px
+  screen radius. This checks the committed inset bitmap, not hardware rendering
 - Palette consistency: **4 themes × 67 color entries** match the committed
   `themes.json`; the ambient ink and black background are unchanged in every
   palette. Settings and Data both accept all four theme indexes, with Foundry
@@ -20,30 +26,26 @@ Forerunner 265, run in Garmin's simulator, or installed on physical hardware.
   one-pixel halo. All 2,880 12/24-hour clock strings and all three bands were
   covered. The three all-times band unions were pairwise disjoint
 
-The latest parser check includes the selected Foundry robotics layout, default
-Fahrenheit temperature bar, grouped weather and solar icons, centered AM/PM,
-compact large step counts, asymmetric porcelain insert, and explicitly typed
-Gregorian weekday/month indexes. The final background uses chamfered ceramic
-substrates, fine copper/teal/violet circuit traces, asymmetric junctions,
-microbridges, and an engraved lower backplane. The battery readout uses the
-current 20px Small font. The new `drawRobotics` helper adds pin headers, parallel
-flex traces, actuator housings, and QFN processor cells. Its `dc.drawRectangle`
-calls pass the official SDK name/argument-count audit. Static guards confirm
-that both `drawArchitecture` and `drawRobotics` are called only after the sleep
-branch returns; they are excluded from the time-only ambient display. No source changed during
-that parser run. This run also covers timestamped local Body Battery history,
-its separate person-and-bolt score, and the Reactor, Foundry, Porcelain, and
-Nocturne palettes. Device charge remains a distinct percentage. The new local
-`PrismelierPalette.color(value, theme)` call is checked against its definition,
-and every generated color mapping is compared with JSON. Renew the fingerprints
-after any subsequent source revision.
+The latest parser check includes the implemented Foundry material bitmap,
+monoline live-data icons, Fahrenheit temperature bar, weather and solar icons,
+centered AM/PM, and timestamped local Body Battery history. Body Battery remains
+a score and device charge a separate percentage. Both use the 20px Small font.
+The texture is loaded as a retained resource reference for Foundry; other themes
+use the vector architecture and robotics. Static guards place `drawBitmap`,
+`drawArchitecture`, and `drawRobotics` after the sleep return, preserving the
+time-only ambient display. They also prohibit reference pinning with `get()` or
+an extra `BufferedBitmap` copy. No source changed during the parser run.
+`PrismelierPalette.color(value, theme)` is checked against its local definition,
+and each vector color mapping is compared with JSON. The raster has its own
+embedded indexed palette; it is not recolored by that vector mapping. Renew the
+fingerprints after any subsequent source revision.
 Source fingerprints for that run:
 
 ```text
 PrismelierApp.mc   e8696d7cd4acb9ec2ab2971572a5d1ee5a5d80017d23ff7c345fc0eb3dabbb14
 PrismelierData.mc  3568805c9c6fc492c46ff3661a01849705f46c7dd394f35c1b7a58cb42def084
-PrismelierPalette.mc  80d4f9049b5ef5f31f9f817dc25a5144644a1203f72a46aed3b7a60ede543239
-PrismelierView.mc  fa93e25343a6d36b7a9f885c03e6ffb58a2c4fdd99f9edb5dd00dfb82f073142
+PrismelierPalette.mc  b29b08fb33d06c4c0b3f9b2554db9055a7dc2bd6da7ee1c68ce6f6ab12e3c2f4
+PrismelierView.mc  b8bc047daf1eb9261854724887f2b63e453a6e84d3037bdb154d53cba3a24049
 ```
 
 ## Automated checks
@@ -101,6 +103,47 @@ is not a type check. A malformed-syntax negative control produced parser errors
 despite exit status 0; the test therefore inspects diagnostics as well as exit
 status. Re-run against the final sources after every source change.
 
+## Raster resources and memory evidence
+
+`resources/textures/textures.xml` references only the indexed Foundry asset.
+Its options are `packingFormat="default"`, `automaticPalette="true"`,
+`compress="true"`, and `dithering="none"`, with a child
+`palette disableTransparency="true"`. Tests compare these attributes and option
+values with the installed official SDK resource schema. This is schema/name
+verification, not resource compilation or a device-specific encoding test.
+[Garmin resource documentation](https://developer.garmin.com/connect-iq/articles/core-topics/Resources.html)
+describes native/default packing, palette reduction, and executable compression.
+
+The official SDK 9.2.0 FR265 device reference documents **131,072 bytes (128 KiB)**
+of watch-face application memory, **416×416** pixels, and **65,536 display colors**.
+The optional SDK test reads and checks that exact device page. See the
+[FR265 device reference](https://developer.garmin.com/connect-iq/device-reference/fr265/).
+This is the application-memory limit, not a proven bitmap-size ceiling.
+
+API 4.0+ loads bitmap/font resources into a separate, managed
+[graphics pool](https://developer.garmin.com/connect-iq/core-topics/graphics/).
+**The FR265 graphics-pool capacity remains unverified.** Retaining a reference
+does not prevent eviction or guarantee a single decode; Garmin may reload it.
+The implementation requests the reference on layout or Foundry selection,
+releases it when selecting a different theme, and draws it only while awake.
+
+The source PNG is **84,734 bytes (about 82.7 KiB)**. That is compressed file size,
+**not RAM usage**, compiled PRG size, or a measured graphics-pool footprint.
+Its SHA256 is
+`e84d33840a2fb49c26661ddead36da40cdf1744ff1680c634bf24d3f62a238fb`.
+An uncompressed 8-bit 416×416 pixel plane is 173,056 bytes (169 KiB), before
+palette/alignment/metadata; a 16-bit plane would be 346,112 bytes (338 KiB).
+The compiler's actual encoding and runtime allocation remain unmeasured.
+No extra full-screen buffer or locked resource object is intentionally created.
+Static tests cover recoverable load/draw fallback to vector artwork; they do not
+inject real resource failures or establish recovery from fatal VM memory errors.
+The draw-error path clears black before drawing fallback vectors. The final
+background art is fitted into a 384px square centered inside the 416px canvas;
+an optional Pillow test checks meaningful pixel centers against a 204px circular
+safe area. Dynamic text/icon collisions still require simulator/watch review.
+An official FR265 build, pool-pressure tests, wake/sleep tests, and hardware
+power measurements are still required before claiming memory or battery safety.
+
 ## Body Battery support and freshness
 
 The public `bodyBattery` field is a nullable 0–100 score, separate from the
@@ -153,7 +196,8 @@ compiler profile, or proprietary SDK redistribution was used. See
    15-minute cutoff, midnight, DST changes, travel,
    unavailable/polar solar events, and settings changes
 5. Verify on an actual FR265: fonts, alignment, clipping, wrist activation,
-   always-on transitions, freshness behavior, and sustained battery impact
+   always-on transitions, freshness behavior, texture pool pressure/reloads,
+   recovery paths, and sustained battery impact
 
 API 5.0+ uses a less-than-10% luminance rule according to Garmin's
 [System 7 announcement](https://forums.garmin.com/developer/connect-iq/b/news-announcements/posts/welcome-to-system-7).

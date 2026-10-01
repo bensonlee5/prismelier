@@ -5,7 +5,7 @@ using Toybox.System;
 using Toybox.Time;
 using Toybox.WatchUi;
 
-// 416px FR265 only. All industrial artwork is drawn from vector primitives.
+// 416px FR265: one static Foundry material bitmap plus live vector overlays.
 // No on-face branding or word labels: icons, numbers and essential units only.
 class PrismelierView extends WatchUi.WatchFace {
     var data;
@@ -22,6 +22,8 @@ class PrismelierView extends WatchUi.WatchFace {
     var cyan = 0x6BE4DE;
     var muted = 0x786D82;
     var theme = 0;
+    var background = null;
+    var laidOut = false;
 
     function initialize() {
         WatchFace.initialize();
@@ -35,12 +37,31 @@ class PrismelierView extends WatchUi.WatchFace {
         smallFont = WatchUi.loadResource(Rez.Fonts.Small);
         labelFont = WatchUi.loadResource(Rez.Fonts.Label);
         ambientFont = WatchUi.loadResource(Rez.Fonts.Ambient);
+        laidOut = true;
+        refreshTexture();
     }
 
     function reloadSettings() {
         data.loadSettings();
         theme = data.palette;
+        if (laidOut) { refreshTexture(); }
         data.refresh(true);
+    }
+
+    function refreshTexture() {
+        if (theme != 1) {
+            background = null;
+        } else if (background == null) {
+            try {
+                background = WatchUi.loadResource(Rez.Drawables.FoundryBackground);
+            } catch (e) {
+                background = null; // Recoverable resource failure: use vector art.
+            }
+        }
+    }
+
+    function usesTexture() {
+        return theme == 1 && background != null;
     }
 
     function onEnterSleep() {
@@ -102,12 +123,27 @@ class PrismelierView extends WatchUi.WatchFace {
             return;
         }
         data.refresh(false);
-        drawArchitecture(dc);
-        drawRobotics(dc);
-        drawMachine(dc);
+        if (usesTexture()) {
+            // Retain only the resource reference. Do not pin with .get() or
+            // copy the image into a second full-screen BufferedBitmap.
+            try {
+                dc.drawBitmap(0, 0, background);
+            } catch (e) {
+                background = null;
+                paint(dc, Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+                dc.clear();
+                drawArchitecture(dc);
+                drawRobotics(dc);
+                drawMachine(dc);
+            }
+        } else {
+            drawArchitecture(dc);
+            drawRobotics(dc);
+            drawMachine(dc);
+        }
         drawBattery(dc);
         drawBodyBattery(dc);
-        text(dc, 208, 77, timeFont, time, green);
+        text(dc, 208, usesTexture() ? 78 : 77, timeFont, time, green);
         if (!data.is24Hour()) {
             text(dc, 208, 163, labelFont, clock.hour < 12 ? "AM" : "PM", ink);
         }
@@ -296,47 +332,54 @@ class PrismelierView extends WatchUi.WatchFace {
     }
 
     function drawBattery(dc) {
+        var dx = usesTexture() ? -5 : 0;
+        var dy = usesTexture() ? 2 : 0;
         paint(dc, cyan, Graphics.COLOR_TRANSPARENT);
-        dc.drawRoundedRectangle(121, 51, 17, 10, 2);
-        dc.fillRectangle(138, 54, 2, 4);
+        dc.setPenWidth(2);
+        dc.drawRoundedRectangle(121 + dx, 51 + dy, 17, 10, 2);
+        dc.setPenWidth(1);
+        stroke(dc, 139 + dx, 54 + dy, 139 + dx, 58 + dy, cyan, 2);
         if (data.battery != null) {
-            dc.fillRectangle(124, 54, (11 * clamp(data.battery, 0, 100) / 100).toNumber(), 4);
+            stroke(dc, 125 + dx, 56 + dy, 125 + dx + (9 * clamp(data.battery, 0, 100) / 100).toNumber(), 56 + dy, cyan, 2);
         }
-        var s = data.battery == null ? "--%" : data.battery.format("%d") + "%";
-        text(dc, 174, 42, smallFont, s, data.battery != null && data.battery <= 15 ? pink : cyan);
+        var reading = data.battery == null ? "--%" : data.battery.format("%d") + "%";
+        text(dc, 174 + dx, 42 + dy, smallFont, reading, data.battery != null && data.battery <= 15 ? pink : cyan);
     }
 
     function drawBodyBattery(dc) {
-        // Person + energy bolt; score has no percent sign (not device charge).
+        // Original monoline person + energy bolt; a score, never a percentage.
+        var dy = usesTexture() ? 2 : 0;
         paint(dc, pink, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(235, 47, 3);
-        stroke(dc, 235, 53, 235, 60, pink, 2);
-        stroke(dc, 230, 55, 240, 55, pink, 2);
-        stroke(dc, 235, 60, 231, 66, pink, 2);
-        stroke(dc, 235, 60, 239, 66, pink, 2);
-        stroke(dc, 246, 48, 242, 55, copper, 1);
-        stroke(dc, 242, 55, 247, 55, copper, 1);
-        stroke(dc, 247, 55, 243, 62, copper, 1);
-        text(dc, 280, 42, smallFont, data.bodyBattery == null ? "--" : data.bodyBattery.format("%d"), ink);
+        dc.setPenWidth(2);
+        dc.drawCircle(235, 47 + dy, 3);
+        dc.setPenWidth(1);
+        stroke(dc, 235, 53 + dy, 235, 60 + dy, pink, 2);
+        stroke(dc, 230, 55 + dy, 240, 55 + dy, pink, 2);
+        stroke(dc, 235, 60 + dy, 231, 66 + dy, pink, 2);
+        stroke(dc, 235, 60 + dy, 239, 66 + dy, pink, 2);
+        trace(dc, [[246, 48 + dy], [242, 55 + dy], [247, 55 + dy], [243, 62 + dy]], copper, 1);
+        text(dc, 280, 42 + dy, smallFont, data.bodyBattery == null ? "--" : data.bodyBattery.format("%d"), ink);
     }
 
     function drawTemperature(dc) {
-        // Linear temperature bar in a violet woodgrain/copper instrument frame.
-        paint(dc, 0x452744, Graphics.COLOR_TRANSPARENT);
-        dc.fillRoundedRectangle(56, 192, 304, 54, 10);
-        for (var grain = 0; grain < 5; grain += 1) {
-            stroke(dc, 71, 197 + grain * 10, 345, 199 + grain * 10, grain % 2 == 0 ? 0x85506D : 0x5D3854, 1);
+        if (!usesTexture()) {
+            // Linear temperature bar in a violet woodgrain/copper instrument frame.
+            paint(dc, 0x452744, Graphics.COLOR_TRANSPARENT);
+            dc.fillRoundedRectangle(56, 192, 304, 54, 10);
+            for (var grain = 0; grain < 5; grain += 1) {
+                stroke(dc, 71, 197 + grain * 10, 345, 199 + grain * 10, grain % 2 == 0 ? 0x85506D : 0x5D3854, 1);
+            }
+            paint(dc, copper, Graphics.COLOR_TRANSPARENT);
+            dc.drawRoundedRectangle(56, 192, 304, 54, 10);
+            stroke(dc, 71, 193, 344, 193, 0xF2BF8C, 1);
+            stroke(dc, 71, 245, 344, 245, 0x3E211E, 2);
+            screw(dc, 64, 201, copper);
+            screw(dc, 352, 201, copper);
+            screw(dc, 64, 237, copper);
+            screw(dc, 352, 237, copper);
+            paint(dc, 0x091B23, Graphics.COLOR_TRANSPARENT);
+            dc.fillRoundedRectangle(73, 209, 270, 19, 4);
         }
-        paint(dc, copper, Graphics.COLOR_TRANSPARENT);
-        dc.drawRoundedRectangle(56, 192, 304, 54, 10);
-        stroke(dc, 71, 193, 344, 193, 0xF2BF8C, 1);
-        stroke(dc, 71, 245, 344, 245, 0x3E211E, 2);
-        screw(dc, 64, 201, copper);
-        screw(dc, 352, 201, copper);
-        screw(dc, 64, 237, copper);
-        screw(dc, 352, 237, copper);
-        paint(dc, 0x091B23, Graphics.COLOR_TRANSPARENT);
-        dc.fillRoundedRectangle(73, 209, 270, 19, 4);
         var fahrenheit = data.isFahrenheit();
         var low = fahrenheit ? 0 : -20;
         var high = fahrenheit ? 120 : 40;
@@ -344,47 +387,54 @@ class PrismelierView extends WatchUi.WatchFace {
         if (val != null && fahrenheit) { val = val * 9.0 / 5.0 + 32.0; }
         if (val != null) {
             var f = clamp((val - low).toFloat() / (high - low), 0.0, 1.0);
-            var width = (262 * f).toNumber();
+            var start = usesTexture() ? 74 : 77;
+            var fullWidth = usesTexture() ? 268 : 262;
+            var width = (fullWidth * f).toNumber();
             if (width > 0) {
                 paint(dc, data.weatherStale ? 0x80665C : pink, Graphics.COLOR_TRANSPARENT);
-                dc.fillRoundedRectangle(77, 213, width, 11, 3);
-                stroke(dc, 79, 214, 77 + width, 214, data.weatherStale ? copper : 0xFFC9FA, 1);
+                dc.fillRoundedRectangle(start, 214, width, 9, 3);
+                stroke(dc, start + 2, 215, start + width, 215, data.weatherStale ? copper : 0xFFC9FA, 1);
             }
             // A square piston instead of a needle. Endpoint clamped, reading exact.
             paint(dc, ink, Graphics.COLOR_TRANSPARENT);
-            dc.fillRectangle(75 + width, 209, 4, 19);
+            dc.fillRectangle(start - 2 + width, 211, 4, 17);
         }
-        for (var t = 0; t <= 12; t += 1) {
-            var tx = 77 + (262 * t / 12).toNumber();
-            stroke(dc, tx, 202, tx, t % 3 == 0 ? 207 : 205, copper, 1);
-            stroke(dc, tx, 232, tx, t % 3 == 0 ? 238 : 235, copper, 1);
+        if (!usesTexture()) {
+            for (var t = 0; t <= 12; t += 1) {
+                var tx = 77 + (262 * t / 12).toNumber();
+                stroke(dc, tx, 202, tx, t % 3 == 0 ? 207 : 205, copper, 1);
+                stroke(dc, tx, 232, tx, t % 3 == 0 ? 238 : 235, copper, 1);
+            }
         }
         var reading = val == null ? "--" : Math.round(val).toNumber().format("%d");
-        drawWeather(dc, 94, 265, data.weatherKind);
-        text(dc, 165, 247, valueFont, reading + (fahrenheit ? "°F" : "°C"), ink);
+        drawWeather(dc, 94, usesTexture() ? 272 : 265, data.weatherKind);
+        text(dc, 165, usesTexture() ? 254 : 247, valueFont, reading + (fahrenheit ? "°F" : "°C"), ink);
         if (data.weatherStale) {
             // Small crossed ring = stale/unknown weather; explained in README.
             paint(dc, copper, Graphics.COLOR_TRANSPARENT);
-            dc.drawCircle(208, 280, 4);
-            stroke(dc, 205, 283, 211, 277, copper, 1);
+            var wx = usesTexture() ? 72 : 208;
+            var wy = usesTexture() ? 283 : 280;
+            dc.drawCircle(wx, wy, 3);
+            stroke(dc, wx - 2, wy + 2, wx + 2, wy - 2, copper, 1);
         }
         drawSolar(dc);
     }
 
     function drawVitals(dc) {
-        var x = 101;
-        var y = 332;
-        paint(dc, pink, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(x - 4, y - 3, 5);
-        dc.fillCircle(x + 4, y - 3, 5);
-        dc.fillPolygon([[x - 9, y], [x + 9, y], [x, y + 9]]);
-        text(dc, 149, 315, valueFont, data.heartRate == null ? "--" : data.heartRate.format("%d"), ink);
+        var dy = 0;
+        // Heart outline and two footprint outlines share a 2px monoline weight.
+        trace(dc, [[101, 341 + dy], [92, 332 + dy], [92, 327 + dy],
+            [95, 324 + dy], [99, 324 + dy], [101, 327 + dy], [103, 324 + dy],
+            [107, 324 + dy], [110, 327 + dy], [110, 332 + dy], [101, 341 + dy]], pink, 2);
+        text(dc, 149, 315 + dy, valueFont, data.heartRate == null ? "--" : data.heartRate.format("%d"), ink);
         paint(dc, cyan, Graphics.COLOR_TRANSPARENT);
-        dc.fillEllipse(220, 322, 6, 11);
-        dc.fillEllipse(229, 328, 6, 11);
-        dc.fillCircle(223, 318, 2);
-        dc.fillCircle(232, 324, 2);
-        text(dc, 288, 315, data.steps != null && data.steps >= 10000 ? smallFont : valueFont, data.steps == null ? "--" : formatSteps(data.steps), ink);
+        dc.setPenWidth(2);
+        dc.drawEllipse(220, 322 + dy, 6, 11);
+        dc.drawEllipse(229, 328 + dy, 6, 11);
+        dc.drawCircle(223, 318 + dy, 2);
+        dc.drawCircle(232, 324 + dy, 2);
+        dc.setPenWidth(1);
+        text(dc, usesTexture() ? 284 : 288, 315 + dy, data.steps != null && data.steps >= 10000 ? smallFont : valueFont, data.steps == null ? "--" : formatSteps(data.steps), ink);
     }
 
     function formatSteps(n) {
@@ -395,83 +445,81 @@ class PrismelierView extends WatchUi.WatchFace {
     function drawWeather(dc, x, y, kind) {
         var color = data.weatherStale ? copper : cyan;
         paint(dc, color, Graphics.COLOR_TRANSPARENT);
-        if (kind == "wind") {
-            stroke(dc, x - 14, y - 5, x + 8, y - 5, color, 2);
-            stroke(dc, x - 9, y + 1, x + 14, y + 1, color, 2);
+        dc.setPenWidth(2);
+        if (kind == "sun") {
+            if (data.solarLabel.find("RISE") != null) {
+                trace(dc, [[x - 4, y - 11], [x - 10, y - 7], [x - 12, y],
+                    [x - 9, y + 8], [x - 2, y + 11], [x + 6, y + 8], [x + 10, y + 3],
+                    [x + 3, y + 4], [x - 3, y], [x - 5, y - 6], [x - 4, y - 11]], color, 2);
+            } else {
+                dc.drawCircle(x, y, 7);
+                for (var r = 0; r < 8; r += 1) { radial(dc, x, y, 11, 14, r * 45, color, 2); }
+            }
+        } else if (kind == "wind") {
+            trace(dc, [[x - 14, y - 5], [x + 7, y - 5], [x + 10, y - 8], [x + 8, y - 11], [x + 5, y - 11]], color, 2);
+            trace(dc, [[x - 10, y + 1], [x + 14, y + 1], [x + 16, y + 4], [x + 13, y + 7]], color, 2);
             stroke(dc, x - 14, y + 7, x + 5, y + 7, color, 2);
-            dc.drawCircle(x + 9, y - 8, 3);
-            dc.drawCircle(x + 14, y + 4, 3);
-        } else if (kind == "sun" && data.solarLabel.find("RISE") != null) {
-            dc.fillCircle(x, y, 10);
-            paint(dc, 0x122325, Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(x + 5, y - 4, 9);
-            stroke(dc, x + 14, y - 9, x + 14, y - 3, color, 1);
-            stroke(dc, x + 11, y - 6, x + 17, y - 6, color, 1);
-        } else if (kind == "sun") {
-            dc.drawCircle(x, y, 7);
-            for (var i = 0; i < 8; i += 1) { radial(dc, x, y, 10, 14, i * 45, color, 1); }
         } else if (kind == "fog") {
             stroke(dc, x - 14, y - 5, x + 14, y - 5, color, 2);
             stroke(dc, x - 10, y + 1, x + 10, y + 1, color, 2);
             stroke(dc, x - 14, y + 7, x + 14, y + 7, color, 2);
         } else {
             if (kind == "partly") {
-                paint(dc, copper, Graphics.COLOR_TRANSPARENT);
-                dc.fillCircle(x + 8, y - 9, 7);
-                radial(dc, x + 8, y - 9, 10, 12, 270, copper, 1);
-                radial(dc, x + 8, y - 9, 10, 12, 315, copper, 1);
-                radial(dc, x + 8, y - 9, 10, 12, 0, copper, 1);
-                paint(dc, color, Graphics.COLOR_TRANSPARENT);
+                trace(dc, [[x + 3, y - 13], [x + 7, y - 16], [x + 12, y - 15],
+                    [x + 15, y - 11], [x + 14, y - 6]], copper, 2);
+                radial(dc, x + 8, y - 10, 8, 10, 270, copper, 2);
+                radial(dc, x + 8, y - 10, 8, 10, 315, copper, 2);
+                radial(dc, x + 8, y - 10, 8, 10, 0, copper, 2);
             }
-            dc.fillCircle(x - 8, y, 6);
-            dc.fillCircle(x, y - 5, 9);
-            dc.fillCircle(x + 9, y, 6);
-            dc.fillRectangle(x - 9, y, 19, 5);
-            if (kind == "rain" || kind == "storm") {
-                stroke(dc, x - 5, y + 9, x - 9, y + 14, color, 2);
-                stroke(dc, x + 6, y + 9, x + 2, y + 14, color, 2);
-                if (kind == "storm") {
-                    stroke(dc, x + 15, y - 7, x + 10, y + 1, pink, 2);
-                    stroke(dc, x + 10, y + 1, x + 16, y + 1, pink, 2);
-                    stroke(dc, x + 16, y + 1, x + 12, y + 8, pink, 2);
-                }
+            trace(dc, [[x - 12, y + 7], [x - 15, y + 4], [x - 15, y], [x - 12, y - 4],
+                [x - 7, y - 5], [x - 5, y - 10], [x, y - 13], [x + 6, y - 11],
+                [x + 9, y - 6], [x + 10, y - 2], [x + 14, y], [x + 16, y + 4],
+                [x + 13, y + 7], [x - 12, y + 7]], color, 2);
+            if (kind == "rain") {
+                stroke(dc, x - 7, y + 11, x - 10, y + 16, color, 2);
+                stroke(dc, x + 2, y + 11, x - 1, y + 16, color, 2);
+                stroke(dc, x + 11, y + 11, x + 8, y + 16, color, 2);
+            } else if (kind == "storm") {
+                trace(dc, [[x + 3, y + 9], [x - 2, y + 15], [x + 5, y + 15], [x, y + 16]], color, 2);
             } else if (kind == "snow") {
-                dc.fillCircle(x - 6, y + 12, 2);
-                dc.fillCircle(x + 6, y + 12, 2);
+                stroke(dc, x, y + 10, x, y + 16, color, 2);
+                stroke(dc, x - 4, y + 12, x + 4, y + 17, color, 2);
+                stroke(dc, x - 4, y + 17, x + 4, y + 12, color, 2);
             }
         }
+        dc.setPenWidth(1);
         if (kind == "unknown" || data.weatherStale) {
-            stroke(dc, x - 16, y + 15, x + 16, y - 16, Graphics.COLOR_BLACK, 5);
-            stroke(dc, x - 16, y + 15, x + 16, y - 16, copper, 2);
+            stroke(dc, x - 17, y + 16, x + 17, y - 17, copper, 2);
         }
     }
 
     function drawSolar(dc) {
         var x = 240;
-        var y = 269;
+        var y = usesTexture() ? 277 : 269;
         var up = data.solarLabel.find("RISE") != null;
         var color = data.solarTime == "--:--" ? 0x777F70 : (up ? 0x27645D : 0xA04D30);
-        var sunY = up ? y - 5 : y + 2;
-        paint(dc, color, Graphics.COLOR_TRANSPARENT);
-        dc.drawCircle(x, sunY, 8);
-        paint(dc, 0xD6D9BF, Graphics.COLOR_TRANSPARENT);
-        dc.fillRectangle(x - 10, y + 1, 20, 14);
-        stroke(dc, x - 14, y, x + 14, y, color, 2);
-        radial(dc, x, sunY, 11, 14, 220, color, 1);
-        radial(dc, x, sunY, 11, 14, 270, color, 1);
-        radial(dc, x, sunY, 11, 14, 320, color, 1);
+        var sunY = up ? y - 4 : y;
+        // Open upper semicircle preserves the material texture underneath.
+        for (var a = 180; a < 360; a += 15) {
+            var p1 = point(x, sunY, 8, a);
+            var p2 = point(x, sunY, 8, a + 15);
+            stroke(dc, p1[0], p1[1], p2[0], p2[1], color, 2);
+        }
+        stroke(dc, x - 14, y, x + 12, y, color, 2);
+        radial(dc, x, sunY, 11, 14, 220, color, 2);
+        radial(dc, x, sunY, 11, 14, 270, color, 2);
+        radial(dc, x, sunY, 11, 14, 320, color, 2);
         if (data.solarTime != "--:--") {
-            // Sunrise: rising sun + upward arrow. Sunset: sinking sun + down.
             var tipY = up ? y - 12 : y + 10;
             var baseY = up ? tipY + 5 : tipY - 5;
             stroke(dc, x + 16, up ? y - 12 : y + 1, x + 16, up ? y - 3 : y + 10, color, 2);
             stroke(dc, x + 12, baseY, x + 16, tipY, color, 2);
             stroke(dc, x + 20, baseY, x + 16, tipY, color, 2);
         }
-        text(dc, 302, 250, smallFont, data.solarTime, 0x183B3B);
+        text(dc, 302, usesTexture() ? 255 : 250, smallFont, data.solarTime, 0x183B3B);
         if (data.solarLabel.find("*") != null) {
             paint(dc, copper, Graphics.COLOR_TRANSPARENT);
-            dc.drawCircle(345, 278, 3);
+            dc.drawCircle(345, usesTexture() ? 285 : 278, 3);
         }
     }
 }
