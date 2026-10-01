@@ -24,6 +24,8 @@ class PrismelierData {
     // Body Battery history spacing is device dependent. Fifteen minutes is
     // this app's conservative expiry policy, not a live-reading guarantee.
     const BODY_BATTERY_MAX_AGE_SECONDS = 900;
+    const SOLAR_CACHE_SECONDS = 3600;
+    const SOLAR_RETRY_SECONDS = 300;
 
     var temperatureC as Lang.Numeric or Null = null;
     var weatherLabel as Lang.String = "NO WEATHER";
@@ -54,6 +56,11 @@ class PrismelierData {
     private var _locationAt as Lang.Number or Null = null;
     private var _solarEvents as Lang.Array = [];
     private var _solarKinds as Lang.Array = [];
+    private var _solarDay as Lang.Number = -1;
+    private var _solarLatitude as Lang.Numeric or Null = null;
+    private var _solarLongitude as Lang.Numeric or Null = null;
+    private var _solarBuiltAt as Lang.Number = -1;
+    private var _solarRetryAfter as Lang.Number = 0;
 
     function initialize() {
         loadSettings();
@@ -377,16 +384,34 @@ class PrismelierData {
 
     private function buildSolarEvents(now as Time.Moment, nowSeconds as Lang.Number)
             as Void {
-        _solarEvents = [];
-        _solarKinds = [];
         if (_location == null || _locationAt == null ||
                 nowSeconds < _locationAt ||
                 nowSeconds - _locationAt >= WEATHER_EXPIRE_SECONDS) {
             _location = null;
             _locationAt = null;
+            _solarEvents = [];
+            _solarKinds = [];
+            _solarBuiltAt = -1;
             return;
         }
         try {
+            var day = Time.today().value();
+            var coordinates = _location.toDegrees();
+            // Observation timestamp changes alone do not change solar events.
+            // Exact coordinates and local midnight also cover travel and DST.
+            if (_solarBuiltAt >= 0 && nowSeconds >= _solarBuiltAt &&
+                    nowSeconds < _solarRetryAfter && day == _solarDay &&
+                    coordinates[0] == _solarLatitude &&
+                    coordinates[1] == _solarLongitude) {
+                return;
+            }
+            _solarDay = day;
+            _solarLatitude = coordinates[0];
+            _solarLongitude = coordinates[1];
+            _solarBuiltAt = nowSeconds;
+            _solarRetryAfter = nowSeconds + SOLAR_RETRY_SECONDS;
+            _solarEvents = [];
+            _solarKinds = [];
             // Noon anchors avoid a midnight/DST boundary when stepping a day.
             // today() is local midnight; both arguments remain UTC Moments.
             var today = Time.today().add(new Time.Duration(43200));
@@ -395,10 +420,15 @@ class PrismelierData {
             addSolarEvent(Weather.getSunset(_location, today), "SUNSET");
             addSolarEvent(Weather.getSunrise(_location, tomorrow), "SUNRISE");
             addSolarEvent(Weather.getSunset(_location, tomorrow), "SUNSET");
+            // Null/polar events are valid results too; don't recalculate them
+            // every minute. Failures retry sooner, without a busy loop.
+            _solarRetryAfter = nowSeconds + SOLAR_CACHE_SECONDS;
         } catch (e) {
             // Missing permission or polar/no-event results must not crash time.
             _solarEvents = [];
             _solarKinds = [];
+            _solarBuiltAt = nowSeconds;
+            _solarRetryAfter = nowSeconds + SOLAR_RETRY_SECONDS;
         }
     }
 

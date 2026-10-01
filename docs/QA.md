@@ -1,7 +1,18 @@
 # QA status
 
-Prismelier is a source project with design renders. It has not been built for a
-Forerunner 265, run in Garmin's simulator, or installed on physical hardware.
+Prismelier is a development project with design renders. Remote commit
+[7b1ac81](https://github.com/bensonlee5/prismelier/commit/7b1ac81b4a5427f47e087c29b294af84496ca59f)
+reports a successful FR265 compile after fixing texture XML and a local variable
+declaration. The checkpoints below predate that external build report.
+
+## Performance review, 1 October 2026
+
+**56 local tests passed** with official SDK 9.2.0/Pillow; **47 passed and 9 skipped**
+without optional dependencies. Startup/wake reads, solar caching and fixed dial
+geometry were optimized without changing the design. This latest revision has
+not been compiled for FR265 or tested in the simulator/on hardware by this review.
+See [the complete review and acceptance plan](PERFORMANCE.md). Historical
+fingerprints and counts below do not describe the new source revision.
 
 ## CI addition (historical checkpoint), 1 October 2026, 14:08 UTC
 

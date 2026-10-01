@@ -24,11 +24,20 @@ class PrismelierView extends WatchUi.WatchFace {
     var theme = 0;
     var background = null;
     var laidOut = false;
+    // Two flat arrays avoid per-frame trigonometry and 144 temporary point
+    // arrays for the 72-segment temperature band. No full-screen buffer.
+    var bandX = [];
+    var bandY = [];
 
     function initialize() {
         WatchFace.initialize();
         data = new PrismelierData();
-        reloadSettings();
+        theme = data.palette;
+        for (var j = 0; j <= 72; j += 1) {
+            var p = point(137, 267, 59, 135.0 + 270.0 * j / 72);
+            bandX.add(p[0]);
+            bandY.add(p[1]);
+        }
     }
 
     function onLayout(dc) {
@@ -71,7 +80,8 @@ class PrismelierView extends WatchUi.WatchFace {
 
     function onExitSleep() {
         sleeping = false;
-        data.refresh(true);
+        // onUpdate performs the ordinary minute-cached refresh. Repeated
+        // gestures must not force history/weather reads inside one minute.
         WatchUi.requestUpdate();
     }
 
@@ -327,17 +337,13 @@ class PrismelierView extends WatchUi.WatchFace {
         // A continuous graduated band encodes the value; needle is temperature,
         // never time. Color shifts from cool cyan through ivory to warm copper.
         for (var j = 0; j < 72; j += 1) {
-            var angle = 135.0 + 270.0 * j / 72;
-            var end = 135.0 + 270.0 * (j + 1) / 72;
             var active = val != null && (j + 0.5) / 72.0 <= f;
             var bandColor = 0x224142;
             if (active) {
                 bandColor = data.weatherStale ? 0x80665C :
                     (j < 24 ? 0x6BE4DE : (j < 48 ? 0xD6D9BF : 0xD98B52));
             }
-            var p1 = point(137, 267, 59, angle);
-            var p2 = point(137, 267, 59, end);
-            stroke(dc, p1[0], p1[1], p2[0], p2[1], bandColor, 7);
+            stroke(dc, bandX[j], bandY[j], bandX[j + 1], bandY[j + 1], bandColor, 7);
         }
         for (var tick = 0; tick <= 12; tick += 1) {
             radial(dc, 137, 267, tick % 4 == 0 ? 48 : 51, 54,

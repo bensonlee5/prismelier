@@ -6,7 +6,7 @@ A futuristic-steampunk digital watch face for the **Garmin Forerunner 265**. The
 
 *Source-backed design render with illustrative readings, not a Garmin simulator or watch screenshot.*
 
-> **Source-only project.** No installable `.prg` is available. A real FR265 build is blocked by the missing official device profile in the current build environment. Simulator and hardware testing remain outstanding. See [validation status](docs/QA.md).
+> **Development project.** The history records a successful FR265 compile in [7b1ac81](https://github.com/bensonlee5/prismelier/commit/7b1ac81b4a5427f47e087c29b294af84496ca59f). The subsequent performance revision still needs an FR265 build, simulator and hardware validation. See [performance review](docs/PERFORMANCE.md) and [validation history](docs/QA.md).
 
 ## Features
 
@@ -43,6 +43,11 @@ Foundry and **Fahrenheit** are the defaults. Optional settings include Celsius/d
 Weather uses Garmin’s existing cache; sunrise/sunset uses the weather observation location, which may differ from your current position. The face cannot force a fresh weather observation. Old data is marked, and unavailable values are not replaced with demo readings. Heart rate is a recent sample; Body Battery is a wellness estimate, not a medical measurement. See [data setup and troubleshooting](docs/INSTALL.md#6-get-weather-solar-heart-rate-and-body-battery-working).
 
 The face has no backend, API key or network permission. It does not activate GPS or transmit health data. Data is cached in RAM, and the textured background is omitted from AOD. Runtime memory use and battery impact still need device validation.
+
+The [performance review](docs/PERFORMANCE.md) removes duplicate startup/wake reads,
+caches solar calculations with freshness/invalidation guards, and precomputes
+the fixed temperature-band geometry. The design and sparse AOD are preserved;
+actual battery savings require watch measurements.
 
 ## Development
 
