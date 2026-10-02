@@ -135,3 +135,11 @@ Source `a861bb1`: moved RH and the rain icon into the dark gauge wells, removed 
 The retained-screen optimization returned without drawing for unchanged values, or drew only the HR rectangle. Physical firmware can clear the screen before onUpdate, so subsequent frames were incomplete. Every awake update now clears and paints a complete frame while preserving sensor-data caching. A regression compares repeated updates with fresh frames in all four themes for unchanged HR, 100→99, 99→missing and missing→64; all 16 cases failed before the fix.
 
 Moved the heart 3px right, shortened the Body Battery figure legs 2px to clear its panel, and centered the rain rail/icon 1px left. A separate simulator-only diagnostic logged raw Body Battery complication values 29,30,98,99, confirming the jumps originate in simulator data. Diagnostic logging is not included in shipped builds.
+
+### Larger frameless always-on view — 2 October 2026
+
+Selected Bigger Time in Quiet Foundry colors: native 65px ExtraLight clock above a copper weekday/month/day line, separated by spaces. No frame or slash. The local calendar refreshes without sensor reads, including midnight; all date array accesses remain guarded. Both lines shift together through three disjoint vertical bands.
+
+Exhaustive asset checks cover both clock formats, all weekday/date-label combinations, and 360/390/416/454px fonts, with rounding uncertainty and a one-pixel halo. Conservative peak lit-area bounds are 6.33%, 5.98%, 3.98%, and 5.41%, respectively (all under 10%). These bounds are not battery-life measurements.
+
+FR265 source `dc489ee`: all 106 tests passed. Official simulator completed the 24-hour always-on run with screen protection ON and burn-in state NO; final displayed luminance usage was 0.56% (not a measured peak or battery prediction). Native low-light alignment and full-face wake redraw reviewed. [Native capture](screenshots/always-on-bigger-time.png).

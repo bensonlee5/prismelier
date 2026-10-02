@@ -1,6 +1,10 @@
-# Low-light glance concepts
+# Selected low-light view
 
-These are design mock-ups, not simulator captures or changes installed on the watch.
+The final selection is **frameless Bigger Time**, with Quiet Foundry colors and a single weekday/date line separated by spaces: `FRIDAY  OCT 02`. Time uses the native 65px ExtraLight font, warm `#A09785`; the caption uses 15px Label in copper `#84644C`. No corners, frame, slash, seconds, or sensor readings are drawn.
+
+The full two-line group shifts between three non-overlapping vertical positions. Calendar labels refresh from local time without polling sensors, and the full face returns on wake. Both 12/24-hour formats follow the watch/app preference. Enable Always On in watch settings to use this view.
+
+Earlier concept sheets below are design explorations, not the final layout.
 
 ![Three options](comparison.png)
 

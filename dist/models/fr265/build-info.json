@@ -3,26 +3,26 @@
   "device": "fr265",
   "deviceName": "Forerunner 265",
   "applicationId": "81c2a924768f4b9eb6ac52e438d0517f",
-  "sourceCommit": "b9ed8745867c131058337575c6eb3cfa3867d306",
+  "sourceCommit": "dc489ee984fe7803250a39fc5a3f3b10627418ff",
   "sdkVersion": "9.2.0",
   "compilerSha256": "46e9bfce45cf49486a35955b6495516cce6b675f810df2def62c456aa219249a",
   "deviceProfileSha256": "34723df303a00dcc25be9983f84b7d30f0c8a72ee4314c438e54e5d98be36b60",
-  "buildInputsSha256": "dedd1220b24197970570068d02880663347ea3e799fe5d06c3b9caf68a04fa41",
+  "buildInputsSha256": "f13cd1b4acb813fa137c472d9709f3d8a5ddb744c05ec6cfd4dbb3866f56b7a9",
   "layout": "round-416-amoled",
   "layoutAdapterSha256": "bae1e6394c727ca6fd81333822c6a1992fc19f2e52379c54fa453485ddc2b80d",
   "program": "Prismelier-fr265.prg",
-  "programBytes": 127212,
-  "programSha256": "1ae3970cfc3d761a8313945656f80792b43e55e5ce7288067b30ec69a2bc4b50",
+  "programBytes": 128172,
+  "programSha256": "859b59860a7ed9862fb951bb68aa1fb3020070d0fdb916656715fcbca5861dab",
   "releaseBuild": true,
   "typeCheckLevel": 1,
   "simulatorTested": true,
   "hardwareTested": false,
   "validation": {
-    "automatedTestsPassed": 104,
+    "automatedTestsPassed": 106,
     "simulator": [
-      "Full-frame redraw, repeated awake updates and AOD/wake",
-      "Shortened Body Battery figure, heart shifted right, centered rain rail",
-      "Gauge text inside frames and full condition label"
+      "65px Quiet Foundry low-light time with spaced weekday/date caption",
+      "24-hour always-on simulation completed: screen protection ON; burn-in state NO; final displayed luminance usage 0.56%",
+      "Full-face wake redraw and alignment"
     ],
     "hardwareConfirmationPending": true
   }

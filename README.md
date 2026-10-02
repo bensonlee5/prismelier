@@ -8,14 +8,22 @@ A copper-and-wood watch face with time, weather, sunrise/sunset, Body Battery, h
 
 | Feature | What you see |
 |---|---|
-| Time & date | 12/24-hour time, weekday, month and day |
-| Temperature | Current-temperature needle and today's low–high range; °F or °C |
-| Weather | Condition icon and label, humidity, and today's rain chance |
-| Sun | Next sunrise or sunset time |
-| Battery | Watch charge percentage and separate Body Battery score |
-| Activity | Heart rate and daily steps |
-| Always-on | Dim, time-only display while resting |
-| Themes | Foundry, Reactor, Porcelain, and Nocturne |
+| Time | Large digital clock with 12/24-hour formats and an AM/PM indicator in 12-hour mode |
+| Calendar | Sunday-first weekday rim with today highlighted, plus the local month and day |
+| Temperature | Current-temperature needle on a °F or °C dial, with an overflow marker for readings beyond the scale |
+| Daily temperature range | Copper arc showing today's forecast low–high range, with markers when the range extends beyond the dial |
+| Weather conditions | Condition icon and label for clear, cloudy, rain, storm, snow/ice, wind, fog, and other conditions; clear skies use a moon icon when sunrise is next |
+| Humidity | Relative humidity percentage and a vertical gauge on the left |
+| Rain chance | Today's forecast precipitation percentage and a matching vertical gauge on the right |
+| Sunrise & sunset | Next sunrise or sunset time in the selected time format, with a distinct rise/set icon and an indicator when the weather-derived location is old |
+| Watch battery | Charge percentage and battery-fill icon; the percentage changes color at 15% or below |
+| Body Battery | Separate 0–100 energy score using Garmin's current value, with recent history as a fallback |
+| Heart rate | Current available heart rate, refreshed while awake, with recent history as a fallback |
+| Steps | Daily step count with thousands separators and text that scales to fit larger totals |
+| Data availability | Missing readings show placeholders; aged weather is flagged, expired weather is hidden, and the forecast range and rain chance are hidden when weather is stale |
+| Always-on | Large warm-colored time with a copper weekday/date line on black; shifts position each minute |
+| Themes | Foundry (aged copper and teal), Reactor (lime, violet, cyan, and copper), Porcelain (warm ivory and charcoal), and Nocturne (midnight blue and amber) |
+| Preferences | Choose a theme, follow the watch's time and temperature settings, or override with 12/24-hour time and °F/°C |
 
 ## Download
 
@@ -49,3 +57,7 @@ Forerunner 265 has been checked in Garmin’s simulator. Other models are experi
 No SDK is needed. The phone’s Connect IQ app cannot install these files. [Detailed USB instructions](docs/INSTALL.md#4-copy-the-prg-over-usb).
 
 The default is Foundry with Fahrenheit and your watch’s time format. [Change preferences](docs/INSTALL.md#preferences). Weather requires a recent Garmin Connect sync; missing readings appear as `--`.
+
+![Quiet Foundry always-on view](docs/screenshots/always-on-bigger-time.png)
+
+Enable **Always On Display** in your watch’s display settings for the low-light view.
