@@ -302,7 +302,7 @@ class PrismelierView extends WatchUi.WatchFace {
             dc.fillCircle(pos[0], pos[1], 12);
             text(dc, pos[0], pos[1] - 12, smallFont, initials[i], current ? 0x091B23 : 0x74ACA0);
         }
-        text(dc, 208, 175, smallFont, data.dateLabel, ink);
+        text(dc, 208, 177, smallFont, data.dateLabel, ink);
     }
 
     function drawBattery(dc) {
