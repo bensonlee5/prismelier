@@ -75,10 +75,11 @@ class RevisionLayoutTests(unittest.TestCase):
         data=(ROOT/'source/PrismelierData.mc').read_text()
         labels=set(re.findall(r'weatherLabel = "([^"]+)"',data))
         self.assertIn('SNOW CHANCE',labels)
+        self.assertIn('PARTLY CLOUDY',labels)
         labels.discard('AGED ')
         labels.update(f'AGED {h}H' for h in range(2,24))
         for text in labels:
-            self.inside('Label',text,284,242,(225,244,348,270))
+            self.inside('Label',text,286,242,(225,244,348,270))
 
     def test_dial_unit_sits_in_needle_free_gap(self):
         for text in ('°F','°C'):
@@ -111,7 +112,7 @@ class RevisionLayoutTests(unittest.TestCase):
         self.assertNotIn('Math.round(val)',gauge)
         self.assertNotIn('var reading',gauge)
         self.assertIn('text(dc, 137, 284, labelFont, fahrenheit ? "°F" : "°C", 0x74ACA0);',gauge)
-        self.assertIn('text(dc, 284, 242, labelFont, data.weatherLabel',gauge)
+        self.assertIn('text(dc, 286, 242, labelFont, data.weatherLabel',gauge)
         self.assertIn('["0", "40", "80", "120"]',gauge)
         self.assertIn('text(dc, 208, 77, timeFont, time, green);',code)
         for reading,angle in ((-40,135),(0,135),(60,270),(120,405),(130,405)):

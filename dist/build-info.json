@@ -1,0 +1,47 @@
+{
+  "application": "Prismelier",
+  "device": "fr265",
+  "sdkVersion": "9.2.0",
+  "buildPlatform": "macOS",
+  "releaseBuild": true,
+  "typeCheckLevel": 1,
+  "programBytes": 124460,
+  "programSha256": "a9d575cbd200abc2bf6793fa1c454cd75a993f9dc58ca32307b23439223c2e91",
+  "validation": {
+    "automatedTestsPassed": 59,
+    "simulator": [
+      "Foundry rendering with full PARTLY CLOUDY label",
+      "Always-on display",
+      "Wake restores full face"
+    ],
+    "hardwareTested": false
+  },
+  "sourceSha256": {
+    "manifest.xml": "52c45f1a4bff502ae7f5ae63c2d1f6f46ae0c9c31ec73151d0ce52c1eb04e1c0",
+    "monkey.jungle": "f3b7481625aa5612d799bace04e16b551870157881221686bf692735f5d7c4c3",
+    "source/PrismelierApp.mc": "e8696d7cd4acb9ec2ab2971572a5d1ee5a5d80017d23ff7c345fc0eb3dabbb14",
+    "source/PrismelierData.mc": "dfb6b74484706abe3a75bc0069b19a3fab64e1570bd8c20120d4e79ed32f1017",
+    "source/PrismelierPalette.mc": "b29b08fb33d06c4c0b3f9b2554db9055a7dc2bd6da7ee1c68ce6f6ab12e3c2f4",
+    "source/PrismelierView.mc": "faed03cac067ab0c562882b8f160a236597027ed68586ebf761ca961a82ff0b5",
+    "resources/drawables/drawables.xml": "6582f0224535b6ebd515d2db0eefb2c0070d5d1781c651b6ceea688fe07a5717",
+    "resources/drawables/icon.svg": "fea0cd9d66f4730697392eff83ff15e32c3d41aa6eee2cd50431404b3a393969",
+    "resources/fonts/Ambient.fnt": "5d9c4bcdbf94efcf6e429309e91deea5c0aca0383ee34854a8ae884bb4c633f2",
+    "resources/fonts/Ambient.png": "5518c70f3465bce1068f021c2db5afe9bcc9c3a28813778f36de7e716d90c66c",
+    "resources/fonts/LICENSE-DejaVu.txt": "63d3ba759d12804c5b31a9d5940d855c1820d1f5999e6b0872eb1c7ff045fbc9",
+    "resources/fonts/Label.fnt": "c81695444b42b2510921b0c88013c5aec59e575b55386806127bac9e39e754dc",
+    "resources/fonts/Label.png": "1bd530add365032be780cc44cd74379ff30b83dd048ae3b4c1cbfd019c291255",
+    "resources/fonts/Small.fnt": "66386ed80a27cfd366495cbe491450e6488005f67ec1df664db4b6020e57b130",
+    "resources/fonts/Small.png": "45eb31d05d1b74475060f2e27b74b7f3ce72fce24e358878c926cd0ce58f29d5",
+    "resources/fonts/Time.fnt": "e5565c9a2e240dca0979a2f6402c6853191aa3d18837ab31bf4eb67134228c79",
+    "resources/fonts/Time.png": "3a27cdaa1c5de8bfccf2e97a62f1145d1ad041d18249d69469e099679c818259",
+    "resources/fonts/Value.fnt": "f446794fabb5fb9a1d1b078e130205db7dc573b142c6f19d6019de96be3b629a",
+    "resources/fonts/Value.png": "d66f6783981d82ab2a379ebe57b63e132e331436b407cd92c1164e3f03ab7884",
+    "resources/fonts/fonts.xml": "c7d0544acc6871bff28cf9750e04043f3876c0f8f3b2c2f24c0ad5229a3bcd6c",
+    "resources/settings/properties.xml": "21de4ae0a98bdf5e5d27c91757135a3027877f1709e00d1efec4b8546e0e370a",
+    "resources/settings/settings.xml": "9b70c52466f237b070a341a984794edef660f64801c723fb1c0325aca99d3b9f",
+    "resources/strings/strings.xml": "5cf578f1751d22d7d975bb46e67b64713f9babfa1d1363974ac0bd3a961c4f94",
+    "resources/textures/foundry-background-indexed.png": "f9da729f8e2a1c66d35960f19ae08a2609bbae42428d4e2b6c44a4051b808ff4",
+    "resources/textures/textures.xml": "32046cb3f6ec8fda663a73c482255c6b5b82f84f9c1b99f2659d046d608690f7",
+    "resources/themes.json": "226800d3f4b11e6ee77b8b4c802d88da62f219ece8188c3166ba7e5fd42e2f2d"
+  }
+}

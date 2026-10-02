@@ -382,7 +382,7 @@ class PrismelierView extends WatchUi.WatchFace {
             dc.fillCircle(137, 267, 2);
         }
         drawWeather(dc, 284, 228, data.weatherKind);
-        text(dc, 284, 242, labelFont, data.weatherLabel, data.weatherStale ? copper : ink);
+        text(dc, 286, 242, labelFont, data.weatherLabel, data.weatherStale ? copper : ink);
         if (data.weatherStale) {
             paint(dc, copper, Graphics.COLOR_TRANSPARENT);
             dc.drawCircle(312, 220, 3);

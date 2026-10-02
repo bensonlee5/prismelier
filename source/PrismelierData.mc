@@ -312,7 +312,7 @@ class PrismelierData {
             case Weather.CONDITION_PARTLY_CLOUDY:
             case Weather.CONDITION_PARTLY_CLEAR:
             case Weather.CONDITION_THIN_CLOUDS:
-                weatherKind = "partly"; weatherLabel = "PARTLY"; break;
+                weatherKind = "partly"; weatherLabel = "PARTLY CLOUDY"; break;
             case Weather.CONDITION_MOSTLY_CLOUDY:
             case Weather.CONDITION_CLOUDY:
                 weatherKind = "cloud"; weatherLabel = "CLOUDY"; break;

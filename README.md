@@ -24,7 +24,7 @@ Remaining validation is listed in [QA](docs/QA.md#open-validation).
 
 - Prominent **digital time**, following the watch's 12/24-hour preference, with a compact AM/PM mark inside the time window
 - **Temperature dial** with a 270° band, needle, labeled scale and unit; no separate numeric temperature reading
-- **Weather panel** with a monoline condition icon and condition word (`PARTLY`, `RAIN`, `AGED 3H`…)
+- **Weather panel** with a monoline condition icon and condition label (`PARTLY CLOUDY`, `RAIN`, `AGED 3H`…)
 - **Weekday rim** (`S M T W T F S`) with today on an inverted copper plate, plus a local month/day such as `Oct 1`
 - Next **sunrise or sunset time**, with distinct event icons
 - **Device battery percentage** at top left and a separate **Body Battery score** at top right
@@ -38,6 +38,12 @@ The target is the **416 × 416 AMOLED Forerunner 265** (`fr265`). Compatibility 
 *Reactor, Porcelain and Nocturne. A [24-hour/Celsius screenshot](docs/screenshots/foundry-24h-celsius.png) is also available.*
 
 ## Build and install
+
+**[Download Prismelier for Forerunner 265 (.prg)](https://github.com/bensonlee5/prismelier/raw/refs/heads/main/dist/Prismelier-fr265.prg)** — ready to copy to the watch's existing `GARMIN/APPS` folder. This build is for the **265 only, not the 265S**. It uses the Foundry theme, Fahrenheit and the watch's time format. No SDK is needed to install the download; start at [USB installation](docs/INSTALL.md#4-copy-the-prg-over-usb), then select Prismelier on the watch.
+
+The committed release build uses SDK 9.2.0 and passed all 59 automated checks plus FR265 simulator checks for the full weather label and always-on/wake transitions. Physical-watch rendering and battery life remain unverified. [Build details](dist/build-info.json) and [SHA-256 checksum](dist/SHA256SUMS) accompany the binary.
+
+To build from source instead:
 
 Follow the [build and USB installation guide](docs/INSTALL.md) for Linux, Windows or macOS:
 

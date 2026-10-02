@@ -2,7 +2,7 @@
 
 ## Current release status
 
-There is no published release. Build your own `.prg` with the steps below; see the [README status](../README.md#status) for what has been validated.
+A prebuilt **Forerunner 265-only** `.prg` is available from the [README download link](../README.md#build-and-install). Download it and skip to [USB installation](#4-copy-the-prg-over-usb), or build your own using the steps below. See the [README status](../README.md#status) for validation limits. There is no Connect IQ Store listing.
 
 ## 1. Set up Garmin's official tools
 
@@ -73,7 +73,19 @@ Close Garmin Express or other Garmin programs if another application already has
 
 You can build and run the simulator on a Mac. However, the FR265's MTP storage generally **does not appear as a normal Finder drive**. Garmin's current support guidance recommends Windows to access these devices' folders.
 
-The supported, conservative transfer route is to move the built `.prg` to a Windows computer, then follow the Windows steps above. A third-party MTP transfer application may also expose `GARMIN/APPS` on macOS, but that path has **not been validated here** and is not Garmin's documented Finder workflow. Do not expect Garmin Express to import an arbitrary development `.prg`.
+Garmin's supported folder-access route is to move the `.prg` to a Windows computer, then follow the Windows steps above. Do not expect Garmin Express to import an arbitrary development `.prg`.
+
+**Mac alternative tested on 1 October 2026:** Homebrew's `libmtp` 1.1.23 successfully copied this build to an FR265, and reading the file back produced an identical SHA-256 checksum. This validates transfer, not the watch's installation or rendering. Close competing MTP applications first:
+
+```sh
+brew install libmtp
+mtp-detect
+mtp-folders
+# Confirm Forerunner 265 and the existing GARMIN/Apps folder in the output.
+mtp-sendfile Prismelier-fr265.prg /GARMIN/Apps
+```
+
+Run the last command from the folder containing your downloaded `.prg`, or substitute its local path. The second argument is the **existing destination folder**, not a filename. Confirm the output reaches 100% and reports a new file ID; a zero exit code alone does not guarantee a copy. After the command finishes and releases the device, unplug and select the face below.
 
 Sources: [Garmin sideload instructions](https://developer.garmin.com/connect-iq/connect-iq-basics/your-first-app/), [Garmin MTP guidance](https://support.garmin.com/en-US/?faq=CZqibgTHMb0dAYEaj2UiU7), [Mac folder-access guidance](https://support.garmin.com/en-IN/?faq=4NnyLlu0o5ASH4BVZ6QWPA).
 

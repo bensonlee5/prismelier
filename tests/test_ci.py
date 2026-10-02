@@ -19,7 +19,8 @@ class CiTests(unittest.TestCase):
                 ci.preflight()
 
     def test_key_inside_repository_rejected_before_compiler(self):
-        with patch.dict('os.environ', {'CIQ_SDK': '/no-sdk', 'CIQ_KEY': str(ROOT / 'bad.der')}, clear=True):
+        with patch.dict('os.environ', {'CIQ_SDK': '/no-sdk', 'CIQ_KEY': str(ROOT / 'bad.der')}, clear=True), \
+             patch.object(ci.platform, 'system', return_value='Linux'):
             with self.assertRaisesRegex(ValueError, 'outside the repository'):
                 ci.preflight()
 
