@@ -468,8 +468,9 @@ class PrismelierView extends WatchUi.WatchFace {
 
     function drawSolar(dc) {
         var x = 247;
-        var y = 295;
         var up = data.solarLabel.find("RISE") != null;
+        // Rise and set have different icon extents; both center at y=294.
+        var y = up ? 303 : 296;
         var color = data.solarTime == "--:--" ? 0x777F70 : (up ? 0x27645D : 0xA04D30);
         var sunY = up ? y - 4 : y;
         // Open upper semicircle preserves the material texture underneath.
@@ -491,9 +492,9 @@ class PrismelierView extends WatchUi.WatchFace {
         }
         // "5:03 PM" needs the Label font to fit the plate; 24-hour and "--:--" use Small.
         if (data.solarTime.length() > 5) {
-            text(dc, 307, 281, labelFont, data.solarTime, 0x183B3B);
+            text(dc, 307, 285, labelFont, data.solarTime, 0x183B3B);
         } else {
-            text(dc, 307, 278, smallFont, data.solarTime, 0x183B3B);
+            text(dc, 307, 282, smallFont, data.solarTime, 0x183B3B);
         }
         if (data.solarLabel.find("*") != null) {
             paint(dc, copper, Graphics.COLOR_TRANSPARENT);
