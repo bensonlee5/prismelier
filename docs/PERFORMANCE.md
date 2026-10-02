@@ -1,9 +1,9 @@
 # Battery and performance review
 
-Reviewed 1 October 2026 against `7b1ac81`, including its FR265 compile fixes.
-These are source-level improvements, not a measured battery-life guarantee.
+CPU and memory work on the watch face, measured in the FR265 simulator. These
+are not battery-life measurements; see the [README status](../README.md#status).
 
-## Changes
+## Changes since `7b1ac81`
 
 - **Startup:** retain the data constructor's initial read; remove the immediate
   second settings load and forced read in the view constructor
@@ -20,12 +20,12 @@ These are source-level improvements, not a measured battery-life guarantee.
   draw avoids 288 sine/cosine calls and 144 temporary two-element point arrays.
   Two retained flat arrays hold 146 numeric coordinates. This trades a small,
   unmeasured heap allocation for less repeated CPU work and allocation churn
-- Fix the optional SDK texture-schema test to accept the already-corrected
-  automatic-palette XML on main, without assuming a removed palette child
+- **Theme colors:** each view memoizes `PrismelierPalette.color()` results in a
+  small dictionary, cleared when settings change. The 67-case palette switch now
+  runs once per distinct color per theme instead of on every draw call
 
-The ebony bitmap, digital time, temperature band/needle, palettes, text and icon
-placement are unchanged. No full-screen backing buffer or new raster is added.
-All 72 cached band segments have the same endpoint formula as before.
+No full-screen backing buffer or new raster is added. All 72 cached band
+segments have the same endpoint formula as before.
 
 ## Existing safeguards retained
 
@@ -44,20 +44,9 @@ provides the cache coordinates; [Weather](https://developer.garmin.com/connect-i
 provides the location/date-specific solar events. Resource-reference behavior
 is described in Garmin's [graphics documentation](https://developer.garmin.com/connect-iq/core-topics/graphics/).
 
-## Verification and limits
-
-- **56 tests passed** with official SDK 9.2.0 and Pillow, including the official
-  parser, API name/arity audit, existing assets/AOD checks and seven new
-  performance source/model tests
-- Standard-library-only: **47 passed, 9 optional tests skipped**
-- New tests guard cache invalidation/retry, wake/startup read paths, fixed dial
-  geometry and absence of new timers/sensor activation. Python models are
-  independent fixtures, not execution of Monkey C or a Garmin emulator
-- `6747f6b` compiles for `fr265` with official SDK 9.2.0 and the FR265 profile
-  (warnings only) and runs in the FR265 simulator without crashing. It has
-  **not been watch-tested**; see the simulator profile below
-- The compile workflow is owner/manual/main-only. No PR-triggered native build
-  is expected; a draft PR is not a green native CI result
+Tests in `tests/test_performance.py` guard the cache invalidation and retry,
+the wake/startup read paths, the fixed dial geometry and the absence of timers
+or sensor activation.
 
 ## Simulator profile, 1 October 2026
 
@@ -89,15 +78,27 @@ Reference faces under the same `onUpdate` timer, two 60-frame runs each:
 Interpretation:
 
 - The full-screen Foundry bitmap costs no more than the vector theme's
-  artwork. Redraw time is dominated by many small vector calls, each resolving
-  a color through `PrismelierPalette.color()`. Removing per-call palette lookups
-  is the likeliest next CPU saving (not yet measured)
+  artwork. Redraw time is dominated by many small vector calls, each of which
+  resolved a color through `PrismelierPalette.color()`. Memoizing those colors
+  (below) was the follow-up
 - Wake and temperature-dial savings are real but small relative to a full
   redraw; the cached-minute refresh became slightly slower
 - These are host-CPU simulator timings, valid only for comparing builds. They
   do not predict watch timing or battery life. The SDK `AnimationWatchFace`
   (no FR265 animation mapping) and `ConfigurableWatchFace` (`WatchFaceConfig`
   unsupported on FR265) samples could not serve as references
+
+### Theme-color cache
+
+Same harness, Foundry theme with the current layout, two alternating 60-frame
+runs per build:
+
+| Build | `onUpdate` | App heap used |
+|---|---|---|
+| Palette lookup on every draw call | 26.1–27.2 ms | 31,784 B |
+| Memoized theme colors | 24.0–24.3 ms | 32,232 B |
+
+That is about 9% less redraw time for 448 bytes of heap.
 
 ## Acceptance checks before release
 

@@ -8,7 +8,7 @@ The latest Foundry face uses an actual static raster resource, not a texture pas
 - Resource: `Rez.Drawables.FoundryBackground`, declared in `resources/textures/textures.xml`
 - Resource settings: native/default packing, automatic palette, no dithering, compression, transparency disabled
 - Only Foundry uses the raster; the three alternate palettes retain the procedural artwork
-- Source-backed preview: `docs/preview-416.png`; the renderer loads the very same indexed file
+- Simulator screenshot: [`docs/screenshots/foundry.png`](screenshots/foundry.png)
 - Icon family: original 2px monoline pictograms at 416px, not platform emoji or baked-in imagery
 
 The artwork combines convex lacquered ebony-inspired hardwood with fine, directional dark-brown and graphite grain, raised machined copper/brass, deep teal patina, satin dark ceramic and an ivory ceramic solar tile. Raised inlays and rims use upper-left highlights and lower-right contact shadows/occlusion; recessed wells keep the live graphics clear. Hardware contact shadows and bevels are static. Clean readout wells preserve legibility. Meaningful material pixels remain inside a 204px radius (the round display is 208px), avoiding clipped crown corners. Graphics remain motionless rather than animated.
@@ -22,7 +22,7 @@ Planning estimates for a single 416px pixel plane, before headers, palette and a
 - 8-bit indexed: **173,056 bytes / 169 KiB**
 - 16-bit RGB565: **346,112 bytes / 338 KiB**
 
-The 116.9 KiB PNG size is compressed storage, **not a runtime RAM measurement**. The actual compiler encoding, graphics-pool occupancy, app heap, decode cost and battery impact still require the official FR265 profile and simulator/hardware. No native memory-fit or battery-life claim is made.
+The 116.9 KiB PNG size is compressed storage, **not a runtime RAM measurement**. The bitmap lives in the graphics pool, not the app heap; in the simulator, drawing it costs no more than the vector themes' artwork (see [PERFORMANCE](PERFORMANCE.md#simulator-profile-1-october-2026)). Graphics-pool occupancy and on-watch decode cost remain unmeasured.
 
 The implementation keeps one resource reference and loads it outside `onUpdate`. It never calls the reference's `get()` to pin pixel data and never creates another full-screen `BufferedBitmap`. Garmin may still evict/redecode the resource behind that reference. Recoverable resource load/draw errors attempt a procedural fallback; fatal VM memory errors are not claimed to be recoverable.
 
@@ -52,6 +52,6 @@ Selected ebony material direction:
 
 > Change only the wood to ebony-inspired hardwood: nearly black chocolate/graphite with subtle warm-brown long straight fibers and clear directional grain. No burl, floral figures, rosettes or swirls. Retain the polished sheen, readable grain, raised profiles, bevel thickness, existing lighting, copper/brass, teal patina, electronics, silhouette and exact readout-well geometry.
 
-The chosen packed PNG has SHA256 `f9da729f8e2a1c66d35960f19ae08a2609bbae42428d4e2b6c44a4051b808ff4`. The ebony-selection checkpoint’s Oct 24/Saturday preview was pixel-identical to the selected study at native size. The current preview removes only the numeric temperature overlay; the selected material resource is unchanged. This confirms artwork continuity, not native-device rendering.
+The chosen packed PNG has SHA256 `f9da729f8e2a1c66d35960f19ae08a2609bbae42428d4e2b6c44a4051b808ff4`.
 
-Live anchors were refined after visual review: time at y=77, month/day at y=175, temperature dial centered at (137,267), weather icon and unit-only °F indicator to its right, and sensor values at y=338. The source and preview compositor use the same coordinates. Native-size and enlarged reviews covered missing/aged weather, endpoint overflow, long dates and extreme metric widths. Always inspect new artwork against every state before replacing the runtime resource.
+Live overlays are positioned in `source/PrismelierView.mc`: time at y=77 (with the AM/PM mark inside the visor), month/day at y=175, temperature dial centered at (137,267) with its unit below the hub, weather icon and condition word to its right, and sensor values at y=338. `tests/test_layout_revision.py` checks text against each well using the committed font metrics. Inspect new artwork in the simulator against every state before replacing the runtime resource.

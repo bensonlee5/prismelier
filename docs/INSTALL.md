@@ -2,11 +2,7 @@
 
 ## Current release status
 
-This repository contains the implemented source and assets. **There is no validated, installable `.prg` yet.** A build was attempted with the official Garmin Connect IQ 9.2.0 compiler, but the build environment lacked the separate FR265 device profile. The official source parser passed; that is not a compile, simulator run or hardware test.
-
-A [manual GitHub Actions workflow](CI.md) is also provided. It needs a dedicated, officially provisioned runner before it can produce a PRG; the first successful CI build is not yet verified.
-
-The following is Garmin's documented development/sideload workflow. It has not been performed on a physical watch for this project.
+There is no published release. Build your own `.prg` with the steps below; see the [README status](../README.md#status) for what has been validated.
 
 ## 1. Set up Garmin's official tools
 
@@ -17,7 +13,7 @@ Use a Windows PC, Mac, or Ubuntu Linux computer. Garmin documents **Ubuntu** for
 3. Install the latest stable Connect IQ SDK and set it active. **Also install/update the Forerunner 265 device definition** in the Devices section. Downloading the SDK ZIP alone does not install the device profiles
 4. Install [Visual Studio Code](https://code.visualstudio.com/) and the **Monkey C** extension published by **Garmin** from its Extensions view
 5. Install the Java runtime required by the extension (Garmin documents Java 11 or newer). In VS Code, open the command palette and run **Monkey C: Verify Installation**
-6. Create a private developer signing key using **Monkey C: Generate a Developer Key**. Save it outside the repository. Keep a private backup for future updates; do not upload or commit it
+6. Create a private developer signing key using **Monkey C: Generate a Developer Key**. Save it outside the repository. Keep a private backup for future updates; do not upload or commit it. The key file needs no particular extension: the extension saves it as `developer_key` by default, and the examples below use that name
 
 Official references: [Getting Started](https://developer.garmin.com/connect-iq/connect-iq-basics/getting-started/) and [VS Code extension](https://developer.garmin.com/connect-iq/reference-guides/visual-studio-code-extension/).
 
@@ -33,7 +29,7 @@ Official references: [Getting Started](https://developer.garmin.com/connect-iq/c
 For CLI builds, with the official device profile already installed:
 
 ```sh
-python tools/build.py --sdk /path/to/connectiq-sdk --key /private/path/developer.der --release
+python tools/build.py --sdk /path/to/connectiq-sdk --key /private/path/developer_key --release
 ```
 
 The output is `build/Prismelier.prg`. On Windows quote paths with spaces; the helper selects `monkeyc.bat`. It never downloads proprietary SDK files, generates credentials, or tries another watch target behind your back.
@@ -41,14 +37,14 @@ The output is `build/Prismelier.prg`. On Windows quote paths with spaces; the he
 For a direct compiler invocation:
 
 ```sh
-monkeyc -f monkey.jungle -d fr265 -o build/Prismelier.prg -y /private/path/developer.der -r -w -l 1
+monkeyc -f monkey.jungle -d fr265 -o build/Prismelier.prg -y /private/path/developer_key -r -w -l 1
 ```
 
 Create `build` first. Use the full path to `monkeyc`/`monkeyc.bat` if it is not on your PATH. **Do not change the device to 265S** to get around a profile error.
 
 ## 3. Test in the real Garmin simulator first
 
-With a source file selected, use **Run → Run Without Debugging** and choose Forerunner 265. Check all items in [QA](QA.md), especially no-weather startup and low-power mode. Simulator values are test fixtures, not your personal data. A successful simulator run still does not prove hardware battery life or weather sync.
+With a source file selected, use **Run → Run Without Debugging** and choose Forerunner 265. Work through the simulator items in [QA](QA.md#open-validation), especially no-weather startup and low-power mode. Simulator values are test fixtures, not your personal data. A successful simulator run still does not prove hardware battery life or weather sync.
 
 ## 4. Copy the `.prg` over USB
 

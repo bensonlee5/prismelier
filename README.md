@@ -2,56 +2,64 @@
 
 A futuristic-steampunk digital watch face for the **Garmin Forerunner 265**. The default **Foundry** theme combines ebony-inspired wood grain, patinated copper, raised material relief and intricate robotics details.
 
-![Prismelier Foundry design render](docs/preview.png)
+![Prismelier Foundry theme in the FR265 simulator](docs/screenshots/foundry.png)
 
-*Source-backed design render with illustrative readings, not a Garmin simulator or watch screenshot.*
+*Connect IQ FR265 simulator screenshot (simulated data: no heart rate, 0 steps).*
 
-> **Development project.** The history records a successful FR265 compile in [7b1ac81](https://github.com/bensonlee5/prismelier/commit/7b1ac81b4a5427f47e087c29b294af84496ca59f). The performance revision has been compiled and profiled in the FR265 simulator, but still needs hardware validation. See [performance review](docs/PERFORMANCE.md) and [validation history](docs/QA.md).
+## Status
+
+This section is the project's single status record; other documents link here.
+
+| Check | State |
+|---|---|
+| FR265 compile (SDK 9.2.0, official profile) | Passes, warnings only |
+| FR265 simulator | Runs in all four themes, 12/24-hour and °F/°C; [profiled](docs/PERFORMANCE.md#simulator-profile-1-october-2026) |
+| Source, layout and asset tests | Pass (`python -m unittest discover -s tests`) |
+| CI workflow | Prepared; no runner provisioned, so no CI build yet ([CI](docs/CI.md)) |
+| Physical FR265 | **Not yet tested**: fonts on AMOLED, AOD transitions, weather sync, battery drain |
+
+Remaining validation is listed in [QA](docs/QA.md#open-validation).
 
 ## Features
 
-- Prominent **digital time**, following the watch’s 12/24-hour preference
-- **Temperature dial** with a 270° band, needle and labeled 0–120°F scale; no separate numeric temperature reading
-- **Weekday rim** (`S M T W T F S`) with the current day highlighted, plus a local month/day display such as `Oct 24`
-- Monoline **weather icons** and the next **sunrise or sunset time**, with distinct event icons
+- Prominent **digital time**, following the watch's 12/24-hour preference, with a compact AM/PM mark inside the time window
+- **Temperature dial** with a 270° band, needle, labeled scale and unit; no separate numeric temperature reading
+- **Weather panel** with a monoline condition icon and condition word (`PARTLY`, `RAIN`, `AGED 3H`…)
+- **Weekday rim** (`S M T W T F S`) with today on an inverted copper plate, plus a local month/day such as `Oct 1`
+- Next **sunrise or sunset time**, with distinct event icons
 - **Device battery percentage** at top left and a separate **Body Battery score** at top right
 - Recent **heart rate** and daily **steps**
 - Sparse, dim, repositioning digital-time-only **always-on display**
 
 The target is the **416 × 416 AMOLED Forerunner 265** (`fr265`). Compatibility with the 265S or other watches is not declared.
 
+![Reactor, Porcelain and Nocturne themes in the FR265 simulator](docs/screenshots/themes.png)
+
+*Reactor, Porcelain and Nocturne. A [24-hour/Celsius screenshot](docs/screenshots/foundry-24h-celsius.png) is also available.*
+
 ## Build and install
 
 Follow the [build and USB installation guide](docs/INSTALL.md) for Linux, Windows or macOS:
 
-1. Install Garmin’s official Connect IQ SDK, the **Forerunner 265 device profile** and the Monkey C tools
-2. Configure a private signing key, build for `fr265`, and validate in Garmin’s simulator
+1. Install Garmin's official Connect IQ SDK, the **Forerunner 265 device profile** and the Monkey C tools
+2. Configure a private signing key, build for `fr265`, and validate in Garmin's simulator
 3. Copy the resulting `.prg` to `GARMIN/APPS` over USB, disconnect safely and select Prismelier on the watch
 
 Sideloading requires a computer. The iPhone Connect IQ app cannot import a raw development `.prg`, and there is no Garmin Store listing. Keep signing keys outside the repository.
 
-### GitHub Actions
-
-[Compile Forerunner 265](https://github.com/bensonlee5/prismelier/actions/workflows/compile.yml) is a **manually triggered, owner-only** workflow for trusted `main`. It requires a dedicated Linux x64 runner with the official SDK, FR265 profile and local signing key already provisioned. It uploads a PRG and checksums only after a successful compile.
-
-**Runner setup is still required; no successful CI build has been verified.** Read the [CI setup and security guide](docs/CI.md) before registering a runner for this public repository. The workflow does not automatically run pull requests.
+[Compile Forerunner 265](https://github.com/bensonlee5/prismelier/actions/workflows/compile.yml) is a **manually triggered, owner-only** GitHub Actions workflow for trusted `main`, run on a dedicated, pre-provisioned Linux runner. Read the [CI setup and security guide](docs/CI.md) before registering a runner for this public repository.
 
 ## Settings and data
 
 Foundry and **Fahrenheit** are the defaults. Optional settings include Celsius/device units, explicit 12/24-hour time and three procedural color palettes: Reactor, Porcelain and Nocturne. See [settings instructions](docs/INSTALL.md#preferences); phone settings for unpublished sideloaded apps are not guaranteed.
 
-Weather uses Garmin’s existing cache; sunrise/sunset uses the weather observation location, which may differ from your current position. The face cannot force a fresh weather observation. Old data is marked, and unavailable values are not replaced with demo readings. Heart rate is a recent sample; Body Battery is a wellness estimate, not a medical measurement. See [data setup and troubleshooting](docs/INSTALL.md#6-get-weather-solar-heart-rate-and-body-battery-working).
+Weather uses Garmin's existing cache; sunrise/sunset uses the weather observation location, which may differ from your current position. The face cannot force a fresh weather observation. Old data is marked, and unavailable values are not replaced with demo readings. Heart rate is a recent sample; Body Battery is a wellness estimate, not a medical measurement. See [data setup and troubleshooting](docs/INSTALL.md#6-get-weather-solar-heart-rate-and-body-battery-working).
 
-The face has no backend, API key or network permission. It does not activate GPS or transmit health data. Data is cached in RAM, and the textured background is omitted from AOD. Runtime memory use and battery impact still need device validation.
-
-The [performance review](docs/PERFORMANCE.md) removes duplicate startup/wake reads,
-caches solar calculations with freshness/invalidation guards, and precomputes
-the fixed temperature-band geometry. The design and sparse AOD are preserved;
-actual battery savings require watch measurements.
+The face has no backend, API key or network permission. It does not activate GPS or transmit health data. Data is cached in RAM, and the textured background is omitted from AOD. See the [performance review](docs/PERFORMANCE.md) for CPU and memory measurements.
 
 ## Development
 
-Run source and asset checks:
+Run source and asset checks (Pillow and an SDK path enable optional checks; see [QA](docs/QA.md)):
 
 ```sh
 python -m unittest discover -s tests -v
@@ -60,16 +68,8 @@ python -m unittest discover -s tests -v
 With the official SDK and device profile installed:
 
 ```sh
-python tools/build.py --sdk /path/to/connectiq-sdk --key /private/path/developer.der --release
+python tools/build.py --sdk /path/to/connectiq-sdk --key /private/path/developer_key --release
 ```
-
-Committed fonts and artwork are included. Optional design-preview generation uses Python, Pillow and locally installed DejaVu fonts:
-
-```sh
-python tools/render_preview.py
-```
-
-Passing source/parser checks does not establish native compilation or device compatibility. [QA details](docs/QA.md) document the checks performed and remaining validation.
 
 ## Credits
 

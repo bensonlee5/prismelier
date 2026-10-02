@@ -7,7 +7,7 @@
 workflow for a dedicated, officially provisioned Linux runner. Adding the workflow
 alone does not install a runner or provide Garmin's device profiles.
 
-The first real FR265 build, simulator run and watch test are still outstanding.
+The first CI build is still outstanding; see the [README status](../README.md#status) for local build and simulator results.
 Preflight and Python source/asset checks are not compilation.
 
 ### Why a pre-provisioned runner?
