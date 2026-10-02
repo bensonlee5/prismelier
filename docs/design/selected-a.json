@@ -1,0 +1,80 @@
+{
+  "design": "Prismelier latest A: Paired rails, selected 2026-10-02 at 04:11 UTC",
+  "selectionIdentity": "Body Battery upper-right; relative-humidity straight rail left; precipitation-chance straight rail right. Do not substitute any earlier option called A.",
+  "referenceLibraryFileId": "libfile_367955cc8e54819191ad7687b45a1d82",
+  "sourceMainCommit": "abf7fd44a5ec74b8b697d260f2a0913826f19de4",
+  "canvas": {"width": 416, "height": 416, "coordinates": "pixels; SVG text positions are BASELINES, not Monkey C drawText top-origin positions"},
+  "background": {
+    "filename": "Prismelier-A-Paired-Rails-Background.png",
+    "sha256": "64db7ec171b512ba44f4832793ff6aed64f2ee54c09a30a3e6ed0d7545ab3eeb",
+    "nativeWidth": 1254,
+    "nativeHeight": 1254,
+    "referenceRendering": "The exact native PNG is rendered at x=0,y=0,width=416,height=416, with no crop. It is new imagegen-created blank material art, not the current main texture. Inspect the materialized PNG and self-contained SVG before implementing. Project-native texture preparation may produce the actual 416px watch resource; compare its rendered appearance to the selected reference.",
+    "transparency": false
+  },
+  "colors": {
+    "ink": "#E8DCC5", "copper": "#C68B61", "humidityFill": "#B1CCC0", "precipitationFill": "#C68B61", "mutedScale": "#95ACA2", "emptyTrack": "#23423B", "needle": "#C4E6D8", "bodyBatteryPerson": "#6AB8AA", "time": "#DECFB1"
+  },
+  "humidityRail": {
+    "centerX": 42,
+    "label": {"text":"RH", "baselineY":228, "font":"DejaVu Sans", "pixelSize":9, "color":"#B1CCC0"},
+    "maximumLabel": {"text":"100", "baselineY":239, "pixelSize":8},
+    "track": {"x":39.5, "y":244, "width":5, "height":34, "min":0, "max":100, "fillDirection":"bottom to top"},
+    "valueMarker": {"x1":38,"x2":46,"yFormula":"244 + 34 * (1 - clampedValue / 100)","strokeWidth":1,"color":"#E8DCC5"},
+    "minimumLabel": {"text":"0", "baselineY":289,"pixelSize":8},
+    "numericReading": {"baselineY":301,"pixelSize":9,"format":"integer followed by %","illustration":"62%"}
+  },
+  "precipitationRail": {
+    "centerX":377,
+    "icon": {"type":"existing monoline rain-cloud motif", "centerX":377, "centerY":225, "scale":0.4, "color":"#B1CCC0", "meaning":"daily probability of precipitation, not current conditions"},
+    "maximumLabel":{"text":"100","baselineY":239,"pixelSize":8},
+    "track":{"x":374.5,"y":244,"width":5,"height":34,"min":0,"max":100,"fillDirection":"bottom to top"},
+    "valueMarker":{"x1":373,"x2":381,"yFormula":"244 + 34 * (1 - clampedValue / 100)","strokeWidth":1,"color":"#E8DCC5"},
+    "minimumLabel":{"text":"0","baselineY":289,"pixelSize":8},
+    "numericReading":{"baselineY":301,"pixelSize":9,"format":"integer followed by %","illustration":"30%"}
+  },
+  "bodyBattery": {
+    "restore":true,"format":"integer energy score, never percentage","illustration":76,
+    "text":{"centerX":280,"mainFont":"Small","drawTextOriginY":48},
+    "person":{"headCenter":[235,53],"headRadius":3,"strokeWidth":2,"segments":[[235,59,235,63],[230,60,240,60],[235,63,231,69],[235,63,239,69]]},
+    "energyBolt":{"points":[[246,53],[242,60],[247,60],[243,67]],"strokeWidth":1,"color":"#C68B61"},
+    "note":"Refresh/freshness logic is functional-task scope; a static preview does not claim a cadence. Keep device battery in upper-left independently."
+  },
+  "temperatureDial": {
+    "center":[133,263],"changeFromMain":"Translate every temperature-dial vector/text/needle element by (-4,-4) relative to current main's (137,267). Right condition and solar elements are NOT included in that translation.",
+    "trackRadius":59,"startAngleDegrees":135,"sweepDegrees":270,
+    "fahrenheitScale":[0,120],"celsiusScale":[-20,40],
+    "emptyTrackStroke":3,"emptyTrackColor":"#23423B",
+    "dailyRangeStroke":9,"dailyRangeColor":"#C68B61",
+    "dailyRange":"Highlight only today's low-to-high interval at the scale positions. Remove the old colored zero-to-current active band. Do not draw low/high endpoint numbers. The existing scale numbers stay.",
+    "illustrativeRangeF":[58,79],"illustrativeRangeAnglesDegrees":[265.5,312.75],
+    "needle":{"innerRadius":-5,"outerRadius":30,"strokeWidth":3,"color":"#C4E6D8","illustrativeCurrentF":72,"illustrativeAngleDegrees":297},
+    "currentTipMarker":{"innerRadius":56,"outerRadius":64,"strokeWidth":2,"color":"#E8DCC5"},
+    "hub":{"outerRadius":4,"outerColor":"#C68B61","innerRadius":2,"innerColor":"#122320"},
+    "existingScale":"13 ticks, 0/40/80/120 for F (or existing Celsius labels), and unit glyph. Retain current main tick/label geometry except (-4,-4) translation."
+  },
+  "unchangedElements": {
+    "weekdayRim":"Current main geometry, center (208,208), radius188, angles210+20*i, Sunday-first. Current weekday copper invert.",
+    "date":"Small font centered at x208, main drawText origin y176",
+    "time":"Current main Time font size91; 12h centerX192 originY77, AM/PM Label centerX324 originY148; use current main 24h behavior.",
+    "deviceBattery":"Current main icon and Small reading, centerX169 originY48, percent sign retained",
+    "currentCondition":"Keep existing icon centered (284,228), condition Label centerX286 originY242. In the reference the illustrative label is PCLOUD.",
+    "sunset":"Keep original right ivory plate, native icon center approximately (247,296), 12h Label time centered x307 originY285. Existing sunrise/sunset distinctions should remain."
+  },
+  "bottomVitals": {
+    "changeFromMain":"Translate the entire current main bottom heart-rate/steps vector and text group by (0,-10) to align the newly generated material's metric rail.",
+    "heartRate":"Value font centerX149; effective drawText originY329 (main339 minus10)",
+    "steps":"Value font centerX284; effective originY329 for normal values, preserve current adaptive fonts for larger values using the same -10 shift",
+    "icons":"Shift all heart/footprint strokes and circles up10 as a group."
+  },
+  "fontNotes": {
+    "existing":"Use repository's shipped native font assets for Time/Small/Label/Value.",
+    "newGaugeFonts":"The selected SVG uses DejaVu Sans at 8px for 0/100 scale labels and 9px for RH and numeric percentage readings. These need deterministic project-native small bitmap fonts or equivalent; do not silently substitute 15px Label, which will overflow the rails.",
+    "baselineConversion":"When porting gauge labels to BMFont drawText, subtract the font's common base/ascent from the stated SVG baseline. Verify the resulting pixels in the simulator."
+  },
+  "productionNotes": [
+    "The self-contained reference SVG embeds the exact new background, all static illustrative UI shapes, and text positions. It is an authoritative visual reference, not live watch source code.",
+    "Match today's daily forecast by local date; missing/stale data behavior belongs in production code. Do not treat absent humidity or precipitation as zero.",
+    "Image generation was used only to create the new blank material layout; the preview interface was rendered deterministically in SVG."
+  ]
+}

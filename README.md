@@ -2,19 +2,21 @@
 
 A futuristic-steampunk digital watch face for the **Garmin Forerunner 265**. The default **Foundry** theme combines ebony-inspired wood grain, patinated copper, raised material relief and intricate robotics details.
 
-![Prismelier Foundry theme in the FR265 simulator](docs/screenshots/foundry.png)
+![Selected A source-based rendering](docs/screenshots/selected-a-source-preview.png)
 
-*Connect IQ FR265 simulator screenshot (simulated data: no heart rate, 0 steps).*
+*Selected-A source-based fixture preview, not a Garmin simulator capture or live readings. [Compare with the selected reference](docs/screenshots/selected-a-comparison.png).*
 
 ## Status
 
 This section is the project's single status record; other documents link here.
 
+**Selected A is implemented:** paired vertical rails show relative humidity on the left and today’s precipitation chance on the right. Body Battery is restored upper-right, separate from device battery. The new selected material, shifted dial/vitals, thick daily forecast arc and awake HR refresh are included. Native compilation, simulator checks and watch validation remain pending.
+
 | Check | State |
 |---|---|
-| FR265 compile (SDK 9.2.0, official profile) | Passes, warnings only |
-| FR265 simulator | Runs in all four themes, 12/24-hour and °F/°C; [profiled](docs/PERFORMANCE.md#simulator-profile-1-october-2026) |
-| Source, layout and asset tests | Pass (`python -m unittest discover -s tests`) |
+| FR265 compile (SDK 9.2.0, official profile) | Previous release passes; HR/humidity/forecast revision **not compiled here** (SDK/profile/key unavailable) |
+| FR265 simulator | Previous release [profiled](docs/PERFORMANCE.md#simulator-profile-1-october-2026); HR/humidity/forecast revision and retained-frame redraw need native validation |
+| Source, layout and asset tests | 79 pass, 6 optional SDK checks skipped (`python -m unittest discover -s tests`) |
 | CI workflow | Prepared; no runner provisioned, so no CI build yet ([CI](docs/CI.md)) |
 | Physical FR265 | **Not yet tested**: fonts on AMOLED, AOD transitions, weather sync, battery drain |
 
@@ -23,12 +25,12 @@ Remaining validation is listed in [QA](docs/QA.md#open-validation).
 ## Features
 
 - Prominent **digital time**, following the watch's 12/24-hour preference, with a compact AM/PM mark inside the time window
-- **Temperature dial** with a 270° band, needle, labeled scale and unit; no separate numeric temperature reading
+- **Temperature dial** with a thin 270° track, thick copper arc for today’s forecast low–high range, current-temperature needle, labeled scale and unit; no extra current/low/high numeric readings
 - **Weather panel** with a monoline condition icon and condition label (`PARTLY CLOUDY`, `RAIN`, `AGED 3H`…)
 - **Weekday rim** (`S M T W T F S`) with today on an inverted copper plate, plus a local month/day such as `Oct 1`
 - Next **sunrise or sunset time**, with distinct event icons
-- **Device battery percentage** at top left and a separate **Body Battery score** at top right
-- Recent **heart rate** and daily **steps**
+- **Device battery percentage** at top left and a separate **Body Battery score** at top right; paired vertical relative-humidity (left) and daily precipitation (right) rails
+- **Heart rate** checked every second while awake using Garmin’s current value, with recent history as fallback; daily **steps**
 - Sparse, dim, repositioning digital-time-only **always-on display**
 
 The target is the **416 × 416 AMOLED Forerunner 265** (`fr265`). Compatibility with the 265S or other watches is not declared.
@@ -41,7 +43,7 @@ The target is the **416 × 416 AMOLED Forerunner 265** (`fr265`). Compatibility 
 
 **[Download Prismelier for Forerunner 265 (.prg)](https://github.com/bensonlee5/prismelier/raw/refs/heads/main/dist/Prismelier-fr265.prg)** — ready to copy to the watch's existing `GARMIN/APPS` folder. This build is for the **265 only, not the 265S**. It uses the Foundry theme, Fahrenheit and the watch's time format. No SDK is needed to install the download; start at [USB installation](docs/INSTALL.md#4-copy-the-prg-over-usb), then select Prismelier on the watch.
 
-The committed release build uses SDK 9.2.0 and passed all 59 automated checks plus FR265 simulator checks for the full weather label and always-on/wake transitions. Physical-watch rendering and battery life remain unverified. [Build details](dist/build-info.json) and [SHA-256 checksum](dist/SHA256SUMS) accompany the binary.
+**The download and older simulator screenshots still represent the previous release, without the source revision’s HR/humidity/forecast changes.** The committed release build uses SDK 9.2.0 and passed all 59 automated checks plus FR265 simulator checks for the full weather label and always-on/wake transitions. Physical-watch rendering and battery life remain unverified. [Build details](dist/build-info.json) and [SHA-256 checksum](dist/SHA256SUMS) accompany the binary.
 
 To build from source instead:
 
@@ -59,7 +61,7 @@ Sideloading requires a computer. The iPhone Connect IQ app cannot import a raw d
 
 Foundry and **Fahrenheit** are the defaults. Optional settings include Celsius/device units, explicit 12/24-hour time and three procedural color palettes: Reactor, Porcelain and Nocturne. See [settings instructions](docs/INSTALL.md#preferences); phone settings for unpublished sideloaded apps are not guaranteed.
 
-Weather uses Garmin's existing cache; sunrise/sunset uses the weather observation location, which may differ from your current position. The face cannot force a fresh weather observation. Old data is marked, and unavailable values are not replaced with demo readings. Heart rate is a recent sample; Body Battery is a wellness estimate, not a medical measurement. See [data setup and troubleshooting](docs/INSTALL.md#6-get-weather-solar-heart-rate-and-body-battery-working).
+Weather uses Garmin's existing cache; sunrise/sunset uses the weather observation location, which may differ from your current position. The face cannot force a fresh weather observation. Old data is marked, and unavailable values are not replaced with demo readings. Humidity shares the weather observation’s age handling; the left rail uses a crossed track for unavailable data. Body Battery uses Garmin’s current complication on wake/change notifications, with minute reconciliation and timestamped history as fallback; Garmin supplies no fixed refresh cadence. The forecast arc appears only for today’s local-date entry with valid bounds and an accompanying weather observation under two hours old. Equal bounds show one mark, and off-scale ranges show overflow chevrons. Heart rate checks Garmin’s current value on each awake update; this does not guarantee a new physiological sample each second. A valid history sample at most two minutes old is used if current HR is unavailable; otherwise `--` is shown. See [data setup and troubleshooting](docs/INSTALL.md#6-get-weather-solar-heart-rate-and-humidity-working).
 
 The face has no backend, API key or network permission. It does not activate GPS or transmit health data. Data is cached in RAM, and the textured background is omitted from AOD. See the [performance review](docs/PERFORMANCE.md) for CPU and memory measurements.
 
@@ -70,6 +72,8 @@ Run source and asset checks (Pillow and an SDK path enable optional checks; see 
 ```sh
 python -m unittest discover -s tests -v
 ```
+
+Render the selected fixture with `python tools/render_preview.py` (Node and Pillow). This executes the drawing subset with fixture data; it does not compile Monkey C or validate Garmin APIs. The selected reference/spec are in `docs/screenshots/selected-a-reference.png` and `docs/design/selected-a.json`.
 
 With the official SDK and device profile installed:
 

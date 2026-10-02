@@ -83,21 +83,21 @@ class RevisionLayoutTests(unittest.TestCase):
 
     def test_dial_unit_sits_in_needle_free_gap(self):
         for text in ('°F','°C'):
-            for x0,y0,x1,y1 in bounds('Label',text,137,284):
+            for x0,y0,x1,y1 in bounds('Label',text,133,280):
                 for x,y in ((x0,y0),(x1,y0),(x0,y1),(x1,y1)):
-                    angle=math.degrees(math.atan2(y-267,x-137))
+                    angle=math.degrees(math.atan2(y-263,x-133))
                     self.assertTrue(45<angle<135,(text,angle))
-                    self.assertLess(math.hypot(x-137,y-267),48)
+                    self.assertLess(math.hypot(x-133,y-263),48)
 
     def test_worst_metrics_remain_inside_quiet_wells(self):
         for text in ('23:59','--:--'):
             self.inside('Small',text,307,282,(268,281,349,309))
         for text in ('11:59 AM','12:00 PM'):
             self.inside('Label',text,307,285,(268,281,349,309))
-        self.inside('Value','220',149,339,(115,343,181,367))
+        self.inside('Value','220',149,329,(115,333,181,357))
         for text in ('100,000','999,999'):
-            self.inside('Small',text,284,342,(238,341,332,367))
-        self.inside('Label','1,000,000',284,346,(238,341,332,367))
+            self.inside('Small',text,284,332,(238,331,332,357))
+        self.inside('Label','1,000,000',284,336,(238,331,332,357))
 
     def test_temperature_sweep_missing_and_overflow_contract(self):
         code=without_comments((ROOT/'source/PrismelierView.mc').read_text())
@@ -106,12 +106,13 @@ class RevisionLayoutTests(unittest.TestCase):
         self.assertIn('var high = fahrenheit ? 120 : 40;',gauge)
         self.assertIn('var needleAngle = 135.0 + 270.0 * f;',gauge)
         self.assertIn('if (val < low || val > high)',gauge)
-        self.assertIn('var active = val != null',gauge)
+        self.assertIn('drawForecastRange(dc, fahrenheit, low, high);',gauge)
+        self.assertIn('bandY[j + 1], 0x224142, 3);',gauge)
         self.assertIn('if (val != null)',gauge)
         self.assertNotIn('fullWidth',gauge)
         self.assertNotIn('Math.round(val)',gauge)
         self.assertNotIn('var reading',gauge)
-        self.assertIn('text(dc, 137, 284, labelFont, fahrenheit ? "°F" : "°C", 0x74ACA0);',gauge)
+        self.assertIn('text(dc, 133, 280, labelFont, fahrenheit ? "°F" : "°C", 0x74ACA0);',gauge)
         self.assertIn('text(dc, 286, 242, labelFont, data.weatherLabel',gauge)
         self.assertIn('["0", "40", "80", "120"]',gauge)
         self.assertIn('text(dc, 208, 77, timeFont, time, green);',code)

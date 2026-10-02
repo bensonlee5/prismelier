@@ -68,7 +68,7 @@ class CalendarSourceContractTests(unittest.TestCase):
         self.assertEqual(self.refresh.count("updateClockLabels(now);"), 1)
         cached_reads = self.refresh[cache:].split("updateWeatherDisplay", 1)[0]
         for operation in ("readActivity();", "readHeartRate(seconds);",
-                          "readBodyBattery(seconds);", "readWeather(seconds);",
+                          "readWeather(seconds);",
                           "buildSolarEvents(now, seconds);"):
             self.assertEqual(self.refresh.count(operation), 1)
             self.assertIn(operation, cached_reads)
@@ -90,6 +90,7 @@ class CalendarSourceContractTests(unittest.TestCase):
         self.assertRegex(self.labels,
                          r"if\s*\(month instanceof Lang\.Number && month >= 1 && "
                          r"month <= 12 &&\s*info.day >= 1 && info.day <= 31\)\s*\{\s*"
+                         r'_localDateKey = info.year \* 10000 \+ month \* 100 \+ info.day;\s*'
                          r'dateLabel = months\[month - 1\] \+ " " \+ '
                          r'info.day.format\("%d"\);\s*\}')
         self.assertLess(self.labels.index('dateLabel = "--";'),

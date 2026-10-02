@@ -1,5 +1,7 @@
+using Toybox.Activity;
 using Toybox.ActivityMonitor;
 using Toybox.Application;
+using Toybox.Complications;
 using Toybox.Lang;
 using Toybox.Position;
 using Toybox.SensorHistory;
@@ -21,18 +23,20 @@ class PrismelierData {
     const WEATHER_STALE_SECONDS = 7200;
     const WEATHER_EXPIRE_SECONDS = 86400;
     const HEART_RATE_MAX_AGE_SECONDS = 120;
-    // Body Battery history spacing is device dependent. Fifteen minutes is
-    // this app's conservative expiry policy, not a live-reading guarantee.
     const BODY_BATTERY_MAX_AGE_SECONDS = 900;
     const SOLAR_CACHE_SECONDS = 3600;
     const SOLAR_RETRY_SECONDS = 300;
 
     var temperatureC as Lang.Numeric or Null = null;
+    var forecastLowC as Lang.Numeric or Null = null;
+    var forecastHighC as Lang.Numeric or Null = null;
     var weatherLabel as Lang.String = "NO WEATHER";
     var weatherKind as Lang.String = "unknown";
     var weatherStale as Lang.Boolean = false;
-    var heartRate as Lang.Number or Null = null;
     var bodyBattery as Lang.Number or Null = null;
+    var precipitationChance as Lang.Number or Null = null;
+    var heartRate as Lang.Number or Null = null;
+    var humidity as Lang.Number or Null = null;
     var steps as Lang.Number or Null = null;
     var battery as Lang.Number or Null = null;
     var solarLabel as Lang.String = "SUN";
@@ -47,6 +51,19 @@ class PrismelierData {
     private var _lastRefreshMinute as Lang.Number = -1;
     private var _heartRateAt as Lang.Number or Null = null;
     private var _bodyBatteryAt as Lang.Number or Null = null;
+    private var _historyBodyBattery as Lang.Number or Null = null;
+    private var _currentBodyBattery as Lang.Number or Null = null;
+    private var _bodyBatteryId as Complications.Id or Null = null;
+    private var _bodyBatteryAwake as Lang.Boolean = false;
+    private var _bodyBatteryDirty as Lang.Boolean = true;
+    private var _lastBodyBatteryMinute as Lang.Number = -1;
+    private var _historyHeartRate as Lang.Number or Null = null;
+    private var _weatherHumidity as Lang.Number or Null = null;
+    private var _forecastLowC as Lang.Numeric or Null = null;
+    private var _forecastHighC as Lang.Numeric or Null = null;
+    private var _forecastPrecipitation as Lang.Number or Null = null;
+    private var _forecastTime as Time.Moment or Null = null;
+    private var _localDateKey as Lang.Number = 0;
     private var _weatherPresent as Lang.Boolean = false;
     private var _weatherAt as Lang.Number or Null = null;
     private var _weatherTemperature as Lang.Numeric or Null = null;
@@ -117,25 +134,24 @@ class PrismelierData {
         // Never keep an expired HR on screen until the next scheduled read.
         if (_heartRateAt == null || seconds < _heartRateAt ||
                 seconds - _heartRateAt > HEART_RATE_MAX_AGE_SECONDS) {
-            heartRate = null;
+            _historyHeartRate = null;
             _heartRateAt = null;
-        }
-        if (_bodyBatteryAt == null || seconds < _bodyBatteryAt ||
-                seconds - _bodyBatteryAt > BODY_BATTERY_MAX_AGE_SECONDS) {
-            bodyBattery = null;
-            _bodyBatteryAt = null;
         }
 
         if (force || minute != _lastRefreshMinute) {
             _lastRefreshMinute = minute;
             readActivity();
             readHeartRate(seconds);
-            readBodyBattery(seconds);
+            readBodyBatteryHistory(seconds);
             readWeather(seconds);
+            readForecast();
             buildSolarEvents(now, seconds);
         }
 
+        refreshHeartRate();
+        refreshBodyBattery(seconds, force);
         updateWeatherDisplay(seconds);
+        updateForecastDisplay(seconds);
         updateSolarDisplay(seconds);
     }
 
@@ -152,11 +168,13 @@ class PrismelierData {
         // calendar values must not preserve a stale date or select Sunday.
         weekdayIndex = null;
         dateLabel = "--";
+        _localDateKey = 0;
         if (weekday instanceof Lang.Number && weekday >= 1 && weekday <= 7) {
             weekdayIndex = weekday - 1;
         }
         if (month instanceof Lang.Number && month >= 1 && month <= 12 &&
                 info.day >= 1 && info.day <= 31) {
+            _localDateKey = info.year * 10000 + month * 100 + info.day;
             dateLabel = months[month - 1] + " " + info.day.format("%d");
         }
     }
@@ -182,8 +200,25 @@ class PrismelierData {
         }
     }
 
+    // Called on every awake onUpdate (normally 1 Hz). This reads Garmin's
+    // current value; it neither enables a sensor nor guarantees a new sample.
+    // Activity.Info has no observation timestamp. Never age or retain that
+    // value ourselves: if unavailable, use only timestamped recent history.
+    private function refreshHeartRate() as Void {
+        heartRate = _historyHeartRate;
+        try {
+            var current = Activity.getActivityInfo().currentHeartRate;
+            if (current != null && current > 0 &&
+                    current != ActivityMonitor.INVALID_HR_SAMPLE) {
+                heartRate = current;
+            }
+        } catch (e) {
+            // Recent history (or --) remains available on an API failure.
+        }
+    }
+
     private function readHeartRate(nowSeconds as Lang.Number) as Void {
-        heartRate = null;
+        _historyHeartRate = null;
         _heartRateAt = null;
         try {
             // A Duration is seconds; a Number here would mean sample count.
@@ -198,7 +233,7 @@ class PrismelierData {
                 if (age > HEART_RATE_MAX_AGE_SECONDS) { break; }
                 if (age >= 0 && sample.data != null && sample.data > 0 &&
                         sample.data != ActivityMonitor.INVALID_HR_SAMPLE) {
-                    heartRate = sample.data.toNumber();
+                    _historyHeartRate = sample.data.toNumber();
                     _heartRateAt = sample.when.value();
                     break;
                 }
@@ -209,12 +244,71 @@ class PrismelierData {
         }
     }
 
-    // Supported on FR265 in watch faces since API 3.3.0, using the existing
-    // SensorHistory permission. This is the on-watch 0-100 wellness score,
-    // not device charge, a percentage, or a score computed from other data.
-    // https://developer.garmin.com/connect-iq/api-docs/Toybox/SensorHistory.html#getBodyBatteryHistory-instance_function
-    private function readBodyBattery(nowSeconds as Lang.Number) as Void {
-        bodyBattery = null;
+    // Native current score (API 4.2). Read on wake, change notification and
+    // minute reconciliation, not on every 1 Hz HR tick. No sampling guarantee.
+    function startBodyBatteryUpdates() as Void {
+        if (_bodyBatteryAwake) { return; }
+        _bodyBatteryAwake = true;
+        _bodyBatteryDirty = true;
+        _currentBodyBattery = null;
+        try {
+            if (_bodyBatteryId == null) {
+                _bodyBatteryId = new Complications.Id(Complications.COMPLICATION_TYPE_BODY_BATTERY);
+            }
+            Complications.registerComplicationChangeCallback(method(:onBodyBatteryChanged));
+            // False or an exception still permits bounded direct reads below.
+            Complications.subscribeToUpdates(_bodyBatteryId);
+        } catch (e) {
+            // Current lookup and timestamped history fallback remain usable.
+        }
+    }
+
+    function stopBodyBatteryUpdates() as Void {
+        if (!_bodyBatteryAwake) { return; }
+        _bodyBatteryAwake = false;
+        _currentBodyBattery = null;
+        _bodyBatteryDirty = true;
+        try {
+            if (_bodyBatteryId != null) { Complications.unsubscribeFromUpdates(_bodyBatteryId); }
+        } catch (e) { }
+        try { Complications.registerComplicationChangeCallback(null); } catch (e) { }
+    }
+
+    function onBodyBatteryChanged(id as Complications.Id) as Void {
+        // Only mark dirty. The next normal awake callback reads once, even
+        // if multiple notifications arrive. Never wake/redraw AOD from here.
+        if (_bodyBatteryAwake && id.getType() == Complications.COMPLICATION_TYPE_BODY_BATTERY) {
+            _bodyBatteryDirty = true;
+        }
+    }
+
+    private function refreshBodyBattery(nowSeconds as Lang.Number, force as Lang.Boolean) as Void {
+        if (!_bodyBatteryAwake) { return; }
+        if (_bodyBatteryAt == null || nowSeconds < _bodyBatteryAt ||
+                nowSeconds - _bodyBatteryAt > BODY_BATTERY_MAX_AGE_SECONDS) {
+            _historyBodyBattery = null;
+            _bodyBatteryAt = null;
+        }
+        var minute = (nowSeconds / 60).toNumber();
+        if (_bodyBatteryDirty || force || minute != _lastBodyBatteryMinute) {
+            _bodyBatteryDirty = false;
+            _lastBodyBatteryMinute = minute;
+            _currentBodyBattery = null;
+            try {
+                if (_bodyBatteryId != null) {
+                    var current = Complications.getComplication(_bodyBatteryId).value;
+                    if (current instanceof Lang.Number && current >= 0 && current <= 100) {
+                        _currentBodyBattery = current;
+                    }
+                }
+            } catch (e) { }
+        }
+        // Current complication has no timestamp. Do not manufacture one.
+        bodyBattery = _currentBodyBattery != null ? _currentBodyBattery : _historyBodyBattery;
+    }
+
+    private function readBodyBatteryHistory(nowSeconds as Lang.Number) as Void {
+        _historyBodyBattery = null;
         _bodyBatteryAt = null;
         if (!(SensorHistory has :getBodyBatteryHistory)) { return; }
         try {
@@ -229,7 +323,7 @@ class PrismelierData {
                 // Zero is a valid reported score; null is unavailable.
                 if (age >= 0 && sample.data != null && sample.data >= 0 &&
                         sample.data <= 100) {
-                    bodyBattery = sample.data.toNumber();
+                    _historyBodyBattery = sample.data.toNumber();
                     _bodyBatteryAt = sample.when.value();
                     break;
                 }
@@ -251,6 +345,7 @@ class PrismelierData {
             _weatherPresent = true;
             _weatherTemperature = wx.temperature;
             _weatherCondition = wx.condition;
+            _weatherHumidity = wx.relativeHumidity;
             _weatherAt = wx.observationTime == null ? null : wx.observationTime.value();
 
             // Null may mean Positioning permission is absent; discard an old
@@ -268,8 +363,66 @@ class PrismelierData {
         }
     }
 
+    // Read with the minute weather batch, never from the awake HR-only path.
+    // forecastTime is a validity date, NOT an issuance/observation timestamp.
+    // https://developer.garmin.com/connect-iq/api-docs/Toybox/Weather/DailyForecast.html
+    private function readForecast() as Void {
+        _forecastLowC = null;
+        _forecastHighC = null;
+        _forecastTime = null;
+        _forecastPrecipitation = null;
+        try {
+            var forecasts = Weather.getDailyForecast();
+            if (forecasts == null) { return; }
+            for (var i = 0; i < forecasts.size(); i += 1) {
+                var forecast = forecasts[i];
+                if (forecast.forecastTime == null || !isToday(forecast.forecastTime)) {
+                    continue;
+                }
+                var low = forecast.lowTemperature;
+                var high = forecast.highTemperature;
+                // Fields are independent: missing temperatures must not hide
+                // valid daily precipitation, and missing rain is never 0%.
+                if (low != null && high != null && low <= high) {
+                    _forecastLowC = low;
+                    _forecastHighC = high;
+                }
+                var chance = forecast.precipitationChance;
+                if (chance != null && chance >= 0 && chance <= 100) {
+                    _forecastPrecipitation = chance;
+                }
+                _forecastTime = forecast.forecastTime;
+                return;
+            }
+        } catch (e) {
+            // No retained range after an unavailable/failed forecast read.
+        }
+    }
+
+    private function isToday(moment as Time.Moment) as Lang.Boolean {
+        var day = Gregorian.info(moment, Time.FORMAT_SHORT);
+        var month = day.month;
+        return _localDateKey != 0 && month instanceof Lang.Number &&
+            day.year * 10000 + month * 100 + day.day == _localDateKey;
+    }
+
+    private function updateForecastDisplay(nowSeconds as Lang.Number) as Void {
+        forecastLowC = null;
+        forecastHighC = null;
+        precipitationChance = null;
+        // Conservative display policy, not a forecast-age guarantee: hide
+        // alongside stale weather. The API exposes no forecast issuance time.
+        if (_weatherAt == null || nowSeconds < _weatherAt ||
+                nowSeconds - _weatherAt >= WEATHER_STALE_SECONDS ||
+                _forecastTime == null || !isToday(_forecastTime)) { return; }
+        forecastLowC = _forecastLowC;
+        forecastHighC = _forecastHighC;
+        precipitationChance = _forecastPrecipitation;
+    }
+
     private function updateWeatherDisplay(nowSeconds as Lang.Number) as Void {
         temperatureC = null;
+        humidity = null;
         weatherKind = "unknown";
         weatherLabel = "NO WEATHER";
         weatherStale = false;
@@ -293,6 +446,9 @@ class PrismelierData {
             return;
         }
         temperatureC = _weatherTemperature;
+        if (_weatherHumidity != null && _weatherHumidity >= 0 && _weatherHumidity <= 100) {
+            humidity = _weatherHumidity;
+        }
         setWeatherCondition(_weatherCondition);
         if (age >= WEATHER_STALE_SECONDS) {
             weatherStale = true;

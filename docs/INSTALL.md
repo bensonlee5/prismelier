@@ -100,15 +100,17 @@ After unplugging, give the watch a moment to install the file. From the current 
 
 If absent, restart the watch once and recheck. If it still does not appear, use the troubleshooting checklist; do not copy random files into other system folders.
 
-## 6. Get weather, solar, heart rate and Body Battery working
+## 6. Get weather, solar, heart rate and humidity working
 
 - Pair the watch with **Garmin Connect on your iPhone**, and let it sync
 - Keep Bluetooth connected and allow Garmin Connect the background/location access it needs for Garmin's own weather feature. Choose the permissions yourself in iOS
 - First check the watch's **native Weather glance**. If Garmin itself has no current weather, this face cannot manufacture it
 - The gauge is **outdoor weather temperature**, not the wrist/ambient sensor, which can be distorted by body heat
 - Solar calculations use the weather observation's location; no GPS session is started by this face. A stale station/location can be wrong after travel
-- Wear the watch with wrist HR enabled. HR appears only when a valid, timestamped sample is at most two minutes old
-- Body Battery uses recent local watch history; keep wearing the watch for Garmin to establish a score. The top-right person/bolt value is a 0–100 score, not battery-charge percentage. It becomes `--` when no valid sample is available within 15 minutes
+- Wear the watch with wrist HR enabled. While awake, the source revision checks Garmin’s current HR once per second. Garmin controls actual sample cadence. If current HR is unavailable, the face uses valid history at most two minutes old, otherwise `--`
+- The local source restores the top-right **Body Battery score**, separate from device battery charge. It checks Garmin’s native current complication on wake, after change notifications, and once per awake minute. If unavailable, valid history up to 15 minutes old is used; otherwise `--`. Faster face updates cannot force Garmin to recalculate Body Battery
+- Selected A shows a vertical 0–100% humidity rail on the left and today’s precipitation chance on the right. Missing data stays unavailable, never an invented zero; each rail distinguishes empty (0%), full (100%) and crossed (missing). The existing downloadable binary predates this local revision
+- Today’s forecast low–high range is the thick copper arc on the temperature dial. The needle remains the current temperature; scale labels remain, with no new endpoint values. A single mark means equal bounds; chevrons mean the forecast extends beyond the dial. Missing/inverted bounds, a different local forecast date, or stale/unverifiable weather age hide the range
 - Allow the face to read the listed Sensor History/Positioning permissions during installation if prompted
 
 The watch, firmware and Garmin Connect decide weather refresh timing. Polling the API more often does not force an update.
@@ -139,7 +141,7 @@ Sideloaded apps may not appear with editable settings in Garmin Connect/Connect 
 | Muted gauge, crossed weather icon and small crossed-ring warning | Cache is at least 2h old; readings disappear at 24h or when age cannot be verified |
 | Solar insert `--:--` | No usable weather location or no sunrise/sunset in the queried window; can occur in polar regions |
 | HR `--` | Watch not worn, wrist HR disabled, or no recent valid sample |
-| Person/bolt Body Battery `--` | No valid score in the last 15 minutes, or its timestamp cannot be verified; check Garmin's native Body Battery glance |
+| Crossed humidity bar | Check native Weather glance and sync; observation must have a valid time, be under 24 hours old and contain humidity |
 | Screen becomes mostly empty | Normal low-power/AOD design; raise wrist to restore the full face |
 | AOD is off entirely | Watch display setting, sleep mode, firmware protection, or an AOD issue. This requires simulator/device validation |
 
