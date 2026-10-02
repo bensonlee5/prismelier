@@ -149,11 +149,21 @@ class PrismelierView extends WatchUi.WatchFace {
         if (sleeping) {
             paint(dc, Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
             dc.clear();
-            // Disjoint bands, not a cosmetic 1px shift: old AMOLED rules safe
-            // in the asset model. Real firmware validation is still required.
+            // Refresh only local calendar labels; no weather or sensor reads.
+            data.refreshCalendar();
+            // Move the whole group between disjoint bands, including corners.
             var slot = (Time.now().value() / 60).toNumber() % 3;
-            var y = 92 + slot * 86;
-            text(dc, 208, y, ambientFont, time, 0x606775);
+            var y = 72 + slot * 108;
+            var weekdays = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY",
+                "THURSDAY", "FRIDAY", "SATURDAY"];
+            text(dc, 208, y - 24, labelFont,
+                data.weekdayIndex == null ? "--" : weekdays[data.weekdayIndex], 0x84644C);
+            text(dc, 208, y, ambientFont, time, 0xA09785);
+            text(dc, 208, y + 56, smallFont, data.dateLabel, 0x84644C);
+            trace(dc, [[122, y - 22], [112, y - 22], [112, y - 12]], 0x84644C, 1);
+            trace(dc, [[294, y - 22], [304, y - 22], [304, y - 12]], 0x84644C, 1);
+            trace(dc, [[112, y + 72], [112, y + 82], [122, y + 82]], 0x84644C, 1);
+            trace(dc, [[304, y + 72], [304, y + 82], [294, y + 82]], 0x84644C, 1);
             return;
         }
         data.refresh(false);

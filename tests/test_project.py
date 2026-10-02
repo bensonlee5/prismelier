@@ -199,6 +199,8 @@ class ProjectStructureTests(unittest.TestCase):
                 self.assertRegex(original, r"^[0-9A-F]{6}$")
                 self.assertRegex(mapped, r"^[0-9A-F]{6}$")
             self.assertEqual(theme["colors"]["606775"], "606775")
+            for ambient in ("84644C", "A09785"):
+                self.assertEqual(theme["colors"][ambient], ambient)
             self.assertEqual(theme["colors"].get("000000", "000000"), "000000")
         self.assertTrue(all(key == value for key, value in base.items()))
         palette = without_comments(source_text("PrismelierPalette.mc"))
@@ -362,10 +364,10 @@ class DataSourceContractTests(unittest.TestCase):
         self.assertIn('solarLabel += "*"', self.code)
         self.assertIn('solarTime = "--:--"', self.code)
 
-    def test_sleep_branch_is_sparse_and_time_only(self):
+    def test_sleep_branch_is_sparse_time_and_calendar(self):
         view = without_comments(source_text("PrismelierView.mc"))
         branch = view.split("if (sleeping) {", 1)[1].split("data.refresh(false);", 1)[0]
-        self.assertEqual(len(re.findall(r"\btext\(", branch)), 1)
+        self.assertEqual(len(re.findall(r"\btext\(", branch)), 3)
         self.assertIn("ambientFont, time", branch)
         self.assertIn("return;", branch)
         self.assertNotIn("data.refresh(", branch)

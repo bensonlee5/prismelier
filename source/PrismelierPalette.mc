@@ -248,6 +248,11 @@ module PrismelierPalette {
                 if (theme == 2) { return 0x766858; }
                 if (theme == 3) { return 0x806844; }
                 break;
+            case 0x84644C:
+                if (theme == 1) { return 0x84644C; }
+                if (theme == 2) { return 0x84644C; }
+                if (theme == 3) { return 0x84644C; }
+                break;
             case 0x85506D:
                 if (theme == 1) { return 0x85735E; }
                 if (theme == 2) { return 0x7A7166; }
@@ -277,6 +282,11 @@ module PrismelierPalette {
                 if (theme == 1) { return 0x7D402C; }
                 if (theme == 2) { return 0x70462F; }
                 if (theme == 3) { return 0x735022; }
+                break;
+            case 0xA09785:
+                if (theme == 1) { return 0xA09785; }
+                if (theme == 2) { return 0xA09785; }
+                if (theme == 3) { return 0xA09785; }
                 break;
             case 0xA16E4C:
                 if (theme == 1) { return 0xA1714F; }

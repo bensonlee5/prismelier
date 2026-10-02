@@ -155,6 +155,11 @@ class PrismelierData {
         updateSolarDisplay(seconds);
     }
 
+    // Low-power display: local weekday/date without a sensor refresh.
+    function refreshCalendar() as Void {
+        updateClockLabels(Time.now());
+    }
+
     private function updateClockLabels(now as Time.Moment) as Void {
         // info() uses the watch's local timezone. FORMAT_SHORT yields numeric
         // weekday 1=Sunday..7=Saturday and month 1=January..12=December.

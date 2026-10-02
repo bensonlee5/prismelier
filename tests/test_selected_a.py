@@ -72,8 +72,11 @@ class SelectedDrawingTests(unittest.TestCase):
 
     def test_aod_has_only_clock_and_wake_restores_full_selected_face(self):
         sleeping=commands({},action='sleep')
-        self.assertEqual([c['name'] for c in sleeping],['clear','drawText'])
-        self.assertEqual(sleeping[-1]['args'][2],'Ambient')
+        self.assertEqual(sleeping[0]['name'],'clear')
+        labels=[c for c in sleeping if c['name']=='drawText']
+        self.assertEqual([c['args'][2] for c in labels],['Label','Ambient','Small'])
+        self.assertEqual([c['args'][3] for c in labels],['FRIDAY','10:08','Oct 2'])
+        self.assertFalse(any(c['name']=='drawBitmap' for c in sleeping))
         waking=commands({},action='wake')
         self.assertTrue(any(c['name']=='drawBitmap' for c in waking))
         self.assertTrue(any(c['name']=='drawText' and c['args'][3]=='RH' for c in waking))

@@ -180,7 +180,7 @@ class VariantAssetTests(unittest.TestCase):
             bands = []
             for slot in range(3):
                 screen = Image.new('L', (size, size))
-                screen.paste(union, (0, math.floor((92 + slot * 86) * size / 416) - 2))
+                screen.paste(union, (0, math.floor((72 + slot * 108) * size / 416) - 2))
                 self.assertEqual(sum(screen.histogram()[1:]), sum(union.histogram()[1:]))
                 box = screen.getbbox()
                 for x in (box[0], box[2] - 1):
