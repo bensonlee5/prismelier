@@ -125,3 +125,7 @@ Built source `d4d1e45` with SDK 9.2.0 and ran all 105 tests successfully. Native
 The native Foundry background retains its lower metric panel: restored heart/steps to that panel (10px below the merged coordinates), including the HR restoration rectangle. Reviewed battery, Body Battery, heart, steps, weekday/date, time, solar icon/time, full PARTLY CLOUDY label, 100% humidity, 27% daily precipitation and forecast arc. Reviewed 12/24-hour layouts, stale weather, missing forecast, AOD and a clean wake redraw. Simulator memory status was approximately 35.3/123.8 kB. [Native capture](screenshots/merged-native-fr265.png).
 
 The exhaustive HR transition, all-theme, weather boundary and hardware checks above remain follow-up validation; this visual pass does not attest those cases.
+
+### Gauge frame correction — 2 October 2026
+
+Source `a861bb1`: moved RH and the rain icon into the dark gauge wells, removed redundant 0/100 scale labels, and separated each reading from its percent sign. The eight-pixel numeric font keeps 100 and missing -- within the 16px-wide wells. The regression check now covers all 0–100 values against these inner bounds rather than only the circular screen. All 105 checks pass. Native FR265 simulator review confirms 100% humidity and 27% precipitation clear the background borders; [capture](screenshots/rails-fixed-native-fr265.png).

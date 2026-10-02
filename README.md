@@ -2,7 +2,7 @@
 
 A futuristic-steampunk digital watch face for the **Garmin Forerunner 265**. The default **Foundry** theme combines ebony-inspired wood grain, patinated copper, raised material relief and intricate robotics details.
 
-![Latest FR265 simulator rendering](docs/screenshots/merged-native-fr265.png)
+![Latest FR265 simulator rendering](docs/screenshots/rails-fixed-native-fr265.png)
 
 *Official FR265 simulator capture of the current build, using simulated weather and health data.*
 
@@ -43,7 +43,7 @@ The target is the **416 × 416 AMOLED Forerunner 265** (`fr265`). Compatibility 
 
 **[Download Prismelier for Forerunner 265 (.prg)](https://github.com/bensonlee5/prismelier/raw/refs/heads/main/dist/Prismelier-fr265.prg)** — ready to copy to the watch's existing `GARMIN/APPS` folder. This build is for the **265 only, not the 265S**. It uses the Foundry theme, Fahrenheit and the watch's time format. No SDK is needed to install the download; start at [USB installation](docs/INSTALL.md#4-copy-the-prg-over-usb), then select Prismelier on the watch.
 
-The download includes the current HR/humidity/forecast revision, built with SDK 9.2.0 from `d4d1e45`. It passed 105 automated checks and FR265 visual simulator review. Older theme screenshots show the previous release. Physical-watch rendering and battery life remain unverified. [Build details](dist/build-info.json) and [SHA-256 checksum](dist/SHA256SUMS) accompany the binary.
+The download includes the current HR/humidity/forecast revision, built with SDK 9.2.0 from `a861bb1`. It passed 105 automated checks and FR265 visual simulator review, including the corrected gauge labels inside their copper frames. Older theme screenshots show the previous release. Physical-watch rendering and battery life remain unverified. [Build details](dist/build-info.json) and [SHA-256 checksum](dist/SHA256SUMS) accompany the binary.
 
 To build from source instead:
 

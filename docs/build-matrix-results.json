@@ -1,77 +1,77 @@
 {
-  "sourceCommit": "d4d1e4562396625f7616d7eea3d26c6197f407f9",
+  "sourceCommit": "a861bb11a98762a510599f9e6ccfe9868630898e",
   "packagerSha256": "7f12ce2dce833ca3b3a5863f6188c6cecb3c01703c61ce0dc89d77439a593d0a",
   "matrixSha256": "8a19efdd3386ca55e24efab46671530657afbd4b997e029378c03175bb9d2903",
   "devices": [
     {
       "device": "fr265",
       "status": "compiled",
-      "programSha256": "fa4334a26d0ceb8ae157f53fd4f4b0c9ad5a5edd6829d7ba64229255d5586a73"
+      "programSha256": "c9f34e0ebb71f24cee3a2f2ec1911d48df7f5c25c8f75cf7995fcee0136489a8"
     },
     {
       "device": "epix2",
       "status": "compiled",
-      "programSha256": "fa4334a26d0ceb8ae157f53fd4f4b0c9ad5a5edd6829d7ba64229255d5586a73"
+      "programSha256": "c9f34e0ebb71f24cee3a2f2ec1911d48df7f5c25c8f75cf7995fcee0136489a8"
     },
     {
       "device": "epix2pro47mm",
       "status": "compiled",
-      "programSha256": "fa4334a26d0ceb8ae157f53fd4f4b0c9ad5a5edd6829d7ba64229255d5586a73"
+      "programSha256": "c9f34e0ebb71f24cee3a2f2ec1911d48df7f5c25c8f75cf7995fcee0136489a8"
     },
     {
       "device": "venu2",
       "status": "compiled",
-      "programSha256": "dbe72903d3bc94f903392b17c2d22bc589298b094c9b81879efc79bcd923520a"
+      "programSha256": "e41e40edfb2c800c19f693814486c74b83d44b7e7782f448fc8141acc43b2384"
     },
     {
       "device": "venu2plus",
       "status": "compiled",
-      "programSha256": "dbe72903d3bc94f903392b17c2d22bc589298b094c9b81879efc79bcd923520a"
+      "programSha256": "e41e40edfb2c800c19f693814486c74b83d44b7e7782f448fc8141acc43b2384"
     },
     {
       "device": "fenix843mm",
       "status": "compiled",
-      "programSha256": "fa4334a26d0ceb8ae157f53fd4f4b0c9ad5a5edd6829d7ba64229255d5586a73"
+      "programSha256": "c9f34e0ebb71f24cee3a2f2ec1911d48df7f5c25c8f75cf7995fcee0136489a8"
     },
     {
       "device": "fr265s",
       "status": "compiled",
-      "programSha256": "69e091b44980033ea13b1e6059147e73bcf8e1033971acade8702a80a17e5a5a"
+      "programSha256": "53b744042144cee2afd5ddba392ca55e5f6f3f32f3ba763bb51c242beeb35f17"
     },
     {
       "device": "fr165",
       "status": "compiled",
-      "programSha256": "0aa92626a44b12797d10cd7d42f596aee35aa48fb4ad2e25e5184941f07afab2"
+      "programSha256": "67ebc2794c8dfde4031ff653cf119a3a2826aa5b8236ed04eebfef66e7fcbb0d"
     },
     {
       "device": "fr165m",
       "status": "compiled",
-      "programSha256": "0aa92626a44b12797d10cd7d42f596aee35aa48fb4ad2e25e5184941f07afab2"
+      "programSha256": "67ebc2794c8dfde4031ff653cf119a3a2826aa5b8236ed04eebfef66e7fcbb0d"
     },
     {
       "device": "fr965",
       "status": "compiled",
-      "programSha256": "7fd7fe6ebbfa53f82a740f4883ec02d10ee1804de663a3e789b0ec3ed37b98e0"
+      "programSha256": "ff9f2a757a7da8a441f7659eaf12f93fac49969e1e2261c28bd5bbb5be68bcbc"
     },
     {
       "device": "fr970",
       "status": "compiled",
-      "programSha256": "7fd7fe6ebbfa53f82a740f4883ec02d10ee1804de663a3e789b0ec3ed37b98e0"
+      "programSha256": "ff9f2a757a7da8a441f7659eaf12f93fac49969e1e2261c28bd5bbb5be68bcbc"
     },
     {
       "device": "venu3",
       "status": "compiled",
-      "programSha256": "e002f833f1058dca5d981e715cc5912f37f286d75c96e27fec7b79da77899a1d"
+      "programSha256": "9e28a695032e918ca9024cda190561b0eb78ac1c7470bfd69fe94720f48fd3e3"
     },
     {
       "device": "venu3s",
       "status": "compiled",
-      "programSha256": "102edeef015df893127664737b21a7948e41432402666447cec81e2c26b27757"
+      "programSha256": "b4d9f344c749447d0fd990543937b2780f7963c0efca2c035c9ae3d73946251d"
     },
     {
       "device": "fenix847mm",
       "status": "compiled",
-      "programSha256": "7fd7fe6ebbfa53f82a740f4883ec02d10ee1804de663a3e789b0ec3ed37b98e0"
+      "programSha256": "ff9f2a757a7da8a441f7659eaf12f93fac49969e1e2261c28bd5bbb5be68bcbc"
     }
   ]
 }

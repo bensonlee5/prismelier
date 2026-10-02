@@ -2,9 +2,9 @@
 
 The current public [FR265 download](https://github.com/bensonlee5/prismelier/raw/refs/heads/main/dist/Prismelier-fr265.prg)
 remains the only simulator-tested model. Its [build record](../dist/build-info.json)
-and [checksums](../dist/SHA256SUMS) identify source `d4d1e45`. It has not been tested on hardware.
+and [checksums](../dist/SHA256SUMS) identify source `a861bb1`. It has not been tested on hardware.
 
-All 14 configured targets compiled successfully from `d4d1e45`; [machine-readable results](build-matrix-results.json) record each PRG checksum. Other-model binaries remain local build outputs pending their exact-device simulator review.
+All 14 configured targets compiled successfully from `a861bb1`; [machine-readable results](build-matrix-results.json) record each PRG checksum. Other-model binaries remain local build outputs pending their exact-device simulator review.
 
 ## Compatibility and validation matrix
 
@@ -19,7 +19,7 @@ The default build covers ten phase-one product profiles:
 
 | Product ID | Model | Round AMOLED size | Actual compile / simulator evidence |
 |---|---|---|---|
-| `fr265` | Forerunner 265 | 416px | SDK 9.2.0 compile and Foundry visual simulator review at `d4d1e45` |
+| `fr265` | Forerunner 265 | 416px | SDK 9.2.0 compile and Foundry visual simulator review at `a861bb1` |
 | `fr265s` | Forerunner 265S | 360px | SDK 9.2.0 compiled; not simulated |
 | `fr165` | Forerunner 165 | 390px | SDK 9.2.0 compiled; not simulated |
 | `fr165m` | Forerunner 165 Music | 390px | SDK 9.2.0 compiled; not simulated |
