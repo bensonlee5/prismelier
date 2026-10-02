@@ -452,15 +452,15 @@ class PrismelierView extends WatchUi.WatchFace {
                 [x + 9, y - 6], [x + 10, y - 2], [x + 14, y], [x + 16, y + 4],
                 [x + 13, y + 7], [x - 12, y + 7]], color, 2);
             if (kind == "rain") {
-                stroke(dc, x - 7, y + 11, x - 10, y + 16, color, 2);
-                stroke(dc, x + 2, y + 11, x - 1, y + 16, color, 2);
-                stroke(dc, x + 11, y + 11, x + 8, y + 16, color, 2);
+                stroke(dc, x - 7, y + 9, x - 10, y + 13, color, 2);
+                stroke(dc, x + 2, y + 9, x - 1, y + 13, color, 2);
+                stroke(dc, x + 11, y + 9, x + 8, y + 13, color, 2);
             } else if (kind == "storm") {
-                trace(dc, [[x + 3, y + 9], [x - 2, y + 15], [x + 5, y + 15], [x, y + 16]], color, 2);
+                trace(dc, [[x + 3, y + 8], [x - 2, y + 12], [x + 5, y + 12], [x, y + 14]], color, 2);
             } else if (kind == "snow") {
-                stroke(dc, x, y + 10, x, y + 16, color, 2);
-                stroke(dc, x - 4, y + 12, x + 4, y + 17, color, 2);
-                stroke(dc, x - 4, y + 17, x + 4, y + 12, color, 2);
+                stroke(dc, x, y + 9, x, y + 14, color, 2);
+                stroke(dc, x - 4, y + 9, x + 4, y + 14, color, 2);
+                stroke(dc, x - 4, y + 14, x + 4, y + 9, color, 2);
             }
         }
         dc.setPenWidth(1);
