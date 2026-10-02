@@ -33,9 +33,6 @@ class PrismelierView extends WatchUi.WatchFace {
     // Theme colors resolved once per theme; PrismelierPalette.color() is a
     // 67-case switch and paint() runs hundreds of times per awake redraw.
     var colors = {};
-    var frameValid = false;
-    var frameKey = "";
-    var displayedHeartRate = null;
 
     function initialize() {
         WatchFace.initialize();
@@ -49,7 +46,6 @@ class PrismelierView extends WatchUi.WatchFace {
     }
 
     function onLayout(dc) {
-        frameValid = false;
         timeFont = WatchUi.loadResource(Rez.Fonts.Time);
         valueFont = WatchUi.loadResource(Rez.Fonts.Value);
         smallFont = WatchUi.loadResource(Rez.Fonts.Small);
@@ -62,7 +58,6 @@ class PrismelierView extends WatchUi.WatchFace {
     }
 
     function reloadSettings() {
-        frameValid = false;
         data.loadSettings();
         theme = data.palette;
         colors = {};
@@ -87,17 +82,14 @@ class PrismelierView extends WatchUi.WatchFace {
     }
 
     function onShow() {
-        frameValid = false;
         if (!sleeping) { data.startBodyBatteryUpdates(); }
     }
 
     function onHide() {
-        frameValid = false;
         data.stopBodyBatteryUpdates();
     }
 
     function onEnterSleep() {
-        frameValid = false;
         sleeping = true;
         data.stopBodyBatteryUpdates();
         WatchUi.requestUpdate();
@@ -106,7 +98,6 @@ class PrismelierView extends WatchUi.WatchFace {
     function onExitSleep() {
         sleeping = false;
         data.startBodyBatteryUpdates();
-        frameValid = false;
         // onUpdate performs the ordinary minute-cached refresh. Repeated
         // gestures must not force history/weather reads inside one minute.
         WatchUi.requestUpdate();
@@ -156,7 +147,6 @@ class PrismelierView extends WatchUi.WatchFace {
         var clock = System.getClockTime();
         var time = data.formatTime(clock.hour, clock.min);
         if (sleeping) {
-            frameValid = false;
             paint(dc, Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
             dc.clear();
             // Disjoint bands, not a cosmetic 1px shift: old AMOLED rules safe
@@ -167,21 +157,8 @@ class PrismelierView extends WatchUi.WatchFace {
             return;
         }
         data.refresh(false);
-        // Minute changes refresh all minute-cached metrics. Labels also catch
-        // timezone, solar-event and weather-age boundaries within a minute.
-        var key = (Time.now().value() / 60).toNumber().format("%d") + time +
-            data.dateLabel + data.solarTime + data.solarLabel + data.weatherLabel +
-            (data.is24Hour() ? "24" : "12") + (data.isFahrenheit() ? "F" : "C") +
-            (data.forecastLowC == null ? "no-range" : "range") +
-            (data.bodyBattery == null ? "--" : data.bodyBattery.format("%d"));
-        if (frameValid && frameKey.equals(key)) {
-            if (displayedHeartRate == data.heartRate) { return; }
-            if (redrawHeartRate(dc)) {
-                displayedHeartRate = data.heartRate;
-                return;
-            }
-        }
-        frameValid = false;
+        // Firmware may clear/replace the display before every onUpdate.
+        // Always produce a complete frame; only sensor data is cached.
         paint(dc, Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
         if (usesTexture()) {
@@ -215,30 +192,6 @@ class PrismelierView extends WatchUi.WatchFace {
         drawTemperature(dc);
         drawWeatherRails(dc);
         drawVitals(dc);
-        displayedHeartRate = data.heartRate;
-        frameKey = key;
-        frameValid = true;
-    }
-
-    function redrawHeartRate(dc) {
-        // Covers the complete old/new Value font ink, including 3 -> 2 digits.
-        // Leave the heart icon, steps and material outside this well untouched.
-        dc.setClip(114, 343, 71, 27);
-        try {
-            if (usesTexture()) {
-                dc.drawBitmap(0, 0, background);
-            } else {
-                paint(dc, 0x080F13, Graphics.COLOR_TRANSPARENT);
-                dc.fillRectangle(114, 343, 71, 27);
-            }
-            drawHeartRate(dc);
-        } catch (e) {
-            // A lost bitmap falls through to the ordinary full-frame recovery.
-            dc.clearClip();
-            return false;
-        }
-        dc.clearClip();
-        return true;
     }
 
     function drawHeartRate(dc) {
@@ -410,8 +363,8 @@ class PrismelierView extends WatchUi.WatchFace {
         dc.setPenWidth(1);
         stroke(dc, 235, y - 1, 235, y + 3, pink, 2);
         stroke(dc, 230, y, 240, y, pink, 2);
-        stroke(dc, 235, y + 3, 231, y + 9, pink, 2);
-        stroke(dc, 235, y + 3, 239, y + 9, pink, 2);
+        stroke(dc, 235, y + 3, 231, y + 7, pink, 2);
+        stroke(dc, 235, y + 3, 239, y + 7, pink, 2);
         trace(dc, [[246, y - 7], [242, y], [247, y], [243, y + 7]], copper, 1);
         text(dc, 280, 48, smallFont, data.bodyBattery == null ? "--" : data.bodyBattery.format("%d"), ink);
     }
@@ -421,14 +374,14 @@ class PrismelierView extends WatchUi.WatchFace {
         // Keep labels inside the narrow dark wells, clear of the copper frame.
         text(dc, 42, 225, gaugeFont, "RH", cyan);
         // Miniature rain cloud; intentionally distinct from the current icon.
-        trace(dc, [[371, 231], [371, 229], [373, 228], [375, 228],
-            [376, 225], [379, 225], [381, 228], [383, 229], [383, 232],
-            [371, 232]], cyan, 1);
-        stroke(dc, 374, 234, 373, 236, cyan, 1);
-        stroke(dc, 378, 234, 377, 236, cyan, 1);
-        stroke(dc, 382, 234, 381, 236, cyan, 1);
+        trace(dc, [[370, 231], [370, 229], [372, 228], [374, 228],
+            [375, 225], [378, 225], [380, 228], [382, 229], [382, 232],
+            [370, 232]], cyan, 1);
+        stroke(dc, 373, 234, 372, 236, cyan, 1);
+        stroke(dc, 377, 234, 376, 236, cyan, 1);
+        stroke(dc, 381, 234, 380, 236, cyan, 1);
         drawWeatherRail(dc, 42, data.humidity, cyan);
-        drawWeatherRail(dc, 377, data.precipitationChance, copper);
+        drawWeatherRail(dc, 376, data.precipitationChance, copper);
     }
 
     function drawWeatherRail(dc, x, value, fillColor) {
@@ -544,9 +497,9 @@ class PrismelierView extends WatchUi.WatchFace {
     function drawVitals(dc) {
         var dy = 22;
         // Heart outline and two footprint outlines share a 2px monoline weight.
-        trace(dc, [[101, 341 + dy], [92, 332 + dy], [92, 327 + dy],
-            [95, 324 + dy], [99, 324 + dy], [101, 327 + dy], [103, 324 + dy],
-            [107, 324 + dy], [110, 327 + dy], [110, 332 + dy], [101, 341 + dy]], pink, 2);
+        trace(dc, [[104, 341 + dy], [95, 332 + dy], [95, 327 + dy],
+            [98, 324 + dy], [102, 324 + dy], [104, 327 + dy], [106, 324 + dy],
+            [110, 324 + dy], [113, 327 + dy], [113, 332 + dy], [104, 341 + dy]], pink, 2);
         drawHeartRate(dc);
         paint(dc, cyan, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(2);

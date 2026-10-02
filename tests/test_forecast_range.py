@@ -29,7 +29,7 @@ class ForecastSourceTests(unittest.TestCase):
         self.assertNotIn('readForecast', method(self.data, 'refreshHeartRate('))
         update = method(self.view, 'onUpdate(')
         self.assertLess(update.index('if (sleeping)'), update.index('data.refresh(false);'))
-        self.assertIn('data.forecastLowC == null ? "no-range" : "range"', update)
+        self.assertIn('drawTemperature(dc);', update)
         self.assertIn('forecast.precipitationChance', self.data)
 
     def test_date_selection_checks_each_entry_and_never_uses_utc_day_or_index_zero(self):

@@ -404,7 +404,7 @@ class DataSourceContractTests(unittest.TestCase):
         self.assertIn("return theme == 1 && background != null;", view)
         update = view.split("function onUpdate(dc)", 1)[1].split("\n    function ", 1)[0]
         draw = "dc.drawBitmap(0, 0, background);"
-        self.assertEqual(view.count(draw), 2)  # full frame and clipped HR restore
+        self.assertEqual(view.count(draw), 1)  # every awake update draws a complete frame
         self.assertLess(update.index("return;"), update.index(draw))
         self.assertLess(update.index("data.refresh(false);"), update.index(draw))
         self.assertNotIn("loadResource(", update)

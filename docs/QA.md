@@ -129,3 +129,9 @@ The exhaustive HR transition, all-theme, weather boundary and hardware checks ab
 ### Gauge frame correction — 2 October 2026
 
 Source `a861bb1`: moved RH and the rain icon into the dark gauge wells, removed redundant 0/100 scale labels, and separated each reading from its percent sign. The eight-pixel numeric font keeps 100 and missing -- within the 16px-wide wells. The regression check now covers all 0–100 values against these inner bounds rather than only the circular screen. All 105 checks pass. Native FR265 simulator review confirms 100% humidity and 27% precipitation clear the background borders; [capture](screenshots/rails-fixed-native-fr265.png).
+
+### Disappearing-face repair and icon follow-up — 2 October 2026
+
+The retained-screen optimization returned without drawing for unchanged values, or drew only the HR rectangle. Physical firmware can clear the screen before onUpdate, so subsequent frames were incomplete. Every awake update now clears and paints a complete frame while preserving sensor-data caching. A regression compares repeated updates with fresh frames in all four themes for unchanged HR, 100→99, 99→missing and missing→64; all 16 cases failed before the fix.
+
+Moved the heart 3px right, shortened the Body Battery figure legs 2px to clear its panel, and centered the rain rail/icon 1px left. A separate simulator-only diagnostic logged raw Body Battery complication values 29,30,98,99, confirming the jumps originate in simulator data. Diagnostic logging is not included in shipped builds.

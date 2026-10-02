@@ -17,15 +17,7 @@ guarantee. On loss, use only timestamped history no older than 120 seconds.
 History, weather and steps retain minute caching. Body Battery is restored using current complication notifications plus wake/minute reconciliation; its timestamped history fallback retains minute caching.
 Humidity uses the existing current-conditions read. The selected forecast adds one `getDailyForecast()` read to the same minute batch; neither weather endpoint is polled each awake second.
 
-The view retains the last awake frame. Identical frames draw nothing; HR-only
-changes restore a clipped 71×27 region (1,917 pixels, 1.11% of the square canvas)
-and redraw the number. Foundry restores the original bitmap through that clip;
-vector themes restore the solid well. Full redraws occur on minute/label/unit
-changes and layout, show/hide, settings and sleep/wake transitions. The managed
-texture reference remains unpinned and no full-screen buffer is added.
-This reduces drawing work in principle, but clipped bitmap decode cost, framebuffer
-persistence and battery effects require native validation. No new timing or drain
-measurements are claimed. See [current validation](QA.md#hrhumidityforecast-revision--2-october-2026).
+Every awake `onUpdate` clears and draws a complete frame. The earlier retained-screen optimization could leave the physical watch blank after its first update: firmware may clear the display before calling the app. Garmin explicitly warns against assuming display persistence ([engineering guidance](https://forums.garmin.com/developer/connect-iq/i/bug-reports/vivoactive-4-clears-screen-before-onupdate)). Identical readings and heart-rate-only changes must still repaint the entire face. Sensor data remains minute-cached where appropriate; no full-screen bitmap buffer is allocated. This restores correct drawing but requires a new hardware battery measurement.
 
 ## Previous release: changes since `7b1ac81`
 

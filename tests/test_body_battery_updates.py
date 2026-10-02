@@ -66,7 +66,6 @@ class BodyBatteryUpdateTests(unittest.TestCase):
         update = method(self.view, 'onUpdate(')
         self.assertIn('drawBattery(dc);', update)
         self.assertIn('drawBodyBattery(dc);', update)
-        self.assertIn('data.bodyBattery == null ? "--" : data.bodyBattery.format("%d")', update)
         for reading in ['--'] + [str(n) for n in range(101)]:
             for x0,y0,x1,y1 in bounds('Small', reading, 280, 48):
                 self.assertGreaterEqual(x0, 251)
@@ -89,7 +88,7 @@ class BodyBatteryUpdateTests(unittest.TestCase):
     def test_selected_paired_rails_draw_independent_fields(self):
         rails = method(self.view, 'drawWeatherRails(')
         self.assertIn('drawWeatherRail(dc, 42, data.humidity, cyan);', rails)
-        self.assertIn('drawWeatherRail(dc, 377, data.precipitationChance, copper);', rails)
+        self.assertIn('drawWeatherRail(dc, 376, data.precipitationChance, copper);', rails)
         update = method(self.view, 'onUpdate(')
         self.assertIn('drawWeatherRails(dc);', update)
         self.assertLess(update.index('if (sleeping)'), update.index('drawWeatherRails(dc);'))

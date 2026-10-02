@@ -37,35 +37,19 @@ class AwakeRefreshTests(unittest.TestCase):
         self.assertNotIn('Weather.', current)
         update = method(self.view, 'onUpdate(')
         self.assertLess(update.index('if (sleeping)'), update.index('data.refresh(false);'))
-        self.assertLess(update.index('data.refresh(false);'), update.index('displayedHeartRate == data.heartRate'))
+        self.assertLess(update.index('data.refresh(false);'), update.index('drawVitals(dc);'))
 
-    def test_lifecycle_events_invalidate_retained_frame(self):
-        for name in ('onLayout(', 'reloadSettings(', 'onShow(', 'onHide(', 'onEnterSleep(', 'onExitSleep('):
-            self.assertIn('frameValid = false;', method(self.view, name), name)
+    def test_awake_updates_do_not_depend_on_retained_display_pixels(self):
         update = method(self.view, 'onUpdate(')
-        for key in ('Time.now().value() / 60', 'data.dateLabel', 'data.solarTime',
-                    'data.solarLabel', 'data.weatherLabel', 'data.is24Hour()', 'data.isFahrenheit()'):
-            self.assertIn(key, update)
-        self.assertLess(update.index('frameValid = false;', update.index('data.refresh(false);')),
-                        update.index('dc.drawBitmap'))
-        self.assertGreater(update.index('frameValid = true;'), update.index('drawVitals(dc);'))
+        awake = update.split('data.refresh(false);', 1)[1]
+        self.assertNotIn('return;', awake)
+        self.assertNotIn('frameValid', self.view)
+        self.assertNotIn('redrawHeartRate', self.view)
+        self.assertLess(awake.index('dc.clear();'), awake.index('drawVitals(dc);'))
+        self.assertIn('dc.clearClip();', update.split('if (sleeping)', 1)[0])
 
-    def test_hr_path_restores_only_bounded_area_and_resets_clip_on_failure(self):
-        update = method(self.view, 'onUpdate(')
-        fast = update.split('if (frameValid && frameKey.equals(key))', 1)[1].split('frameValid = false;', 1)[0]
-        self.assertIn('if (displayedHeartRate == data.heartRate) { return; }', fast)
-        self.assertIn('if (redrawHeartRate(dc))', fast)
-        repaint = method(self.view, 'redrawHeartRate(')
-        self.assertLess(repaint.index('dc.setClip('), repaint.index('dc.drawBitmap'))
-        self.assertEqual(repaint.count('dc.clearClip();'), 2)  # success and exception
-        self.assertIn('dc.fillRectangle(114, 343, 71, 27);', repaint)
-        for forbidden in ('dc.clear();', 'drawTemperature(', 'drawArchitecture(', 'data.refresh(', 'WatchUi.loadResource('):
-            self.assertNotIn(forbidden, repaint)
-        self.assertIn('dc.clearClip();', method(self.view, 'onUpdate(').split('if (sleeping)', 1)[0])
-
-    def test_hr_dirty_rectangle_contains_all_old_and_new_glyph_ink(self):
-        # Actual BMFont offsets/widths: changing 100 -> 99 -> -- must erase
-        # every old glyph, with no need to redraw the neighboring heart/steps.
+    def test_hr_panel_contains_all_glyph_ink(self):
+        # Actual BMFont ink must remain inside the lower metric panel.
         clip = (114, 343, 185, 370)
         for value in ['--'] + [str(n) for n in range(1, 1000)]:
             for x0, y0, x1, y1 in bounds('Value', value, 149, 339):
@@ -74,7 +58,7 @@ class AwakeRefreshTests(unittest.TestCase):
                 self.assertLessEqual(x1, clip[2], value)
                 self.assertLessEqual(y1, clip[3], value)
         self.assertLess(71 * 27 / (416 * 416), 0.012)
-        self.assertGreater(clip[0], 111)  # heart's rightmost ink + outline
+        self.assertGreaterEqual(clip[0], 114)  # heart's shifted rightmost ink + outline
         self.assertLess(clip[2], 218)    # steps' leftmost ink
 
     def test_humidity_missing_weather_age_guards(self):
