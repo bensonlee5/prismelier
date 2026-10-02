@@ -2,7 +2,9 @@
 
 A copper-and-wood watch face with time, weather, sunrise/sunset, Body Battery, heart rate, and steps.
 
-![Prismelier on Forerunner 265](docs/screenshots/full-redraw-final-fr265.png)
+| Full display | Always-on display |
+|:---:|:---:|
+| ![Prismelier on Forerunner 265](docs/screenshots/full-redraw-final-fr265.png) | ![Quiet Foundry always-on view](docs/screenshots/always-on-bigger-time.png) |
 
 ## Features
 
@@ -57,7 +59,5 @@ Forerunner 265 has been checked in Garmin’s simulator. Other models are experi
 No SDK is needed. The phone’s Connect IQ app cannot install these files. [Detailed USB instructions](docs/INSTALL.md#4-copy-the-prg-over-usb).
 
 The default is Foundry with Fahrenheit and your watch’s time format. [Change preferences](docs/INSTALL.md#preferences). Weather requires a recent Garmin Connect sync; missing readings appear as `--`.
-
-![Quiet Foundry always-on view](docs/screenshots/always-on-bigger-time.png)
 
 Enable **Always On Display** in your watch’s display settings for the low-light view.
