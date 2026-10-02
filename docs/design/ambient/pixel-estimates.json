@@ -1,0 +1,14 @@
+{
+  "A": {
+    "litPixels": 1815,
+    "fractionCircularScreen": 0.0134
+  },
+  "B": {
+    "litPixels": 2097,
+    "fractionCircularScreen": 0.0154
+  },
+  "C": {
+    "litPixels": 1905,
+    "fractionCircularScreen": 0.014
+  }
+}

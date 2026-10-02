@@ -4,6 +4,19 @@ A copper-and-wood watch face with time, weather, sunrise/sunset, Body Battery, h
 
 ![Prismelier on Forerunner 265](docs/screenshots/full-redraw-final-fr265.png)
 
+## Features
+
+| Feature | What you see |
+|---|---|
+| Time & date | 12/24-hour time, weekday, month and day |
+| Temperature | Current-temperature needle and today's low–high range; °F or °C |
+| Weather | Condition icon and label, humidity, and today's rain chance |
+| Sun | Next sunrise or sunset time |
+| Battery | Watch charge percentage and separate Body Battery score |
+| Activity | Heart rate and daily steps |
+| Always-on | Dim, time-only display while resting |
+| Themes | Foundry, Reactor, Porcelain, and Nocturne |
+
 ## Download
 
 Choose your **exact watch model**. The 265 and 265S use different files.
