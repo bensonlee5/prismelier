@@ -223,13 +223,13 @@ class PrismelierView extends WatchUi.WatchFace {
     function redrawHeartRate(dc) {
         // Covers the complete old/new Value font ink, including 3 -> 2 digits.
         // Leave the heart icon, steps and material outside this well untouched.
-        dc.setClip(114, 333, 71, 27);
+        dc.setClip(114, 343, 71, 27);
         try {
             if (usesTexture()) {
                 dc.drawBitmap(0, 0, background);
             } else {
                 paint(dc, 0x080F13, Graphics.COLOR_TRANSPARENT);
-                dc.fillRectangle(114, 333, 71, 27);
+                dc.fillRectangle(114, 343, 71, 27);
             }
             drawHeartRate(dc);
         } catch (e) {
@@ -242,7 +242,7 @@ class PrismelierView extends WatchUi.WatchFace {
     }
 
     function drawHeartRate(dc) {
-        text(dc, 149, 329, valueFont, data.heartRate == null ? "--" : data.heartRate.format("%d"), ink);
+        text(dc, 149, 339, valueFont, data.heartRate == null ? "--" : data.heartRate.format("%d"), ink);
     }
 
     function screw(dc, x, y, color) {
@@ -359,9 +359,9 @@ class PrismelierView extends WatchUi.WatchFace {
         screw(dc, 83, 318, copper);
         screw(dc, 184, 318, copper);
         paint(dc, 0x080F13, Graphics.COLOR_TRANSPARENT);
-        dc.fillRoundedRectangle(83, 332, 254, 38, 7);
+        dc.fillRoundedRectangle(83, 342, 254, 38, 7);
         paint(dc, 0x6B4839, Graphics.COLOR_TRANSPARENT);
-        dc.drawRoundedRectangle(83, 332, 254, 38, 7);
+        dc.drawRoundedRectangle(83, 342, 254, 38, 7);
         for (var side = 0; side < 2; side += 1) {
             var x = side == 0 ? 30 : 365;
             paint(dc, 0x080F13, Graphics.COLOR_TRANSPARENT);
@@ -545,7 +545,7 @@ class PrismelierView extends WatchUi.WatchFace {
     }
 
     function drawVitals(dc) {
-        var dy = 12;
+        var dy = 22;
         // Heart outline and two footprint outlines share a 2px monoline weight.
         trace(dc, [[101, 341 + dy], [92, 332 + dy], [92, 327 + dy],
             [95, 324 + dy], [99, 324 + dy], [101, 327 + dy], [103, 324 + dy],
@@ -553,14 +553,14 @@ class PrismelierView extends WatchUi.WatchFace {
         drawHeartRate(dc);
         paint(dc, cyan, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(2);
-        dc.drawEllipse(220, 340, 6, 9);
-        dc.drawEllipse(229, 346, 6, 9);
-        dc.drawCircle(223, 336, 2);
-        dc.drawCircle(232, 342, 2);
+        dc.drawEllipse(220, 350, 6, 9);
+        dc.drawEllipse(229, 356, 6, 9);
+        dc.drawCircle(223, 346, 2);
+        dc.drawCircle(232, 352, 2);
         dc.setPenWidth(1);
         // Smaller fonts need lower origins to keep their visible ink centered.
-        var stepY = data.steps != null && data.steps >= 1000000 ? 336 :
-            (data.steps != null && data.steps >= 10000 ? 332 : 329);
+        var stepY = data.steps != null && data.steps >= 1000000 ? 346 :
+            (data.steps != null && data.steps >= 10000 ? 342 : 339);
         text(dc, 284, stepY, data.steps != null && data.steps >= 1000000 ? labelFont : (data.steps != null && data.steps >= 10000 ? smallFont : valueFont), data.steps == null ? "--" : formatSteps(data.steps), ink);
     }
 

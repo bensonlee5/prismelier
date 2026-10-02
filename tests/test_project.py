@@ -145,7 +145,7 @@ class ProjectStructureTests(unittest.TestCase):
     def test_permissions_and_no_active_sensor_or_network_calls(self):
         manifest = ET.parse(ROOT / "manifest.xml").getroot()
         permissions = {p.attrib["id"] for p in manifest.findall(".//iq:uses-permission", NS)}
-        self.assertEqual(permissions, {"SensorHistory", "Positioning"})
+        self.assertEqual(permissions, {"SensorHistory", "Positioning", "ComplicationSubscriber"})
         code = without_comments("\n".join(p.read_text() for p in SOURCE.glob("*.mc")))
         for forbidden in ("Toybox.Communications", "makeWebRequest", "makeImageRequest",
                           "enableLocationEvents", "enableSensorEvents", "registerSensorDataListener"):

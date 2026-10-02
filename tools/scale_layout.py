@@ -19,8 +19,8 @@ SIZES = (360, 390, 454)
 # so new art cannot silently bypass device adaptation.
 COORDINATES = {'drawText': 2, 'drawLine': 4, 'fillCircle': 3, 'drawCircle': 3,
                'drawEllipse': 4, 'fillRoundedRectangle': 5, 'drawRoundedRectangle': 5,
-               'drawBitmap': 2}
-PASSTHROUGH = {'setColor', 'clear', 'setAntiAlias'}
+               'drawBitmap': 2, 'fillRectangle': 4, 'setClip': 4}
+PASSTHROUGH = {'setColor', 'clear', 'setAntiAlias', 'clearClip'}
 
 
 def split_arguments(text):
@@ -131,7 +131,7 @@ def generate(size, destination):
     textures = destination / 'textures'
     fonts.mkdir(parents=True, exist_ok=True)
     textures.mkdir(parents=True, exist_ok=True)
-    for name in ('Time', 'Value', 'Small', 'Label', 'Ambient'):
+    for name in ('Time', 'Value', 'Small', 'Label', 'Ambient', 'Gauge', 'GaugeScale'):
         scale_font(ROOT / 'resources/fonts', fonts, name, size)
     for name in ('fonts.xml', 'LICENSE-DejaVu.txt'):
         shutil.copyfile(ROOT / 'resources/fonts' / name, fonts / name)

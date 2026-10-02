@@ -94,10 +94,10 @@ class RevisionLayoutTests(unittest.TestCase):
             self.inside('Small',text,307,282,(268,281,349,309))
         for text in ('11:59 AM','12:00 PM'):
             self.inside('Label',text,307,285,(268,281,349,309))
-        self.inside('Value','220',149,329,(115,333,181,357))
+        self.inside('Value','220',149,339,(115,343,181,367))
         for text in ('100,000','999,999'):
-            self.inside('Small',text,284,332,(238,331,332,357))
-        self.inside('Label','1,000,000',284,336,(238,331,332,357))
+            self.inside('Small',text,284,342,(238,341,332,367))
+        self.inside('Label','1,000,000',284,346,(238,341,332,367))
 
     def test_temperature_sweep_missing_and_overflow_contract(self):
         code=without_comments((ROOT/'source/PrismelierView.mc').read_text())

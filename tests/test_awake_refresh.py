@@ -58,7 +58,7 @@ class AwakeRefreshTests(unittest.TestCase):
         repaint = method(self.view, 'redrawHeartRate(')
         self.assertLess(repaint.index('dc.setClip('), repaint.index('dc.drawBitmap'))
         self.assertEqual(repaint.count('dc.clearClip();'), 2)  # success and exception
-        self.assertIn('dc.fillRectangle(114, 333, 71, 27);', repaint)
+        self.assertIn('dc.fillRectangle(114, 343, 71, 27);', repaint)
         for forbidden in ('dc.clear();', 'drawTemperature(', 'drawArchitecture(', 'data.refresh(', 'WatchUi.loadResource('):
             self.assertNotIn(forbidden, repaint)
         self.assertIn('dc.clearClip();', method(self.view, 'onUpdate(').split('if (sleeping)', 1)[0])
@@ -66,9 +66,9 @@ class AwakeRefreshTests(unittest.TestCase):
     def test_hr_dirty_rectangle_contains_all_old_and_new_glyph_ink(self):
         # Actual BMFont offsets/widths: changing 100 -> 99 -> -- must erase
         # every old glyph, with no need to redraw the neighboring heart/steps.
-        clip = (114, 333, 185, 360)
+        clip = (114, 343, 185, 370)
         for value in ['--'] + [str(n) for n in range(1, 1000)]:
-            for x0, y0, x1, y1 in bounds('Value', value, 149, 329):
+            for x0, y0, x1, y1 in bounds('Value', value, 149, 339):
                 self.assertGreaterEqual(x0, clip[0], value)
                 self.assertGreaterEqual(y0, clip[1], value)
                 self.assertLessEqual(x1, clip[2], value)

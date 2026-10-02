@@ -4,4 +4,6 @@
   <font id="Small" filename="Small.fnt" antialias="true" />
   <font id="Label" filename="Label.fnt" antialias="true" />
   <font id="Ambient" filename="Ambient.fnt" antialias="true" />
+  <font id="Gauge" filename="Gauge.fnt" antialias="true" />
+  <font id="GaugeScale" filename="GaugeScale.fnt" antialias="true" />
 </resources>

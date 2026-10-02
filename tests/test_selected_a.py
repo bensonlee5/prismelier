@@ -57,15 +57,15 @@ class SelectedDrawingTests(unittest.TestCase):
         self.assertTrue(any(c['name']=='fillCircle' and c['args']==[133,263,4] for c in calls))
         for x,value in [(149,'64'),(284,'8,432')]:
             text=next(c for c in calls if c['name']=='drawText' and c['args'][3]==value)
-            self.assertEqual(text['args'][:2],[x,329])
+            self.assertEqual(text['args'][:2],[x,339])
         self.assertTrue(any(c['name']=='drawText' and c['args'][3]=='PARTLY CLOUDY' for c in calls))
         self.assertTrue(any(c['name']=='drawText' and c['args'][:2]==[280,48] and c['args'][3]=='76' for c in calls))
 
     def test_hr_only_update_restores_translated_region_without_weather_or_texture_redraw_outside_clip(self):
         calls=commands({'heartRate':100},update={'heartRate':99})
         self.assertEqual([c['name'] for c in calls],['drawBitmap','drawText'])
-        self.assertTrue(all(c['clip']==[114,333,71,27] for c in calls))
-        self.assertEqual(calls[-1]['args'][:4],[149,329,'Value','99'])
+        self.assertTrue(all(c['clip']==[114,343,71,27] for c in calls))
+        self.assertEqual(calls[-1]['args'][:4],[149,339,'Value','99'])
         self.assertEqual(commands({'heartRate':100},update={'heartRate':100}),[])
 
     def test_aod_has_only_clock_and_wake_restores_full_selected_face(self):

@@ -274,7 +274,7 @@ class PrismelierData {
         try { Complications.registerComplicationChangeCallback(null); } catch (e) { }
     }
 
-    function onBodyBatteryChanged(id as Complications.Id) as Void {
+    function onBodyBatteryChanged(id as Toybox.Complications.Id) as Void {
         // Only mark dirty. The next normal awake callback reads once, even
         // if multiple notifications arrive. Never wake/redraw AOD from here.
         if (_bodyBatteryAwake && id.getType() == Complications.COMPLICATION_TYPE_BODY_BATTERY) {
