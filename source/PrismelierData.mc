@@ -1,3 +1,4 @@
+using Toybox.Activity;
 using Toybox.ActivityMonitor;
 using Toybox.Application;
 using Toybox.Lang;
@@ -21,9 +22,6 @@ class PrismelierData {
     const WEATHER_STALE_SECONDS = 7200;
     const WEATHER_EXPIRE_SECONDS = 86400;
     const HEART_RATE_MAX_AGE_SECONDS = 120;
-    // Body Battery history spacing is device dependent. Fifteen minutes is
-    // this app's conservative expiry policy, not a live-reading guarantee.
-    const BODY_BATTERY_MAX_AGE_SECONDS = 900;
     const SOLAR_CACHE_SECONDS = 3600;
     const SOLAR_RETRY_SECONDS = 300;
 
@@ -32,7 +30,7 @@ class PrismelierData {
     var weatherKind as Lang.String = "unknown";
     var weatherStale as Lang.Boolean = false;
     var heartRate as Lang.Number or Null = null;
-    var bodyBattery as Lang.Number or Null = null;
+    var humidity as Lang.Number or Null = null;
     var steps as Lang.Number or Null = null;
     var battery as Lang.Number or Null = null;
     var solarLabel as Lang.String = "SUN";
@@ -46,7 +44,8 @@ class PrismelierData {
     private var _temperatureUnits as Lang.Number = 0;
     private var _lastRefreshMinute as Lang.Number = -1;
     private var _heartRateAt as Lang.Number or Null = null;
-    private var _bodyBatteryAt as Lang.Number or Null = null;
+    private var _historyHeartRate as Lang.Number or Null = null;
+    private var _weatherHumidity as Lang.Number or Null = null;
     private var _weatherPresent as Lang.Boolean = false;
     private var _weatherAt as Lang.Number or Null = null;
     private var _weatherTemperature as Lang.Numeric or Null = null;
@@ -117,24 +116,19 @@ class PrismelierData {
         // Never keep an expired HR on screen until the next scheduled read.
         if (_heartRateAt == null || seconds < _heartRateAt ||
                 seconds - _heartRateAt > HEART_RATE_MAX_AGE_SECONDS) {
-            heartRate = null;
+            _historyHeartRate = null;
             _heartRateAt = null;
-        }
-        if (_bodyBatteryAt == null || seconds < _bodyBatteryAt ||
-                seconds - _bodyBatteryAt > BODY_BATTERY_MAX_AGE_SECONDS) {
-            bodyBattery = null;
-            _bodyBatteryAt = null;
         }
 
         if (force || minute != _lastRefreshMinute) {
             _lastRefreshMinute = minute;
             readActivity();
             readHeartRate(seconds);
-            readBodyBattery(seconds);
             readWeather(seconds);
             buildSolarEvents(now, seconds);
         }
 
+        refreshHeartRate();
         updateWeatherDisplay(seconds);
         updateSolarDisplay(seconds);
     }
@@ -182,8 +176,25 @@ class PrismelierData {
         }
     }
 
+    // Called on every awake onUpdate (normally 1 Hz). This reads Garmin's
+    // current value; it neither enables a sensor nor guarantees a new sample.
+    // Activity.Info has no observation timestamp. Never age or retain that
+    // value ourselves: if unavailable, use only timestamped recent history.
+    private function refreshHeartRate() as Void {
+        heartRate = _historyHeartRate;
+        try {
+            var current = Activity.getActivityInfo().currentHeartRate;
+            if (current != null && current > 0 &&
+                    current != ActivityMonitor.INVALID_HR_SAMPLE) {
+                heartRate = current;
+            }
+        } catch (e) {
+            // Recent history (or --) remains available on an API failure.
+        }
+    }
+
     private function readHeartRate(nowSeconds as Lang.Number) as Void {
-        heartRate = null;
+        _historyHeartRate = null;
         _heartRateAt = null;
         try {
             // A Duration is seconds; a Number here would mean sample count.
@@ -198,7 +209,7 @@ class PrismelierData {
                 if (age > HEART_RATE_MAX_AGE_SECONDS) { break; }
                 if (age >= 0 && sample.data != null && sample.data > 0 &&
                         sample.data != ActivityMonitor.INVALID_HR_SAMPLE) {
-                    heartRate = sample.data.toNumber();
+                    _historyHeartRate = sample.data.toNumber();
                     _heartRateAt = sample.when.value();
                     break;
                 }
@@ -206,37 +217,6 @@ class PrismelierData {
             }
         } catch (e) {
             // No fallback to a value with an unverifiable observation time.
-        }
-    }
-
-    // Supported on FR265 in watch faces since API 3.3.0, using the existing
-    // SensorHistory permission. This is the on-watch 0-100 wellness score,
-    // not device charge, a percentage, or a score computed from other data.
-    // https://developer.garmin.com/connect-iq/api-docs/Toybox/SensorHistory.html#getBodyBatteryHistory-instance_function
-    private function readBodyBattery(nowSeconds as Lang.Number) as Void {
-        bodyBattery = null;
-        _bodyBatteryAt = null;
-        if (!(SensorHistory has :getBodyBatteryHistory)) { return; }
-        try {
-            var history = SensorHistory.getBodyBatteryHistory({
-                :period => new Time.Duration(BODY_BATTERY_MAX_AGE_SECONDS),
-                :order => SensorHistory.ORDER_NEWEST_FIRST
-            });
-            var sample = history.next();
-            while (sample != null) {
-                var age = nowSeconds - sample.when.value();
-                if (age > BODY_BATTERY_MAX_AGE_SECONDS) { break; }
-                // Zero is a valid reported score; null is unavailable.
-                if (age >= 0 && sample.data != null && sample.data >= 0 &&
-                        sample.data <= 100) {
-                    bodyBattery = sample.data.toNumber();
-                    _bodyBatteryAt = sample.when.value();
-                    break;
-                }
-                sample = history.next();
-            }
-        } catch (e) {
-            // No synthetic score, stale fallback, sensor activation or upload.
         }
     }
 
@@ -251,6 +231,7 @@ class PrismelierData {
             _weatherPresent = true;
             _weatherTemperature = wx.temperature;
             _weatherCondition = wx.condition;
+            _weatherHumidity = wx.relativeHumidity;
             _weatherAt = wx.observationTime == null ? null : wx.observationTime.value();
 
             // Null may mean Positioning permission is absent; discard an old
@@ -270,6 +251,7 @@ class PrismelierData {
 
     private function updateWeatherDisplay(nowSeconds as Lang.Number) as Void {
         temperatureC = null;
+        humidity = null;
         weatherKind = "unknown";
         weatherLabel = "NO WEATHER";
         weatherStale = false;
@@ -293,6 +275,9 @@ class PrismelierData {
             return;
         }
         temperatureC = _weatherTemperature;
+        if (_weatherHumidity != null && _weatherHumidity >= 0 && _weatherHumidity <= 100) {
+            humidity = _weatherHumidity;
+        }
         setWeatherCondition(_weatherCondition);
         if (age >= WEATHER_STALE_SECONDS) {
             weatherStale = true;

@@ -68,7 +68,7 @@ class CalendarSourceContractTests(unittest.TestCase):
         self.assertEqual(self.refresh.count("updateClockLabels(now);"), 1)
         cached_reads = self.refresh[cache:].split("updateWeatherDisplay", 1)[0]
         for operation in ("readActivity();", "readHeartRate(seconds);",
-                          "readBodyBattery(seconds);", "readWeather(seconds);",
+                          "readWeather(seconds);",
                           "buildSolarEvents(now, seconds);"):
             self.assertEqual(self.refresh.count(operation), 1)
             self.assertIn(operation, cached_reads)

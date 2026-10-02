@@ -31,7 +31,7 @@ CONNECTIQ_SDK=/path/to/connectiq-sdk python -m unittest discover -s tests -v
   word, solar time and metric is measured against its panel using the committed
   font metrics. The dial's unit label is checked to stay in the needle-free gap
 - **Data contracts:** calendar/DST/timezone handling, weather freshness, solar
-  cache invalidation and retry, Body Battery expiry, and the startup and wake
+  cache invalidation and retry, humidity validity/expiry, awake HR polling and the startup and wake
   read paths
 - **Palettes:** all four themes map every color in `resources/themes.json`, and
   ambient ink and black are never recolored
@@ -47,15 +47,13 @@ These are app policies, not Garmin refresh guarantees.
 
 | Value | Shown while | Then |
 |---|---|---|
-| Heart rate | Sample is at most 2 minutes old | `--` |
-| Body Battery (0–100) | Sample is at most 15 minutes old | `--` |
+| Heart rate | Valid current API value; otherwise history at most 2 minutes old | `--`; current value is not retained after API loss |
+| Humidity (0–100%) | Valid weather observation under 24 hours old | Copper ink from 2 hours; `--%` if missing, out of range, expired or timestamp invalid |
 | Weather condition and dial | Observation is under 2 hours old | 2–24 hours: copper icon, mark and needle; condition word becomes `AGED nH` |
 | Weather dial | Observation is under 24 hours old | `WX EXPIRED` (or `AGE UNKNOWN`/`CHECK TIME` for a missing or future timestamp); dial empty |
 | Solar location | Observation older than 2 hours | Copper dot on the sunrise/sunset plate |
 
-Body Battery comes from on-device `SensorHistory`. Garmin documents no
-guaranteed sampling interval, and synced data is not included. Expired, invalid
-or unsupported readings show placeholders, never invented values.
+Current HR has no observation timestamp or guaranteed sample cadence in Garmin’s API. History keeps its original timestamp and expires on every awake update, even inside a cached minute. Weather and history reads remain once per clock minute; there is no background HR polling in AOD.
 
 ## Raster resources and memory
 
@@ -81,10 +79,24 @@ Reviewed the Foundry face in the official FR265 simulator at native resolution:
 
 [Final simulator capture](screenshots/alignment-final.png) uses simulated snow/sunset data and 24-hour time; it is not watch data. Physical-watch appearance still needs confirmation.
 
+### HR/humidity revision — 2 October 2026
+
+58 source/layout/asset checks pass; 6 optional SDK checks skip in this environment.
+No compiler, simulator, FR265 profile or configured signing key is available;
+`python tools/build.py --release` stops at the required SDK/key preflight.
+The earlier release’s native results and `dist/` binary do not validate this revision.
+
+Before release, use simulated FIT HR to exercise 100 → 99 → missing; confirm
+one current-value read per awake callback, no retained current value after loss,
+and history expiry at 120/121 seconds. Check unchanged frames, minute rollover,
+weather expiry inside a minute, wake/show/layout/settings invalidation, all four
+themes and texture-loss recovery. Confirm the 71×27 HR restore leaves no ghost
+digits or damage to adjacent artwork and survives framebuffer transitions.
+
 ### Remaining checks
 
 1. **Simulator, manual:** missing/disconnected weather, observations at the
-   2-hour and 24-hour boundaries, Body Battery at 0/100/missing, midnight, DST
+   2-hour and 24-hour boundaries, humidity at 0/100/missing/out-of-range, midnight, DST
    and timezone changes, clock rollback, location changes, polar or failed
    solar events, settings changes, AOD transitions and the heat-map check, and
    returning from other apps without a blank or stale screen

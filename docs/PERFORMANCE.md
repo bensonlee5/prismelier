@@ -3,7 +3,31 @@
 CPU and memory work on the watch face, measured in the FR265 simulator. These
 are not battery-life measurements; see the [README status](../README.md#status).
 
-## Changes since `7b1ac81`
+## Awake HR and humidity revision — 2 October 2026
+
+Garmin’s [WatchFace lifecycle](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/WatchFace.html)
+already supplies awake `onUpdate` callbacks each second (high-power mode, usually
+about ten seconds after a gesture). Low-power/AOD is a separate state even when
+the display remains visibly lit; it keeps the sparse moving clock with no HR reads.
+No timer, sensor activation or `onPartialUpdate` callback is added.
+
+Each awake refresh reads [Activity.Info.currentHeartRate](https://developer.garmin.com/connect-iq/api-docs/Toybox/Activity/Info.html#currentHeartRate-var)
+(bpm). Its nullable value has no timestamp and no documented 1 Hz sampling
+guarantee. On loss, use only timestamped history no older than 120 seconds.
+History, weather and steps retain minute caching; Body Battery reads are removed.
+Humidity uses the existing weather read, with no additional weather polling.
+
+The view retains the last awake frame. Identical frames draw nothing; HR-only
+changes restore a clipped 71×27 region (1,917 pixels, 1.11% of the square canvas)
+and redraw the number. Foundry restores the original bitmap through that clip;
+vector themes restore the solid well. Full redraws occur on minute/label/unit
+changes and layout, show/hide, settings and sleep/wake transitions. The managed
+texture reference remains unpinned and no full-screen buffer is added.
+This reduces drawing work in principle, but clipped bitmap decode cost, framebuffer
+persistence and battery effects require native validation. No new timing or drain
+measurements are claimed. See [current validation](QA.md#hrhumidity-revision--2-october-2026).
+
+## Previous release: changes since `7b1ac81`
 
 - **Startup:** retain the data constructor's initial read; remove the immediate
   second settings load and forced read in the view constructor
@@ -27,7 +51,7 @@ are not battery-life measurements; see the [README status](../README.md#status).
 No full-screen backing buffer or new raster is added. All 72 cached band
 segments have the same endpoint formula as before.
 
-## Existing safeguards retained
+## Previous release safeguards
 
 The face uses local history and Garmin's weather cache. It activates no sensor,
 GPS or network request, and adds no timer, animation or partial-second update.
@@ -37,8 +61,8 @@ reference, without pinning or a duplicate full-screen buffer.
 
 Garmin documents once-per-second updates while awake and once-per-minute updates
 in low-power mode in its [WatchFace API](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/WatchFace.html).
-Every requested full redraw still paints the screen: this review deliberately
-does not assume that skipping a callback preserves the framebuffer across view,
+In the previous release, every requested full redraw painted the screen: that review deliberately
+did not assume that skipping a callback preserves the framebuffer across view,
 layout or power transitions. [Location.toDegrees](https://developer.garmin.com/connect-iq/api-docs/Toybox/Position/Location.html#toDegrees-instance_function)
 provides the cache coordinates; [Weather](https://developer.garmin.com/connect-iq/api-docs/Toybox/Weather.html)
 provides the location/date-specific solar events. Resource-reference behavior
@@ -117,3 +141,24 @@ That is about 9% less redraw time for 448 bytes of heap.
 
 No runtime memory figure, battery percentage saving or extra days of battery
 life is claimed until those measurements exist.
+
+## Weather API findings for future designs
+
+[CurrentConditions](https://developer.garmin.com/connect-iq/api-docs/Toybox/Weather/CurrentConditions.html)
+provides `relativeHumidity` as nullable integer 0–100%, outdoor observation
+humidity, not a wrist sensor or rain probability. `observationTime` is UTC.
+Its high/low fields are forecast daily temperatures in Celsius. Its precipitation
+chance is 0–100%, but the documentation does not specify a forecast interval.
+
+[DailyForecast](https://developer.garmin.com/connect-iq/api-docs/Toybox/Weather/DailyForecast.html),
+returned by `Weather.getDailyForecast()`, represents a given day, with nullable
+high/low in Celsius, precipitation chance 0–100%, and UTC `forecastTime` (validity,
+not issuance time). These APIs/fields date to 3.2.0, below our 4.2.0 minimum.
+Match each entry’s local calendar year/month/day to today; never assume index 0
+or use a current/hourly probability as today’s daily forecast. Missing date/value
+must remain unavailable. Convert temperatures to Fahrenheit for the default dial.
+The API does not specify a precise midnight-to-midnight probability interval,
+aggregation rule, or weather-location timezone: “today’s forecast” requires a
+matched date, but “whole-day probability” is not a documented guarantee. Travel
+across timezones needs an explicit location/date policy. No forecast layout or
+forecast reads are implemented in this revision.

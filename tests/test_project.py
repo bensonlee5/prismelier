@@ -311,7 +311,7 @@ class DataSourceContractTests(unittest.TestCase):
         self.assertIn("SensorHistory.ORDER_NEWEST_FIRST", self.code)
         self.assertIn("sample.when.value()", self.code)
         self.assertIn("sample.data != ActivityMonitor.INVALID_HR_SAMPLE", self.code)
-        self.assertNotIn("currentHeartRate", self.code)
+        self.assertIn("Activity.getActivityInfo().currentHeartRate", self.code)
         self.assertIn('weatherLabel = "AGE UNKNOWN"', self.code)
         self.assertIn('weatherLabel = "WX EXPIRED"', self.code)
         self.assertIn('weatherLabel = "CHECK TIME"', self.code)
@@ -328,33 +328,19 @@ class DataSourceContractTests(unittest.TestCase):
         self.assertIn('hour.format("%02d")', self.code)
         self.assertIn('minute.format("%02d")', self.code)
 
-    def test_body_battery_local_timestamped_score_contract(self):
-        self.assertRegex(self.code, r"var\s+bodyBattery\s+as\s+Lang\.Number\s+or\s+Null\s*=\s*null;")
-        self.assertRegex(self.code, r"const\s+BODY_BATTERY_MAX_AGE_SECONDS\s*=\s*900;")
-        self.assertLess(self.code.index("seconds - _bodyBatteryAt > BODY_BATTERY_MAX_AGE_SECONDS"),
-                        self.code.index("if (force || minute != _lastRefreshMinute)"))
-        refresh = self.code.split("if (force || minute != _lastRefreshMinute)", 1)[1].split("updateWeatherDisplay", 1)[0]
-        self.assertEqual(refresh.count("readBodyBattery(seconds);"), 1)
-        body = self.code.split("private function readBodyBattery", 1)[1].split("private function readWeather", 1)[0]
-        for fragment in ("bodyBattery = null;", "_bodyBatteryAt = null;",
-                         "SensorHistory has :getBodyBatteryHistory",
-                         "SensorHistory.getBodyBatteryHistory",
-                         "new Time.Duration(BODY_BATTERY_MAX_AGE_SECONDS)",
-                         "SensorHistory.ORDER_NEWEST_FIRST", "sample.when.value()",
-                         "age > BODY_BATTERY_MAX_AGE_SECONDS", "age >= 0",
-                         "sample.data != null", "sample.data >= 0", "sample.data <= 100",
-                         "bodyBattery = sample.data.toNumber();",
-                         "_bodyBatteryAt = sample.when.value();"):
-            self.assertIn(fragment, body)
-        self.assertNotIn("getSystemStats", body)
-        self.assertNotIn("Complications", self.code)
+    def test_humidity_replaces_body_battery_and_shares_weather_age(self):
+        self.assertIn("_weatherHumidity = wx.relativeHumidity;", self.code)
+        display = self.code.split("private function updateWeatherDisplay", 1)[1].split("private function setWeatherCondition", 1)[0]
+        self.assertLess(display.index("humidity = null;"), display.index("if (!_weatherPresent)"))
+        self.assertLess(display.index("age >= WEATHER_EXPIRE_SECONDS"), display.index("humidity = _weatherHumidity;"))
+        self.assertIn("_weatherHumidity >= 0 && _weatherHumidity <= 100", display)
         view = without_comments(source_text("PrismelierView.mc"))
-        body_display = view.split("function drawBodyBattery(dc)", 1)[1].split("function drawTemperature", 1)[0]
-        device_display = view.split("function drawBattery(dc)", 1)[1].split("function drawBodyBattery", 1)[0]
-        self.assertIn('data.bodyBattery == null ? "--" : data.bodyBattery.format("%d")', body_display)
-        self.assertNotIn('"%"', body_display)
-        self.assertNotIn("data.battery", body_display)
-        self.assertIn('data.battery.format("%d") + "%"', device_display)
+        self.assertNotIn("bodyBattery", self.code + view)
+        self.assertNotIn("getBodyBatteryHistory", self.code)
+        humidity = view.split("function drawHumidity(dc)", 1)[1].split("function drawTemperature", 1)[0]
+        self.assertIn('data.humidity == null ? "--%" : data.humidity.format("%d") + "%"', humidity)
+        self.assertIn("data.weatherStale ? copper : cyan", humidity)
+        self.assertIn('data.battery.format("%d") + "%"', view)
 
     def test_solar_location_timezone_selection_and_expiry_contract(self):
         self.assertIn("wx.observationLocationPosition", self.code)
@@ -382,7 +368,7 @@ class DataSourceContractTests(unittest.TestCase):
         self.assertNotIn("data.refresh(", branch)
         self.assertNotRegex(branch, r"\bdraw[A-Z]")
         self.assertNotIn("Timer", view)
-        before_branch = view.split("if (sleeping)", 1)[0]
+        before_branch = view.split("function onUpdate(dc)", 1)[1].split("data.refresh(false);", 1)[0]
         self.assertIn("paint(dc, Graphics.COLOR_BLACK, Graphics.COLOR_BLACK)", before_branch)
         self.assertIn("dc.clear()", before_branch)
         # Background craftsmanship is awake-only. Guard its call site as well
@@ -415,7 +401,7 @@ class DataSourceContractTests(unittest.TestCase):
         self.assertIn("return theme == 1 && background != null;", view)
         update = view.split("function onUpdate(dc)", 1)[1].split("\n    function ", 1)[0]
         draw = "dc.drawBitmap(0, 0, background);"
-        self.assertEqual(view.count(draw), 1)
+        self.assertEqual(view.count(draw), 2)  # full frame and clipped HR restore
         self.assertLess(update.index("return;"), update.index(draw))
         self.assertLess(update.index("data.refresh(false);"), update.index(draw))
         self.assertNotIn("loadResource(", update)
@@ -574,9 +560,9 @@ class OfficialSdkChecks(unittest.TestCase):
             "sample.when": ["Time.Moment"], "wx.observationTime": ["Time.Moment"],
             "data.solarLabel": ["Lang.String"],
             "data.solarTime": ["Lang.String"],
-            "kind": ["Lang.String"],
+            "kind": ["Lang.String"], "frameKey": ["Lang.String"],
             "data.battery": ["Lang.Number"], "data.heartRate": ["Lang.Number"],
-            "data.bodyBattery": ["Lang.Number"],
+            "data.humidity": ["Lang.Number"],
             "h": ["Lang.Number"], "hour": ["Lang.Number"], "minute": ["Lang.Number"],
             "n": ["Lang.Number"], "info.day": ["Lang.Number"],
             "value": ["Lang.Number", "Lang.Float"],
@@ -677,23 +663,11 @@ class OfficialSdkChecks(unittest.TestCase):
         self.assertTrue(referenced)
         self.assertEqual(referenced - documented, set())
 
-    def test_body_battery_documented_fr265_watchface_support(self):
-        document = (SDK / "doc/Toybox/SensorHistory.html").read_text(encoding="utf-8")
-        details = document.split('id="getBodyBatteryHistory-instance_function"', 1)[1].split('<h3 class="signature"', 1)[0]
-        plain = html.unescape(re.sub(r"<[^>]+>", " ", details))
-        self.assertIn("Forerunner® 265", plain)
-        self.assertIn("API Level 3.3.0", plain)
-        self.assertIn("0-100", plain)
-        self.assertIn("SensorHistory", document.split("Requires Permission:", 1)[1].split("Classes Under Namespace", 1)[0])
-        matrix = (SDK / "doc/docs/Connect_IQ_Basics/App_Types.html").read_text(encoding="utf-8")
-        table = next(t for t in re.findall(r"<table.*?</table>", matrix, re.S) if "Toybox.SensorHistory" in t)
-        rows = re.findall(r"<tr.*?</tr>", table, re.S)
-        def cells(row):
-            return [html.unescape(re.sub(r"<[^>]+>", "", c)).strip()
-                    for c in re.findall(r"<t[hd]\b[^>]*>(.*?)</t[hd]>", row, re.S)]
-        header = cells(rows[0])
-        row = cells(next(r for r in rows if "Toybox.SensorHistory" in r))
-        self.assertEqual(row[header.index("Watch Face")], "✓")
+    def test_humidity_documented_units(self):
+        document = (SDK / "doc/Toybox/Weather/CurrentConditions.html").read_text(encoding="utf-8")
+        self.assertIn("relativeHumidity", document)
+        self.assertIn("0-100%", document)
+
 
     def test_official_monkeydoc_parser_no_diagnostics(self):
         if shutil.which("java") is None:

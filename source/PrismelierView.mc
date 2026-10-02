@@ -31,6 +31,9 @@ class PrismelierView extends WatchUi.WatchFace {
     // Theme colors resolved once per theme; PrismelierPalette.color() is a
     // 67-case switch and paint() runs hundreds of times per awake redraw.
     var colors = {};
+    var frameValid = false;
+    var frameKey = "";
+    var displayedHeartRate = null;
 
     function initialize() {
         WatchFace.initialize();
@@ -44,6 +47,7 @@ class PrismelierView extends WatchUi.WatchFace {
     }
 
     function onLayout(dc) {
+        frameValid = false;
         timeFont = WatchUi.loadResource(Rez.Fonts.Time);
         valueFont = WatchUi.loadResource(Rez.Fonts.Value);
         smallFont = WatchUi.loadResource(Rez.Fonts.Small);
@@ -54,6 +58,7 @@ class PrismelierView extends WatchUi.WatchFace {
     }
 
     function reloadSettings() {
+        frameValid = false;
         data.loadSettings();
         theme = data.palette;
         colors = {};
@@ -77,13 +82,23 @@ class PrismelierView extends WatchUi.WatchFace {
         return theme == 1 && background != null;
     }
 
+    function onShow() {
+        frameValid = false;
+    }
+
+    function onHide() {
+        frameValid = false;
+    }
+
     function onEnterSleep() {
+        frameValid = false;
         sleeping = true;
         WatchUi.requestUpdate();
     }
 
     function onExitSleep() {
         sleeping = false;
+        frameValid = false;
         // onUpdate performs the ordinary minute-cached refresh. Repeated
         // gestures must not force history/weather reads inside one minute.
         WatchUi.requestUpdate();
@@ -128,12 +143,14 @@ class PrismelierView extends WatchUi.WatchFace {
     }
 
     function onUpdate(dc) {
-        paint(dc, Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
-        dc.clear();
+        dc.clearClip();
         dc.setAntiAlias(true);
         var clock = System.getClockTime();
         var time = data.formatTime(clock.hour, clock.min);
         if (sleeping) {
+            frameValid = false;
+            paint(dc, Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+            dc.clear();
             // Disjoint bands, not a cosmetic 1px shift: old AMOLED rules safe
             // in the asset model. Real firmware validation is still required.
             var slot = (Time.now().value() / 60).toNumber() % 3;
@@ -142,6 +159,21 @@ class PrismelierView extends WatchUi.WatchFace {
             return;
         }
         data.refresh(false);
+        // Minute changes refresh all minute-cached metrics. Labels also catch
+        // timezone, solar-event and weather-age boundaries within a minute.
+        var key = (Time.now().value() / 60).toNumber().format("%d") + time +
+            data.dateLabel + data.solarTime + data.solarLabel + data.weatherLabel +
+            (data.is24Hour() ? "24" : "12") + (data.isFahrenheit() ? "F" : "C");
+        if (frameValid && frameKey.equals(key)) {
+            if (displayedHeartRate == data.heartRate) { return; }
+            if (redrawHeartRate(dc)) {
+                displayedHeartRate = data.heartRate;
+                return;
+            }
+        }
+        frameValid = false;
+        paint(dc, Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+        dc.clear();
         if (usesTexture()) {
             // Retain only the resource reference. Do not pin with .get() or
             // copy the image into a second full-screen BufferedBitmap.
@@ -162,7 +194,7 @@ class PrismelierView extends WatchUi.WatchFace {
         }
         drawCalendar(dc);
         drawBattery(dc);
-        drawBodyBattery(dc);
+        drawHumidity(dc);
         if (data.is24Hour()) {
             text(dc, 208, 77, timeFont, time, green);
         } else {
@@ -172,6 +204,34 @@ class PrismelierView extends WatchUi.WatchFace {
         }
         drawTemperature(dc);
         drawVitals(dc);
+        displayedHeartRate = data.heartRate;
+        frameKey = key;
+        frameValid = true;
+    }
+
+    function redrawHeartRate(dc) {
+        // Covers the complete old/new Value font ink, including 3 -> 2 digits.
+        // Leave the heart icon, steps and material outside this well untouched.
+        dc.setClip(114, 343, 71, 27);
+        try {
+            if (usesTexture()) {
+                dc.drawBitmap(0, 0, background);
+            } else {
+                paint(dc, 0x080F13, Graphics.COLOR_TRANSPARENT);
+                dc.fillRectangle(114, 343, 71, 27);
+            }
+            drawHeartRate(dc);
+        } catch (e) {
+            // A lost bitmap falls through to the ordinary full-frame recovery.
+            dc.clearClip();
+            return false;
+        }
+        dc.clearClip();
+        return true;
+    }
+
+    function drawHeartRate(dc) {
+        text(dc, 149, 339, valueFont, data.heartRate == null ? "--" : data.heartRate.format("%d"), ink);
     }
 
     function screw(dc, x, y, color) {
@@ -321,20 +381,13 @@ class PrismelierView extends WatchUi.WatchFace {
         text(dc, 174 + dx, 48, smallFont, reading, data.battery != null && data.battery <= 15 ? pink : cyan);
     }
 
-    function drawBodyBattery(dc) {
-        // Original monoline person + energy bolt; a score, never a percentage.
-        // Compact person stays within the top pocket, centered on the score.
-        var y = 60;
-        paint(dc, pink, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(2);
-        dc.drawCircle(235, y - 7, 3);
-        dc.setPenWidth(1);
-        stroke(dc, 235, y - 1, 235, y + 3, pink, 2);
-        stroke(dc, 230, y, 240, y, pink, 2);
-        stroke(dc, 235, y + 3, 231, y + 9, pink, 2);
-        stroke(dc, 235, y + 3, 239, y + 9, pink, 2);
-        trace(dc, [[246, y - 7], [242, y], [247, y], [243, y + 7]], copper, 1);
-        text(dc, 280, 48, smallFont, data.bodyBattery == null ? "--" : data.bodyBattery.format("%d"), ink);
+    function drawHumidity(dc) {
+        // Relative humidity, from the same cached observation as the dial.
+        var color = data.weatherStale ? copper : cyan;
+        trace(dc, [[238, 50], [232, 58], [231, 62], [233, 67],
+            [238, 69], [243, 67], [245, 62], [244, 58], [238, 50]], color, 2);
+        var reading = data.humidity == null ? "--%" : data.humidity.format("%d") + "%";
+        text(dc, 280, 48, smallFont, reading, color);
     }
 
     function drawTemperature(dc) {
@@ -399,7 +452,7 @@ class PrismelierView extends WatchUi.WatchFace {
         trace(dc, [[101, 341 + dy], [92, 332 + dy], [92, 327 + dy],
             [95, 324 + dy], [99, 324 + dy], [101, 327 + dy], [103, 324 + dy],
             [107, 324 + dy], [110, 327 + dy], [110, 332 + dy], [101, 341 + dy]], pink, 2);
-        text(dc, 149, 339, valueFont, data.heartRate == null ? "--" : data.heartRate.format("%d"), ink);
+        drawHeartRate(dc);
         paint(dc, cyan, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(2);
         dc.drawEllipse(220, 350, 6, 9);
