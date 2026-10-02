@@ -44,3 +44,6 @@ if __name__ == '__main__':
     build('Small', d/'DejaVuSans.ttf', 20, ' ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-:.,%°/*')
     build('Label', d/'DejaVuSans.ttf', 15, ' ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-:.,%°/*')
     build('Ambient', d/'DejaVuSans-ExtraLight.ttf', 52, '0123456789:')
+
+    build('Gauge', d/'DejaVuSans.ttf', 9, 'RH0123456789-%')
+    build('GaugeScale', d/'DejaVuSans.ttf', 8, '0123456789-%')

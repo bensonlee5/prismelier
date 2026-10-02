@@ -328,18 +328,21 @@ class DataSourceContractTests(unittest.TestCase):
         self.assertIn('hour.format("%02d")', self.code)
         self.assertIn('minute.format("%02d")', self.code)
 
-    def test_humidity_replaces_body_battery_and_shares_weather_age(self):
+    def test_humidity_shares_weather_age_and_body_battery_is_separate(self):
         self.assertIn("_weatherHumidity = wx.relativeHumidity;", self.code)
         display = self.code.split("private function updateWeatherDisplay", 1)[1].split("private function setWeatherCondition", 1)[0]
         self.assertLess(display.index("humidity = null;"), display.index("if (!_weatherPresent)"))
         self.assertLess(display.index("age >= WEATHER_EXPIRE_SECONDS"), display.index("humidity = _weatherHumidity;"))
         self.assertIn("_weatherHumidity >= 0 && _weatherHumidity <= 100", display)
         view = without_comments(source_text("PrismelierView.mc"))
-        self.assertNotIn("bodyBattery", self.code + view)
-        self.assertNotIn("getBodyBatteryHistory", self.code)
-        humidity = view.split("function drawHumidity(dc)", 1)[1].split("function drawTemperature", 1)[0]
-        self.assertIn('data.humidity == null ? "--%" : data.humidity.format("%d") + "%"', humidity)
-        self.assertIn("data.weatherStale ? copper : cyan", humidity)
+        self.assertIn("getBodyBatteryHistory", self.code)
+        self.assertIn("drawBodyBattery(dc);", view)
+        humidity = view.split("function drawWeatherRail(dc,", 1)[1].split("function drawTemperature", 1)[0]
+        self.assertIn('34.0 * clamp(value, 0, 100) / 100.0', humidity)
+        self.assertIn('if (value != null)', humidity)
+        self.assertIn('dc.fillRectangle(x - 2.5, 244, 5, 34);', humidity)
+        self.assertIn('stroke(dc, x - 3, 257, x + 3, 265, muted, 1);', humidity)
+        self.assertIn("data.weatherStale ? copper : fillColor", humidity)
         self.assertIn('data.battery.format("%d") + "%"', view)
 
     def test_solar_location_timezone_selection_and_expiry_contract(self):
@@ -555,6 +558,7 @@ class OfficialSdkChecks(unittest.TestCase):
             "bandX": ["Lang.Array"], "bandY": ["Lang.Array"],
             "_location": ["Position.Location"],
             "history": ["SensorHistory.SensorHistoryIterator"],
+            "forecasts": ["Lang.Array"],
             "best": ["Time.Moment"], "candidate": ["Time.Moment"],
             "now": ["Time.Moment"], "today": ["Time.Moment"],
             "sample.when": ["Time.Moment"], "wx.observationTime": ["Time.Moment"],
@@ -562,7 +566,8 @@ class OfficialSdkChecks(unittest.TestCase):
             "data.solarTime": ["Lang.String"],
             "kind": ["Lang.String"], "frameKey": ["Lang.String"],
             "data.battery": ["Lang.Number"], "data.heartRate": ["Lang.Number"],
-            "data.humidity": ["Lang.Number"],
+            "data.humidity": ["Lang.Number"], "data.bodyBattery": ["Lang.Number"],
+            "id": ["Complications.Id"],
             "h": ["Lang.Number"], "hour": ["Lang.Number"], "minute": ["Lang.Number"],
             "n": ["Lang.Number"], "info.day": ["Lang.Number"],
             "value": ["Lang.Number", "Lang.Float"],
@@ -571,7 +576,7 @@ class OfficialSdkChecks(unittest.TestCase):
         numeric = ["Lang.Number", "Lang.Float", "Lang.Long", "Lang.Double"]
         chains = {"toNumber": numeric, "toFloat": numeric, "format": numeric,
                   "add": ["Time.Moment"], "value": ["Time.Moment"]}
-        local_classes = {"data": "PrismelierData.mc", "view": "PrismelierView.mc",
+        local_classes = {"view.data": "PrismelierData.mc", "data": "PrismelierData.mc", "view": "PrismelierView.mc",
                          "PrismelierPalette": "PrismelierPalette.mc"}
         cache = {}
         checked = set()

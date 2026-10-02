@@ -58,7 +58,7 @@ class AwakeRefreshTests(unittest.TestCase):
         repaint = method(self.view, 'redrawHeartRate(')
         self.assertLess(repaint.index('dc.setClip('), repaint.index('dc.drawBitmap'))
         self.assertEqual(repaint.count('dc.clearClip();'), 2)  # success and exception
-        self.assertIn('dc.fillRectangle(114, 343, 71, 27);', repaint)
+        self.assertIn('dc.fillRectangle(114, 333, 71, 27);', repaint)
         for forbidden in ('dc.clear();', 'drawTemperature(', 'drawArchitecture(', 'data.refresh(', 'WatchUi.loadResource('):
             self.assertNotIn(forbidden, repaint)
         self.assertIn('dc.clearClip();', method(self.view, 'onUpdate(').split('if (sleeping)', 1)[0])
@@ -66,9 +66,9 @@ class AwakeRefreshTests(unittest.TestCase):
     def test_hr_dirty_rectangle_contains_all_old_and_new_glyph_ink(self):
         # Actual BMFont offsets/widths: changing 100 -> 99 -> -- must erase
         # every old glyph, with no need to redraw the neighboring heart/steps.
-        clip = (114, 343, 185, 370)
+        clip = (114, 333, 185, 360)
         for value in ['--'] + [str(n) for n in range(1, 1000)]:
-            for x0, y0, x1, y1 in bounds('Value', value, 149, 339):
+            for x0, y0, x1, y1 in bounds('Value', value, 149, 329):
                 self.assertGreaterEqual(x0, clip[0], value)
                 self.assertGreaterEqual(y0, clip[1], value)
                 self.assertLessEqual(x1, clip[2], value)
@@ -77,20 +77,14 @@ class AwakeRefreshTests(unittest.TestCase):
         self.assertGreater(clip[0], 111)  # heart's rightmost ink + outline
         self.assertLess(clip[2], 218)    # steps' leftmost ink
 
-    def test_humidity_zero_full_and_missing_fit_existing_pocket(self):
-        for value in ['--%'] + [str(n) + '%' for n in range(101)]:
-            for x0, y0, x1, y1 in bounds('Small', value, 280, 48):
-                self.assertGreaterEqual(x0, 251, value)
-                self.assertLessEqual(x1, 309, value)
-                self.assertGreaterEqual(y0, 50, value)
-                self.assertLessEqual(y1, 79, value)
+    def test_humidity_missing_weather_age_guards(self):
         display = method(self.data, 'updateWeatherDisplay(')
         for invalid in ('_weatherAt == null', 'age < 0', 'age >= WEATHER_EXPIRE_SECONDS'):
             self.assertLess(display.index(invalid), display.index('humidity = _weatherHumidity;'))
         read = method(self.data, 'readWeather(')
         self.assertIn('_weatherHumidity = wx.relativeHumidity;', read)
         self.assertIn('_weatherAt = wx.observationTime == null ? null : wx.observationTime.value();', read)
-        self.assertNotIn('getDailyForecast', self.data)  # Optional design not selected.
+        self.assertIn('_forecastPrecipitation = chance;', self.data)
 
 
 if __name__ == '__main__':

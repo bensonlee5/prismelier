@@ -90,6 +90,7 @@ class CalendarSourceContractTests(unittest.TestCase):
         self.assertRegex(self.labels,
                          r"if\s*\(month instanceof Lang\.Number && month >= 1 && "
                          r"month <= 12 &&\s*info.day >= 1 && info.day <= 31\)\s*\{\s*"
+                         r'_localDateKey = info.year \* 10000 \+ month \* 100 \+ info.day;\s*'
                          r'dateLabel = months\[month - 1\] \+ " " \+ '
                          r'info.day.format\("%d"\);\s*\}')
         self.assertLess(self.labels.index('dateLabel = "--";'),

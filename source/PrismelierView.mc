@@ -15,6 +15,8 @@ class PrismelierView extends WatchUi.WatchFace {
     var smallFont;
     var labelFont;
     var ambientFont;
+    var gaugeFont;
+    var gaugeScaleFont;
     var ink = 0xF2EDD8;
     var copper = 0xD98B52;
     var green = 0xC7FF70;
@@ -40,7 +42,7 @@ class PrismelierView extends WatchUi.WatchFace {
         data = new PrismelierData();
         theme = data.palette;
         for (var j = 0; j <= 72; j += 1) {
-            var p = point(137, 267, 59, 135.0 + 270.0 * j / 72);
+            var p = point(133, 263, 59, 135.0 + 270.0 * j / 72);
             bandX.add(p[0]);
             bandY.add(p[1]);
         }
@@ -53,6 +55,8 @@ class PrismelierView extends WatchUi.WatchFace {
         smallFont = WatchUi.loadResource(Rez.Fonts.Small);
         labelFont = WatchUi.loadResource(Rez.Fonts.Label);
         ambientFont = WatchUi.loadResource(Rez.Fonts.Ambient);
+        gaugeFont = WatchUi.loadResource(Rez.Fonts.Gauge);
+        gaugeScaleFont = WatchUi.loadResource(Rez.Fonts.GaugeScale);
         laidOut = true;
         refreshTexture();
     }
@@ -84,20 +88,24 @@ class PrismelierView extends WatchUi.WatchFace {
 
     function onShow() {
         frameValid = false;
+        if (!sleeping) { data.startBodyBatteryUpdates(); }
     }
 
     function onHide() {
         frameValid = false;
+        data.stopBodyBatteryUpdates();
     }
 
     function onEnterSleep() {
         frameValid = false;
         sleeping = true;
+        data.stopBodyBatteryUpdates();
         WatchUi.requestUpdate();
     }
 
     function onExitSleep() {
         sleeping = false;
+        data.startBodyBatteryUpdates();
         frameValid = false;
         // onUpdate performs the ordinary minute-cached refresh. Repeated
         // gestures must not force history/weather reads inside one minute.
@@ -163,7 +171,9 @@ class PrismelierView extends WatchUi.WatchFace {
         // timezone, solar-event and weather-age boundaries within a minute.
         var key = (Time.now().value() / 60).toNumber().format("%d") + time +
             data.dateLabel + data.solarTime + data.solarLabel + data.weatherLabel +
-            (data.is24Hour() ? "24" : "12") + (data.isFahrenheit() ? "F" : "C");
+            (data.is24Hour() ? "24" : "12") + (data.isFahrenheit() ? "F" : "C") +
+            (data.forecastLowC == null ? "no-range" : "range") +
+            (data.bodyBattery == null ? "--" : data.bodyBattery.format("%d"));
         if (frameValid && frameKey.equals(key)) {
             if (displayedHeartRate == data.heartRate) { return; }
             if (redrawHeartRate(dc)) {
@@ -194,7 +204,7 @@ class PrismelierView extends WatchUi.WatchFace {
         }
         drawCalendar(dc);
         drawBattery(dc);
-        drawHumidity(dc);
+        drawBodyBattery(dc);
         if (data.is24Hour()) {
             text(dc, 208, 77, timeFont, time, green);
         } else {
@@ -203,6 +213,7 @@ class PrismelierView extends WatchUi.WatchFace {
             text(dc, 324, 148, labelFont, clock.hour < 12 ? "AM" : "PM", ink);
         }
         drawTemperature(dc);
+        drawWeatherRails(dc);
         drawVitals(dc);
         displayedHeartRate = data.heartRate;
         frameKey = key;
@@ -212,13 +223,13 @@ class PrismelierView extends WatchUi.WatchFace {
     function redrawHeartRate(dc) {
         // Covers the complete old/new Value font ink, including 3 -> 2 digits.
         // Leave the heart icon, steps and material outside this well untouched.
-        dc.setClip(114, 343, 71, 27);
+        dc.setClip(114, 333, 71, 27);
         try {
             if (usesTexture()) {
                 dc.drawBitmap(0, 0, background);
             } else {
                 paint(dc, 0x080F13, Graphics.COLOR_TRANSPARENT);
-                dc.fillRectangle(114, 343, 71, 27);
+                dc.fillRectangle(114, 333, 71, 27);
             }
             drawHeartRate(dc);
         } catch (e) {
@@ -231,7 +242,7 @@ class PrismelierView extends WatchUi.WatchFace {
     }
 
     function drawHeartRate(dc) {
-        text(dc, 149, 339, valueFont, data.heartRate == null ? "--" : data.heartRate.format("%d"), ink);
+        text(dc, 149, 329, valueFont, data.heartRate == null ? "--" : data.heartRate.format("%d"), ink);
     }
 
     function screw(dc, x, y, color) {
@@ -301,10 +312,7 @@ class PrismelierView extends WatchUi.WatchFace {
         paint(dc, 0xD6D9BF, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon([[229, 273], [343, 273], [349, 280], [344, 310], [227, 310], [223, 303]]);
         stroke(dc, 231, 275, 339, 275, 0xF5F5DB, 1);
-        paint(dc, 0x080F13, Graphics.COLOR_TRANSPARENT);
-        dc.fillRoundedRectangle(83, 342, 254, 38, 7);
-        paint(dc, 0x6B4839, Graphics.COLOR_TRANSPARENT);
-        dc.drawRoundedRectangle(83, 342, 254, 38, 7);
+
     }
 
     function drawRobotics(dc) {
@@ -337,19 +345,30 @@ class PrismelierView extends WatchUi.WatchFace {
     function drawMachine(dc) {
         // A high-quality wood bezel carries the temperature instrument only.
         paint(dc, 0x452744, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(137, 267, 74);
+        dc.fillCircle(133, 263, 74);
         paint(dc, 0x85506D, Graphics.COLOR_TRANSPARENT);
-        dc.drawCircle(137, 267, 71);
+        dc.drawCircle(133, 263, 71);
         paint(dc, copper, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(2);
-        dc.drawCircle(137, 267, 67);
+        dc.drawCircle(133, 263, 67);
         dc.setPenWidth(1);
         paint(dc, 0x091B23, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(137, 267, 64);
-        screw(dc, 87, 213, copper);
-        screw(dc, 188, 213, copper);
-        screw(dc, 87, 322, copper);
-        screw(dc, 188, 322, copper);
+        dc.fillCircle(133, 263, 64);
+        screw(dc, 83, 209, copper);
+        screw(dc, 184, 209, copper);
+        screw(dc, 83, 318, copper);
+        screw(dc, 184, 318, copper);
+        paint(dc, 0x080F13, Graphics.COLOR_TRANSPARENT);
+        dc.fillRoundedRectangle(83, 332, 254, 38, 7);
+        paint(dc, 0x6B4839, Graphics.COLOR_TRANSPARENT);
+        dc.drawRoundedRectangle(83, 332, 254, 38, 7);
+        for (var side = 0; side < 2; side += 1) {
+            var x = side == 0 ? 30 : 365;
+            paint(dc, 0x080F13, Graphics.COLOR_TRANSPARENT);
+            dc.fillRoundedRectangle(x, 220, 24, 86, 5);
+            paint(dc, copper, Graphics.COLOR_TRANSPARENT);
+            dc.drawRoundedRectangle(x, 220, 24, 86, 5);
+        }
     }
 
     function drawCalendar(dc) {
@@ -381,13 +400,59 @@ class PrismelierView extends WatchUi.WatchFace {
         text(dc, 174 + dx, 48, smallFont, reading, data.battery != null && data.battery <= 15 ? pink : cyan);
     }
 
-    function drawHumidity(dc) {
-        // Relative humidity, from the same cached observation as the dial.
-        var color = data.weatherStale ? copper : cyan;
-        trace(dc, [[238, 50], [232, 58], [231, 62], [233, 67],
-            [238, 69], [243, 67], [245, 62], [244, 58], [238, 50]], color, 2);
-        var reading = data.humidity == null ? "--%" : data.humidity.format("%d") + "%";
-        text(dc, 280, 48, smallFont, reading, color);
+    function drawBodyBattery(dc) {
+        // Original monoline person + energy bolt; a score, never a percentage.
+        // Compact person stays within the top pocket, centered on the score.
+        var y = 60;
+        paint(dc, pink, Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(2);
+        dc.drawCircle(235, y - 7, 3);
+        dc.setPenWidth(1);
+        stroke(dc, 235, y - 1, 235, y + 3, pink, 2);
+        stroke(dc, 230, y, 240, y, pink, 2);
+        stroke(dc, 235, y + 3, 231, y + 9, pink, 2);
+        stroke(dc, 235, y + 3, 239, y + 9, pink, 2);
+        trace(dc, [[246, y - 7], [242, y], [247, y], [243, y + 7]], copper, 1);
+        text(dc, 280, 48, smallFont, data.bodyBattery == null ? "--" : data.bodyBattery.format("%d"), ink);
+    }
+
+    function drawWeatherRails(dc) {
+        // Selected A: matched left RH and right daily precipitation rails.
+        // BMFont bases: Gauge=9, GaugeScale=8; source reference uses baselines.
+        text(dc, 42, 219, gaugeFont, "RH", cyan);
+        // Miniature rain cloud; intentionally distinct from the current icon.
+        trace(dc, [[371, 226], [371, 224], [373, 223], [375, 223],
+            [376, 220], [379, 220], [381, 223], [383, 224], [383, 227],
+            [371, 227]], cyan, 1);
+        stroke(dc, 374, 229, 373, 231, cyan, 1);
+        stroke(dc, 378, 229, 377, 231, cyan, 1);
+        stroke(dc, 382, 229, 381, 231, cyan, 1);
+        drawWeatherRail(dc, 42, data.humidity, cyan);
+        drawWeatherRail(dc, 377, data.precipitationChance, copper);
+    }
+
+    function drawWeatherRail(dc, x, value, fillColor) {
+        var color = data.weatherStale ? copper : fillColor;
+        text(dc, x, 231, gaugeScaleFont, "100", 0x74ACA0);
+        text(dc, x, 281, gaugeScaleFont, "0", 0x74ACA0);
+        paint(dc, 0x224142, Graphics.COLOR_TRANSPARENT);
+        dc.fillRectangle(x - 2.5, 244, 5, 34);
+        if (value != null) {
+            var height = 34.0 * clamp(value, 0, 100) / 100.0;
+            if (height > 0) {
+                paint(dc, color, Graphics.COLOR_TRANSPARENT);
+                dc.fillRectangle(x - 2.5, 278 - height, 5, height);
+            }
+            stroke(dc, x - 4, 278 - height, x + 4, 278 - height, ink, 1);
+        } else {
+            // Missing is a crossed track and --%, never a fabricated zero.
+            stroke(dc, x - 3, 257, x + 3, 265, muted, 1);
+            stroke(dc, x - 3, 265, x + 3, 257, muted, 1);
+        }
+        // The longest reading uses 8px type to stay inside the round edge;
+        // both fonts share baseline 301, preserving the selected alignment.
+        text(dc, x, value == 100 ? 293 : 292, value == 100 ? gaugeScaleFont : gaugeFont,
+            value == null ? "--%" : value.format("%d") + "%", color);
     }
 
     function drawTemperature(dc) {
@@ -397,44 +462,38 @@ class PrismelierView extends WatchUi.WatchFace {
         var val = data.temperatureC;
         if (val != null && fahrenheit) { val = val * 9.0 / 5.0 + 32.0; }
         var f = val == null ? 0.0 : clamp((val - low).toFloat() / (high - low), 0.0, 1.0);
-        // Car-instrument sweep: 270 degrees, lower-left to lower-right.
-        // A continuous graduated band encodes the value; needle is temperature,
-        // never time. Color shifts from cool cyan through ivory to warm copper.
+        // Thin full-scale track; the thick overlay represents today's range.
+        // The needle alone represents the current temperature.
         for (var j = 0; j < 72; j += 1) {
-            var active = val != null && (j + 0.5) / 72.0 <= f;
-            var bandColor = 0x224142;
-            if (active) {
-                bandColor = data.weatherStale ? 0x80665C :
-                    (j < 24 ? 0x6BE4DE : (j < 48 ? 0xD6D9BF : 0xD98B52));
-            }
-            stroke(dc, bandX[j], bandY[j], bandX[j + 1], bandY[j + 1], bandColor, 7);
+            stroke(dc, bandX[j], bandY[j], bandX[j + 1], bandY[j + 1], 0x224142, 3);
         }
+        drawForecastRange(dc, fahrenheit, low, high);
         for (var tick = 0; tick <= 12; tick += 1) {
-            radial(dc, 137, 267, tick % 4 == 0 ? 48 : 51, 54,
+            radial(dc, 133, 263, tick % 4 == 0 ? 48 : 51, 54,
                 135.0 + tick * 22.5, 0x74ACA0, 1);
         }
-        text(dc, 137, 284, labelFont, fahrenheit ? "°F" : "°C", 0x74ACA0);
+        text(dc, 133, 280, labelFont, fahrenheit ? "°F" : "°C", 0x74ACA0);
         var labels = fahrenheit ? ["0", "40", "80", "120"] : ["-20", "0", "20", "40"];
         for (var label = 0; label < 4; label += 1) {
-            var lp = point(137, 267, 42, 135 + label * 90);
+            var lp = point(133, 263, 42, 135 + label * 90);
             text(dc, lp[0], lp[1] - 9, labelFont, labels[label], ink);
         }
         if (val != null) {
             var needleAngle = 135.0 + 270.0 * f;
-            radial(dc, 137, 267, -5, 30, needleAngle, data.weatherStale ? copper : 0xFFC9FA, 3);
-            radial(dc, 137, 267, 56, 63, needleAngle, ink, 2);
+            radial(dc, 133, 263, -5, 30, needleAngle, data.weatherStale ? copper : 0xFFC9FA, 3);
+            radial(dc, 133, 263, 56, 64, needleAngle, ink, 2);
             if (val < low || val > high) {
                 // Outward chevron explicitly signals a clamped scale endpoint.
-                var tip = point(137, 267, 65, needleAngle);
-                var left = point(137, 267, 59, needleAngle - 4);
-                var right = point(137, 267, 59, needleAngle + 4);
+                var tip = point(133, 263, 65, needleAngle);
+                var left = point(133, 263, 59, needleAngle - 4);
+                var right = point(133, 263, 59, needleAngle + 4);
                 stroke(dc, left[0], left[1], tip[0], tip[1], ink, 2);
                 stroke(dc, right[0], right[1], tip[0], tip[1], ink, 2);
             }
             paint(dc, copper, Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(137, 267, 4);
+            dc.fillCircle(133, 263, 4);
             paint(dc, 0x091B23, Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(137, 267, 2);
+            dc.fillCircle(133, 263, 2);
         }
         drawWeather(dc, 284, 228, data.weatherKind);
         text(dc, 286, 242, labelFont, data.weatherLabel, data.weatherStale ? copper : ink);
@@ -446,8 +505,47 @@ class PrismelierView extends WatchUi.WatchFace {
         drawSolar(dc);
     }
 
+    function drawForecastRange(dc, fahrenheit, dialLow, dialHigh) {
+        var low = data.forecastLowC;
+        var high = data.forecastHighC;
+        if (low == null || high == null || !(low <= high)) { return; }
+        if (fahrenheit) {
+            low = low * 9.0 / 5.0 + 32.0;
+            high = high * 9.0 / 5.0 + 32.0;
+        }
+        var start = clamp((low - dialLow).toFloat() / (dialHigh - dialLow), 0.0, 1.0) * 72;
+        var end = clamp((high - dialLow).toFloat() / (dialHigh - dialLow), 0.0, 1.0) * 72;
+        // Overlay a thicker copper bar on the existing scale. Interpolate the
+        // two boundary chords so short ranges do not expand to whole segments.
+        // Reuse cached geometry; no new per-segment trigonometry or buffers.
+        for (var j = 0; j < 72; j += 1) {
+            var from = clamp(start - j, 0.0, 1.0);
+            var to = clamp(end - j, 0.0, 1.0);
+            if (to <= from) { continue; }
+            var dx = bandX[j + 1] - bandX[j];
+            var dy = bandY[j + 1] - bandY[j];
+            stroke(dc, bandX[j] + dx * from, bandY[j] + dy * from,
+                bandX[j] + dx * to, bandY[j] + dy * to, copper, 9);
+        }
+        // Equal in-scale bounds are a single tick, never an invented interval.
+        if (low == high && low >= dialLow && high <= dialHigh) {
+            radial(dc, 133, 263, 55, 63, 135.0 + 270.0 * start / 72, copper, 3);
+        }
+        // Entirely out-of-scale ranges show only the relevant overflow mark.
+        if (low < dialLow) { drawForecastOverflow(dc, 135); }
+        if (high > dialHigh) { drawForecastOverflow(dc, 405); }
+    }
+
+    function drawForecastOverflow(dc, angle) {
+        var tip = point(133, 263, 70, angle);
+        var left = point(133, 263, 65, angle - 4);
+        var right = point(133, 263, 65, angle + 4);
+        stroke(dc, left[0], left[1], tip[0], tip[1], copper, 2);
+        stroke(dc, right[0], right[1], tip[0], tip[1], copper, 2);
+    }
+
     function drawVitals(dc) {
-        var dy = 22;
+        var dy = 12;
         // Heart outline and two footprint outlines share a 2px monoline weight.
         trace(dc, [[101, 341 + dy], [92, 332 + dy], [92, 327 + dy],
             [95, 324 + dy], [99, 324 + dy], [101, 327 + dy], [103, 324 + dy],
@@ -455,14 +553,14 @@ class PrismelierView extends WatchUi.WatchFace {
         drawHeartRate(dc);
         paint(dc, cyan, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(2);
-        dc.drawEllipse(220, 350, 6, 9);
-        dc.drawEllipse(229, 356, 6, 9);
-        dc.drawCircle(223, 346, 2);
-        dc.drawCircle(232, 352, 2);
+        dc.drawEllipse(220, 340, 6, 9);
+        dc.drawEllipse(229, 346, 6, 9);
+        dc.drawCircle(223, 336, 2);
+        dc.drawCircle(232, 342, 2);
         dc.setPenWidth(1);
         // Smaller fonts need lower origins to keep their visible ink centered.
-        var stepY = data.steps != null && data.steps >= 1000000 ? 346 :
-            (data.steps != null && data.steps >= 10000 ? 342 : 339);
+        var stepY = data.steps != null && data.steps >= 1000000 ? 336 :
+            (data.steps != null && data.steps >= 10000 ? 332 : 329);
         text(dc, 284, stepY, data.steps != null && data.steps >= 1000000 ? labelFont : (data.steps != null && data.steps >= 10000 ? smallFont : valueFont), data.steps == null ? "--" : formatSteps(data.steps), ink);
     }
 

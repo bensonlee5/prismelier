@@ -3,7 +3,7 @@
 CPU and memory work on the watch face, measured in the FR265 simulator. These
 are not battery-life measurements; see the [README status](../README.md#status).
 
-## Awake HR and humidity revision — 2 October 2026
+## Awake HR, humidity and forecast revision — 2 October 2026
 
 Garmin’s [WatchFace lifecycle](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/WatchFace.html)
 already supplies awake `onUpdate` callbacks each second (high-power mode, usually
@@ -14,8 +14,8 @@ No timer, sensor activation or `onPartialUpdate` callback is added.
 Each awake refresh reads [Activity.Info.currentHeartRate](https://developer.garmin.com/connect-iq/api-docs/Toybox/Activity/Info.html#currentHeartRate-var)
 (bpm). Its nullable value has no timestamp and no documented 1 Hz sampling
 guarantee. On loss, use only timestamped history no older than 120 seconds.
-History, weather and steps retain minute caching; Body Battery reads are removed.
-Humidity uses the existing weather read, with no additional weather polling.
+History, weather and steps retain minute caching. Body Battery is restored using current complication notifications plus wake/minute reconciliation; its timestamped history fallback retains minute caching.
+Humidity uses the existing current-conditions read. The selected forecast adds one `getDailyForecast()` read to the same minute batch; neither weather endpoint is polled each awake second.
 
 The view retains the last awake frame. Identical frames draw nothing; HR-only
 changes restore a clipped 71×27 region (1,917 pixels, 1.11% of the square canvas)
@@ -25,7 +25,7 @@ changes and layout, show/hide, settings and sleep/wake transitions. The managed
 texture reference remains unpinned and no full-screen buffer is added.
 This reduces drawing work in principle, but clipped bitmap decode cost, framebuffer
 persistence and battery effects require native validation. No new timing or drain
-measurements are claimed. See [current validation](QA.md#hrhumidity-revision--2-october-2026).
+measurements are claimed. See [current validation](QA.md#hrhumidityforecast-revision--2-october-2026).
 
 ## Previous release: changes since `7b1ac81`
 
@@ -142,7 +142,54 @@ That is about 9% less redraw time for 448 bytes of heap.
 No runtime memory figure, battery percentage saving or extra days of battery
 life is claimed until those measurements exist.
 
-## Weather API findings for future designs
+## Selected dial forecast and paired rails
+
+The dial’s full-scale track is 3px. Today’s forecast overlays a 9px copper arc
+at the same 59px radius; the original current-temperature needle, ticks, unit
+and scale numbers remain. No new low/high/current numeric values are drawn.
+Boundary chords interpolate the existing cached points, preserving short ranges
+without adding per-segment trigonometry. Partial ranges cap to the scale and add
+overflow chevrons; completely off-scale ranges show only a chevron. Equal bounds
+inside the scale show a single radial mark rather than inventing a span.
+
+Forecast entries are searched for a UTC `forecastTime` mapping to today’s local
+year/month/day. Null results, exceptions or missing/inverted bounds clear the
+cached range. Date matching and weather-age gating are rechecked each awake
+update so a timezone/clock change cannot leave yesterday’s range visible. The
+arc hides if the accompanying weather observation is two hours old, future-dated
+or lacks a timestamp. This is a conservative app display policy: the API provides
+no forecast issuance time, so it cannot prove the forecast itself is recent.
+
+The superseded upper-right humidity prototype is removed from rendering; Body
+Battery is restored there. The left humidity rail and right daily precipitation rail use
+vertical bottom-up fill. Their small bitmap fonts are loaded with existing resources. Empty is 0%, full is 100%, crossed is unavailable. The
+condition bay and yellow solar plate remain unchanged.
+
+## Body Battery current source and awake cadence
+
+[Complications](https://developer.garmin.com/connect-iq/api-docs/Toybox/Complications.html)
+is available on FR265 since API 4.2.0 (our existing minimum). The built-in
+`COMPLICATION_TYPE_BODY_BATTERY` supplies a current nullable Number. Register a
+change callback, subscribe while awake, read on wake and after a change or
+unavailability notification, and reconcile once per awake minute in case a
+subscription fails or a notification is missed. Notifications only mark dirty;
+the next regular awake callback performs one read. They do not request AOD
+updates. Hide/sleep/app stop unsubscribe and clear the callback. No timer or
+sensor activation is introduced.
+
+The complication exposes no observation timestamp or fixed production/update
+interval. Re-reading it cannot force a new score. Native current-score availability
+is preferable to repeatedly scanning history, but its latency needs FR265 testing.
+[Body Battery history](https://developer.garmin.com/connect-iq/api-docs/Toybox/SensorHistory.html#getBodyBatteryHistory-instance_function)
+is the fallback: Garmin explicitly says sample spacing is device dependent.
+Keep original sample timestamps and accept valid 0–100 samples at most 900 seconds
+old; that age limit is an app policy, not Garmin’s sampling cadence. An unavailable
+complication falls back to history or `--`, never an invented value. The current
+complication cache is cleared on every source read and on sleep/hide.
+Body Battery changes invalidate the awake frame; unchanged scores cause no
+redraw. The distinct device battery percentage continues to use system stats.
+
+## Weather API findings
 
 [CurrentConditions](https://developer.garmin.com/connect-iq/api-docs/Toybox/Weather/CurrentConditions.html)
 provides `relativeHumidity` as nullable integer 0–100%, outdoor observation
@@ -159,6 +206,9 @@ or use a current/hourly probability as today’s daily forecast. Missing date/va
 must remain unavailable. Convert temperatures to Fahrenheit for the default dial.
 The API does not specify a precise midnight-to-midnight probability interval,
 aggregation rule, or weather-location timezone: “today’s forecast” requires a
-matched date, but “whole-day probability” is not a documented guarantee. Travel
-across timezones needs an explicit location/date policy. No forecast layout or
-forecast reads are implemented in this revision.
+matched date, but “whole-day probability” is not a documented guarantee. The implemented date policy uses the watch’s local calendar, including when
+traveling; the API does not expose the weather location’s timezone. The selected low–high range is implemented. Daily `precipitationChance` is now
+read from that same date-matched entry and cached independently of temperature
+bounds, so a missing temperature does not hide a valid chance (including 0%).
+Its right-hand rail is part of selected A. No hourly/current chance is used
+and no additional weather endpoint or polling cadence is added.

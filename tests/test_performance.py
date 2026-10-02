@@ -34,7 +34,7 @@ class PerformanceSourceTests(unittest.TestCase):
         init = view.split("function initialize()", 1)[1].split("function onLayout", 1)[0]
         draw = view.split("function drawTemperature", 1)[1].split("for (var tick", 1)[0]
         self.assertIn("var j = 0; j <= 72; j += 1", init)
-        self.assertIn("point(137, 267, 59, 135.0 + 270.0 * j / 72)", init)
+        self.assertIn("point(133, 263, 59, 135.0 + 270.0 * j / 72)", init)
         self.assertEqual(view.count("bandX.add("), 1)
         self.assertEqual(view.count("bandY.add("), 1)
         self.assertIn("bandX[j], bandY[j], bandX[j + 1], bandY[j + 1]", draw)
@@ -72,7 +72,7 @@ class IndependentPerformanceModels(unittest.TestCase):
     def test_cached_points_equal_all_original_segment_endpoints(self):
         def point(degrees):
             a = degrees * math.pi / 180.0
-            return 137 + math.cos(a) * 59, 267 + math.sin(a) * 59
+            return 133 + math.cos(a) * 59, 263 + math.sin(a) * 59
         cached = [point(135.0 + 270.0 * j / 72) for j in range(73)]
         for j in range(72):
             self.assertEqual(cached[j], point(135.0 + 270.0 * j / 72))

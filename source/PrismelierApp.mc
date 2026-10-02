@@ -13,6 +13,10 @@ class PrismelierApp extends Application.AppBase {
         return [view];
     }
 
+    function onStop(state) {
+        if (view != null) { view.data.stopBodyBatteryUpdates(); }
+    }
+
     function onSettingsChanged() {
         if (view != null) {
             view.reloadSettings();
