@@ -99,9 +99,12 @@ class CalendarSourceContractTests(unittest.TestCase):
         self.assertNotIn('format("%02d")', self.labels)
         self.assertNotIn("days[", self.labels)
 
-    def test_existing_am_pm_selection_stays_unchanged(self):
-        self.assertIn('timeSuffix = is24Hour() ? "" : (info.hour < 12 ? "AM" : "PM");',
-                      self.labels)
+    def test_am_pm_is_drawn_by_view_and_solar_suffix_matches(self):
+        data = (ROOT / "source/PrismelierData.mc").read_text()
+        view = (ROOT / "source/PrismelierView.mc").read_text()
+        self.assertNotIn("timeSuffix", data)
+        self.assertIn('clock.hour < 12 ? "AM" : "PM"', view)
+        self.assertIn('solarTime += info.hour < 12 ? " AM" : " PM";', data)
 
 
 class IndependentDateFixtureTests(unittest.TestCase):

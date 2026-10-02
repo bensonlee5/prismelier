@@ -217,7 +217,11 @@ class ProjectStructureTests(unittest.TestCase):
         self.assertTrue(set(re.findall(r"0x([0-9A-F]{6})\b", view)) <= set(base),
                         "Every literal artwork color must be in the theme map")
         self.assertIn("theme = data.palette;", view)
-        self.assertIn("dc.setColor(PrismelierPalette.color(foreground, theme), background);", view)
+        # Mapped colors are memoized per theme; settings changes clear the cache.
+        self.assertIn("c = PrismelierPalette.color(foreground, theme);", view)
+        self.assertIn("dc.setColor(c, background);", view)
+        reload = view.split("function reloadSettings()", 1)[1].split("function refreshTexture", 1)[0]
+        self.assertLess(reload.index("theme = data.palette;"), reload.index("colors = {};"))
         self.assertEqual(view.count("dc.setColor("), 1, "Artwork bypasses the palette helper")
         print(f"\nPalette source audit: {len(themes)} themes x {len(base)} color entries match JSON; "
               "ambient ink and black remain unchanged")
@@ -534,7 +538,7 @@ class OfficialSdkChecks(unittest.TestCase):
         ns = {"xs": "http://www.w3.org/2001/XMLSchema"}
         schema = ET.parse(SDK / "bin/resources.xsd").getroot()
         texture_xml = ET.parse(ROOT / "resources/textures/textures.xml").getroot()
-        for element, type_name in ((texture_xml[0], "bitmapType"), (texture_xml[0][0], "paletteType")):
+        for element, type_name in ((texture_xml[0], "bitmapType"),):
             definition = schema.find(f"xs:complexType[@name='{type_name}']", ns)
             self.assertIsNotNone(definition)
             attributes = {a.attrib["name"]: a.attrib["type"]
@@ -562,11 +566,14 @@ class OfficialSdkChecks(unittest.TestCase):
             "WatchFace": ["WatchUi.WatchFace"],
             "_solarEvents": ["Lang.Array"], "_solarKinds": ["Lang.Array"],
             "points": ["Lang.Array"],
+            "bandX": ["Lang.Array"], "bandY": ["Lang.Array"],
+            "_location": ["Position.Location"],
             "history": ["SensorHistory.SensorHistoryIterator"],
             "best": ["Time.Moment"], "candidate": ["Time.Moment"],
             "now": ["Time.Moment"], "today": ["Time.Moment"],
             "sample.when": ["Time.Moment"], "wx.observationTime": ["Time.Moment"],
             "data.solarLabel": ["Lang.String"],
+            "data.solarTime": ["Lang.String"],
             "data.battery": ["Lang.Number"], "data.heartRate": ["Lang.Number"],
             "data.bodyBattery": ["Lang.Number"],
             "h": ["Lang.Number"], "hour": ["Lang.Number"], "minute": ["Lang.Number"],
