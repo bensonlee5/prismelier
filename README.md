@@ -55,6 +55,10 @@ Sideloading requires a computer. The iPhone Connect IQ app cannot import a raw d
 
 [Compile Forerunner 265](https://github.com/bensonlee5/prismelier/actions/workflows/compile.yml) is a **manually triggered, owner-only** GitHub Actions workflow for trusted `main`, run on a dedicated, pre-provisioned Linux runner. Read the [CI setup and security guide](docs/CI.md) before registering a runner for this public repository.
 
+For repeatable per-model packages and public GitHub releases, see the
+[multi-device build guide and compatibility matrix](docs/MULTI_DEVICE.md).
+Additional 416px AMOLED models are build candidates, not yet verified downloads.
+
 ## Settings and data
 
 Foundry and **Fahrenheit** are the defaults. Optional settings include Celsius/device units, explicit 12/24-hour time and three procedural color palettes: Reactor, Porcelain and Nocturne. See [settings instructions](docs/INSTALL.md#preferences); phone settings for unpublished sideloaded apps are not guaranteed.

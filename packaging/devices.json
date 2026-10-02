@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "layout": "round-416-amoled",
+  "source": "https://developer.garmin.com/connect-iq/compatible-devices/",
+  "devices": [
+    {
+      "id": "fr265",
+      "name": "Forerunner 265",
+      "width": 416,
+      "height": 416,
+      "display": "AMOLED",
+      "shape": "round",
+      "status": "previously-simulator-tested"
+    },
+    {
+      "id": "epix2",
+      "name": "epix (Gen 2)",
+      "width": 416,
+      "height": 416,
+      "display": "AMOLED",
+      "shape": "round",
+      "status": "candidate-uncompiled"
+    },
+    {
+      "id": "epix2pro47mm",
+      "name": "epix Pro (Gen 2) 47mm",
+      "width": 416,
+      "height": 416,
+      "display": "AMOLED",
+      "shape": "round",
+      "status": "candidate-uncompiled"
+    },
+    {
+      "id": "venu2",
+      "name": "Venu 2",
+      "width": 416,
+      "height": 416,
+      "display": "AMOLED",
+      "shape": "round",
+      "status": "candidate-uncompiled"
+    },
+    {
+      "id": "venu2plus",
+      "name": "Venu 2 Plus",
+      "width": 416,
+      "height": 416,
+      "display": "AMOLED",
+      "shape": "round",
+      "status": "candidate-uncompiled"
+    },
+    {
+      "id": "fenix843mm",
+      "name": "f\u0113nix 8 43mm",
+      "width": 416,
+      "height": 416,
+      "display": "AMOLED",
+      "shape": "round",
+      "status": "candidate-uncompiled"
+    }
+  ]
+}
