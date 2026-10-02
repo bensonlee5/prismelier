@@ -1,0 +1,5 @@
+<resources>
+  <!-- Opaque indexed source, native packing, no full-screen runtime buffer. -->
+  <bitmap id="FoundryBackground" filename="foundry-background-indexed.png"
+          packingFormat="default" automaticPalette="true" dithering="none" compress="true" />
+</resources>

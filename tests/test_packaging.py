@@ -142,11 +142,33 @@ class PackagingTests(unittest.TestCase):
                 self.assertEqual(set(archive.namelist()),
                                  {'Prismelier-fr265.prg', 'build-info.json', 'INSTALL.txt', 'SHA256SUMS'})
 
-    def test_all_matrix_models_match_existing_layout(self):
+    def test_prepare_all_ten_profiles_has_matching_manifest_and_texture(self):
+        import struct
+        matrix = json.loads((ROOT / 'packaging/devices.json').read_text())
+        commit = pkg.resolve_ref('HEAD')
+        for device in (d for d in matrix['devices'] if d['phaseOne']):
+            with self.subTest(device=device['id']), tempfile.TemporaryDirectory() as tmp:
+                source = Path(tmp)
+                app = pkg.prepare_source(commit, source, device)
+                self.assertEqual(app, '81c2a924768f4b9eb6ac52e438d0517f')
+                tree = pkg.ET.parse(source / 'manifest.xml')
+                self.assertEqual([p.attrib['id'] for p in tree.findall(f'.//{{{pkg.NS}}}product')], [device['id']])
+                texture = (source / 'resources/textures/foundry-background-indexed.png').read_bytes()
+                self.assertEqual(struct.unpack('>II', texture[16:24]), (device['width'], device['height']))
+                view = (source / 'source/PrismelierView.mc').read_text()
+                if device['width'] != 416:
+                    self.assertIn(f"value * {device['width']}.0 / 416.0", view)
+                else:
+                    self.assertNotIn('function layoutPixel', view)
+                self.assertEqual(list(source.rglob('*.prg')), [])
+
+    def test_matrix_models_have_implemented_geometry(self):
         matrix = json.loads((ROOT / 'packaging/devices.json').read_text())
         for device in matrix['devices']:
-            self.assertEqual((device['width'], device['height'], device['shape'], device['display']),
-                             (416, 416, 'round', 'AMOLED'))
+            self.assertEqual((device['width'], device['shape'], device['display']),
+                             (device['height'], 'round', 'AMOLED'))
+            self.assertIn(device['width'], (360, 390, 416, 454))
+        self.assertEqual(sum(d['phaseOne'] for d in matrix['devices']), 10)
 
 
 if __name__ == '__main__':

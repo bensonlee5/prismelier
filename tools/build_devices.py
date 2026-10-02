@@ -20,6 +20,13 @@ import tempfile
 import xml.etree.ElementTree as ET
 import zipfile
 
+# Also importable by offline tests without altering sys.path globally.
+import importlib.util
+_adapter_spec = importlib.util.spec_from_file_location(
+    "scale_layout", Path(__file__).with_name("scale_layout.py"))
+_adapter = importlib.util.module_from_spec(_adapter_spec)
+_adapter_spec.loader.exec_module(_adapter)
+
 ROOT = Path(__file__).resolve().parents[1]
 NS = 'http://www.garmin.com/xml/connectiq'
 SDK_VERSION = '9.2.0'
@@ -46,9 +53,12 @@ def resolve_ref(ref):
     return git('rev-parse', '--verify', '--end-of-options', ref + '^{commit}').decode().strip()
 
 
-def snapshot(commit, destination):
+def snapshot(commit, destination, variant=None):
     """Only tracked build inputs; exclude old dist binaries and arbitrary scripts."""
-    archive = git('archive', commit, 'manifest.xml', 'monkey.jungle', 'source', 'resources')
+    paths = ['manifest.xml', 'monkey.jungle', 'source', 'resources']
+    if variant is not None:
+        paths.append(f'packaging/variants/{variant}')
+    archive = git('archive', commit, *paths)
     with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
         for item in tar:
             target = destination / item.name
@@ -61,6 +71,28 @@ def snapshot(commit, destination):
                 target.write_bytes(tar.extractfile(item).read())
             else:
                 raise ValueError('Build inputs must not contain symlinks or special files')
+
+
+def prepare_source(commit, source, device):
+    size = device['width']
+    if size != device['height'] or device['shape'] != 'round' or device['display'] != 'AMOLED':
+        raise ValueError('No layout/resource implementation for this display')
+    if size not in (360, 390, 416, 454):
+        raise ValueError('No reviewed source adaptation for this resolution')
+    snapshot(commit, source, size if size != 416 else None)
+    if size != 416:
+        variant = source / f'packaging/variants/{size}'
+        provenance = json.loads((variant / 'variant-info.json').read_text())
+        for name, expected in provenance['masterSha256'].items():
+            if sha256(source / name) != expected:
+                raise ValueError('Scaled assets are stale relative to this ref; regenerate with tools/scale_layout.py')
+        for folder in ('fonts', 'textures'):
+            shutil.rmtree(source / 'resources' / folder)
+            shutil.copytree(variant / folder, source / 'resources' / folder)
+        shutil.rmtree(source / 'packaging')
+        view = source / 'source/PrismelierView.mc'
+        view.write_text(_adapter.adapt_source(view.read_text(), size))
+    return target_manifest(source, device['id'])
 
 
 def target_manifest(source, device):
@@ -119,8 +151,7 @@ def build_one(device, commit, sdk, key, profiles, output):
         stage = Path(temporary)
         source = stage / 'source-inputs'
         source.mkdir()
-        snapshot(commit, source)
-        app_id = target_manifest(source, target)
+        app_id = prepare_source(commit, source, device)
         input_hash = fingerprint(source)
         prg = stage / f'Prismelier-{target}.prg'
         command = [str(sdk / 'bin/monkeyc'), '-f', str(source / 'monkey.jungle'),
@@ -140,7 +171,8 @@ def build_one(device, commit, sdk, key, profiles, output):
                       applicationId=app_id, sourceCommit=commit, sdkVersion=SDK_VERSION,
                       compilerSha256=sha256(sdk / 'bin/monkeybrains.jar'),
                       deviceProfileSha256=before, buildInputsSha256=input_hash,
-                      layout='round-416-amoled', program=prg.name, programBytes=prg.stat().st_size,
+                      layout=f'round-{device["width"]}-amoled',
+                      layoutAdapterSha256=sha256(Path(__file__).with_name('scale_layout.py')), program=prg.name, programBytes=prg.stat().st_size,
                       programSha256=sha256(prg), releaseBuild=True, typeCheckLevel=1,
                       simulatorTested=False, hardwareTested=False,
                       validation='compiled-only; not approved for public release')
@@ -164,11 +196,32 @@ def write_json(path, data):
     path.write_text(json.dumps(data, indent=2) + '\n')
 
 
+def prepare(args):
+    matrix = json.loads((ROOT / 'packaging/devices.json').read_text())
+    devices = {d['id']: d for d in matrix['devices']}
+    if args.device not in devices:
+        raise ValueError('Unknown device ID')
+    commit = resolve_ref(args.ref)
+    output = Path(args.output).expanduser().absolute()
+    if output.exists() or output.is_symlink():
+        raise ValueError('Output already exists; choose a new path')
+    source = output / 'project'
+    source.mkdir(parents=True)
+    prepare_source(commit, source, devices[args.device])
+    write_json(output / 'prepared-info.json', {
+        'sourceCommit': commit, 'device': args.device,
+        'layoutPixels': devices[args.device]['width'], 'buildInputsSha256': fingerprint(source),
+        'layoutAdapterSha256': sha256(Path(__file__).with_name('scale_layout.py')),
+        'compiled': False, 'simulatorTested': False})
+    print(f'Prepared {args.device} source/resources at {source}; NOT a compiled program')
+    return 0
+
+
 def build(args):
     commit = resolve_ref(args.ref)
     matrix = json.loads((ROOT / 'packaging/devices.json').read_text())
     by_id = {d['id']: d for d in matrix['devices']}
-    targets = args.devices.split(',') if args.devices else list(by_id)
+    targets = args.devices.split(',') if args.devices else [d['id'] for d in matrix['devices'] if d['phaseOne']]
     if len(set(targets)) != len(targets) or any(d not in by_id for d in targets):
         raise ValueError('Unknown or duplicate device; use only IDs in packaging/devices.json')
     sdk, key, profiles = preflight(args.sdk, args.key)
@@ -273,17 +326,21 @@ def main():
     commands = parser.add_subparsers(dest='command', required=True)
     b = commands.add_parser('build')
     b.add_argument('--ref', required=True, help='Git ref resolved to immutable commit; working-tree edits excluded')
-    b.add_argument('--devices', help='Comma-separated matrix IDs; default: all candidates')
+    b.add_argument('--devices', help='Comma-separated matrix IDs; default: ten phase-one candidates')
     b.add_argument('--sdk', default=os.environ.get('CIQ_SDK'))
     b.add_argument('--key', default=os.environ.get('CIQ_KEY'))
     b.add_argument('--output', required=True, help='New output directory; never overwrites')
+    prep = commands.add_parser('prepare', help='Inspect generated source/resources without SDK or signing key')
+    prep.add_argument('--ref', required=True)
+    prep.add_argument('--device', required=True)
+    prep.add_argument('--output', required=True)
     p = commands.add_parser('publish')
     p.add_argument('--output', required=True)
     p.add_argument('--evidence', required=True, help='Simulator checklist tied to exact program hashes')
     p.add_argument('--tag', required=True)
     args = parser.parse_args()
     try:
-        return build(args) if args.command == 'build' else publish(args)
+        return {'build': build, 'prepare': prepare, 'publish': publish}[args.command](args)
     except (ValueError, OSError, KeyError, subprocess.SubprocessError) as exc:
         print(f'Packaging failed: {exc}', file=sys.stderr)
         return 1

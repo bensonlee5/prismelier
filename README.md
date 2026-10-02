@@ -57,7 +57,8 @@ Sideloading requires a computer. The iPhone Connect IQ app cannot import a raw d
 
 For repeatable per-model packages and public GitHub releases, see the
 [multi-device build guide and compatibility matrix](docs/MULTI_DEVICE.md).
-Additional 416px AMOLED models are build candidates, not yet verified downloads.
+Ten round AMOLED profiles across 360/390/416/454px have build tooling and size
+variants; additional models remain uncompiled candidates, not verified downloads.
 
 ## Settings and data
 

@@ -13,20 +13,75 @@ and [device reference](https://developer.garmin.com/connect-iq/device-reference/
 are the model/geometry sources. Local official device profiles and the compiler
 remain authoritative for an actual build.
 
-| Product ID | Model | Layout | Actual compile / simulator evidence |
-|---|---|---|---|
-| `fr265` | Forerunner 265 | 416 × 416 round AMOLED | Existing SDK 9.2.0 build and simulator review at `abf7fd4`; no new compile in this change |
-| `epix2` | epix (Gen 2) | 416 × 416 round AMOLED | Candidate only; not compiled or simulated |
-| `epix2pro47mm` | epix Pro (Gen 2) 47mm | 416 × 416 round AMOLED | Candidate only; not compiled or simulated |
-| `venu2` | Venu 2 | 416 × 416 round AMOLED | Candidate only; not compiled or simulated |
-| `venu2plus` | Venu 2 Plus | 416 × 416 round AMOLED | Candidate only; not compiled or simulated |
-| `fenix843mm` | fēnix 8 43mm | 416 × 416 round AMOLED | Candidate only; not compiled or simulated |
+The default build covers ten phase-one product profiles:
 
-The renderer, bitmap fonts, 416px texture and sparse repositioning AOD have fixed
-coordinates. These candidates reuse that geometry without resampling. The source
-manifest intentionally still declares only FR265: the packager writes a temporary
-one-product manifest for each candidate, preserving the application ID, API 4.2
-minimum and permissions. Adding an ID does **not** establish compatibility.
+| Product ID | Model | Round AMOLED size | Actual compile / simulator evidence |
+|---|---|---|---|
+| `fr265` | Forerunner 265 | 416px | Historical SDK 9.2.0 build and simulator review at `abf7fd4` |
+| `fr265s` | Forerunner 265S | 360px | Adapted candidate; not compiled or simulated |
+| `fr165` | Forerunner 165 | 390px | Adapted candidate; not compiled or simulated |
+| `fr165m` | Forerunner 165 Music | 390px | Adapted candidate; not compiled or simulated |
+| `fr965` | Forerunner 965 | 454px | Adapted candidate; not compiled or simulated |
+| `fr970` | Forerunner 970 | 454px | Adapted candidate; not compiled or simulated |
+| `venu3` | Venu 3 | 454px | Adapted candidate; not compiled or simulated |
+| `venu3s` | Venu 3S | 390px | Adapted candidate; not compiled or simulated |
+| `fenix843mm` | fēnix 8 43mm | 416px | Candidate; not compiled or simulated |
+| `fenix847mm` | fēnix 8 47mm / 51mm | 454px | Adapted candidate; not compiled or simulated |
+
+The initial six candidates were `fr265`, `epix2`, `epix2pro47mm`, `venu2`,
+`venu2plus`, `fenix843mm`, selected to reuse the existing 416px layout. The other
+four remain explicit optional 416px targets via `--devices`; they are not default
+builds and have no new native validation. The broader default now covers the
+mainstream shortlist across four resolutions rather than limiting selection to
+one convenient screen size. There is no claim these are the ten best-selling watches.
+
+### Source and resource adaptation
+
+The 416px master and existing FR265 binary remain unchanged. `tools/scale_layout.py`
+generates separate 360/390/454 bitmap-font atlases and indexed opaque textures in
+`packaging/variants/`. Each glyph is independently resized with antialiasing and
+repacked, preserving the original glyph coverage, proportional placement and font
+license. Smallest label size is 13px at 360px: on-device readability is still a
+required acceptance check, not guaranteed by geometry tests. The bitmap texture
+is resized offline, never via a runtime full-screen buffer.
+
+For those three sizes, the packager extracts the variant **from the requested
+source commit**, checks its master-asset hashes to reject stale variants, replaces
+only the temporary checkout's fonts/textures, and adapts drawing coordinates in
+its view source. The coordinate adapter handles every current Dc primitive,
+scales polygon points in place and keeps pen width at least one pixel. It fails
+on an unknown drawing API or double adaptation so a future artwork change cannot
+silently bypass sizing. Decimal coordinates follow the existing Dc conversion
+behavior. The adapter itself and all resulting build inputs are fingerprinted.
+Extra coordinate arithmetic requires native performance measurement on each
+size. There is no second framebuffer or repeated bitmap/font resource loading.
+
+The normal manifest intentionally still declares only FR265. The packager writes
+a temporary one-product manifest preserving application ID, API 4.2 minimum and
+permissions. Adding a model ID or passing these offline checks does not establish
+native compatibility. A source ref predating the variant assets cannot build the
+new sizes; use a commit containing this change.
+
+Offline tests cover every clock string in both time formats, AM/PM separation,
+dates, weather labels, worst-case metrics, weekday circular bounds, atlas
+coordinates, texture dimensions/round bounds, and AOD masks. For 360/390/454px,
+the conservative lit-pixel estimates are respectively **3.10% / 3.10% / 2.85%**,
+with disjoint three-band masks across all 2,880 clock strings. These include a
+one-pixel halo and are asset-model results, not Garmin firmware burn-in validation.
+
+Regenerate assets after editing the master fonts or texture (Pillow required):
+
+```sh
+python3 tools/scale_layout.py
+python3 -m unittest discover -s tests -v
+```
+
+Inspect a generated project without an SDK or signing key, using a ref that
+contains the variants:
+
+```sh
+python3 tools/build_devices.py prepare --ref HEAD --device fr265s --output build/inspect-360
+```
 
 Garmin documents a 131,072-byte watch-face heap for these round AMOLED classes.
 API 4+ devices have a separate graphics pool; compressed PNG or PRG file size does
@@ -40,15 +95,12 @@ and [project performance notes](PERFORMANCE.md).
 
 Explicitly outside this build matrix:
 
-- FR265S (360px), FR165/165 Music and Venu 3S (390px): need smaller layout, fonts,
-  texture and renewed AOD lit-pixel checks.
-- FR965/970, Venu 3 and fēnix 8 47/51mm (454px): need larger layout/resources and
-  graphics-memory checks. The fēnix 8 47/51mm share `fenix847mm`; no `fenix851mm`.
 - MIP models (including FR255/955, fēnix 7 and solar variants): need an intentional
   reduced-palette design and low-power behavior, not the AMOLED texture/AOD path.
 - Rectangular Venu Sq/X1 and Instinct displays: need shape-specific composition.
 - Other generations, sizes and aliases: no support promise without their own
-  official profile, build and validation evidence.
+  official profile, build and validation evidence. The fēnix 8 47/51mm share
+  `fenix847mm`; do not invent a `fenix851mm` target.
 
 ## Provision once on the build computer
 
@@ -72,7 +124,7 @@ Do not redirect the compiler to a different profile library.
 
 ```sh
 git fetch origin
-python3 tools/build_devices.py build --ref origin/main --output build/models-run1
+python3 tools/build_devices.py build --ref HEAD --output build/models-run1
 # Or just selected profiles:
 python3 tools/build_devices.py build --ref abf7fd44 --devices fr265,epix2 --output build/models-run2
 ```
@@ -148,3 +200,15 @@ published** in this change. Existing FR265 evidence remains historical, not a
 substitute for compiling these packages. Provision the SDK, selected profiles and
 saved key on an authorized local machine, run the commands above, and perform the
 simulator reviews before publishing. No persistent runner was installed.
+
+### Use a configured environment without sending private keys
+
+The owner can clone/check out this PR on an already configured local Linux/macOS
+computer, set `CIQ_SDK` and `CIQ_KEY` to existing local paths, and run the build and
+simulator there. Do **not** paste a key into chat, commit it, upload it to an
+artifact, or add it as a GitHub secret for this process. Share only the generated
+PRGs, public build records/checksums and validation observations if review is
+needed. Alternatively select an authorized local execution environment that
+already has the SDK/profiles and saved key mounted outside the checkout; local
+path configuration is sufficient. A new persistent self-hosted runner is not
+required and is not configured by this PR.

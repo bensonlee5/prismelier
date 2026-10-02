@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "layout": "round-416-amoled",
+  "layout": "round-amoled-360-390-416-454",
   "source": "https://developer.garmin.com/connect-iq/compatible-devices/",
   "devices": [
     {
@@ -10,7 +10,8 @@
       "height": 416,
       "display": "AMOLED",
       "shape": "round",
-      "status": "previously-simulator-tested"
+      "status": "previously-simulator-tested",
+      "phaseOne": true
     },
     {
       "id": "epix2",
@@ -19,7 +20,8 @@
       "height": 416,
       "display": "AMOLED",
       "shape": "round",
-      "status": "candidate-uncompiled"
+      "status": "candidate-uncompiled",
+      "phaseOne": false
     },
     {
       "id": "epix2pro47mm",
@@ -28,7 +30,8 @@
       "height": 416,
       "display": "AMOLED",
       "shape": "round",
-      "status": "candidate-uncompiled"
+      "status": "candidate-uncompiled",
+      "phaseOne": false
     },
     {
       "id": "venu2",
@@ -37,7 +40,8 @@
       "height": 416,
       "display": "AMOLED",
       "shape": "round",
-      "status": "candidate-uncompiled"
+      "status": "candidate-uncompiled",
+      "phaseOne": false
     },
     {
       "id": "venu2plus",
@@ -46,7 +50,8 @@
       "height": 416,
       "display": "AMOLED",
       "shape": "round",
-      "status": "candidate-uncompiled"
+      "status": "candidate-uncompiled",
+      "phaseOne": false
     },
     {
       "id": "fenix843mm",
@@ -55,7 +60,88 @@
       "height": 416,
       "display": "AMOLED",
       "shape": "round",
-      "status": "candidate-uncompiled"
+      "status": "candidate-uncompiled",
+      "phaseOne": true
+    },
+    {
+      "id": "fr265s",
+      "name": "Forerunner 265S",
+      "width": 360,
+      "height": 360,
+      "display": "AMOLED",
+      "shape": "round",
+      "status": "candidate-uncompiled",
+      "phaseOne": true
+    },
+    {
+      "id": "fr165",
+      "name": "Forerunner 165",
+      "width": 390,
+      "height": 390,
+      "display": "AMOLED",
+      "shape": "round",
+      "status": "candidate-uncompiled",
+      "phaseOne": true
+    },
+    {
+      "id": "fr165m",
+      "name": "Forerunner 165 Music",
+      "width": 390,
+      "height": 390,
+      "display": "AMOLED",
+      "shape": "round",
+      "status": "candidate-uncompiled",
+      "phaseOne": true
+    },
+    {
+      "id": "fr965",
+      "name": "Forerunner 965",
+      "width": 454,
+      "height": 454,
+      "display": "AMOLED",
+      "shape": "round",
+      "status": "candidate-uncompiled",
+      "phaseOne": true
+    },
+    {
+      "id": "fr970",
+      "name": "Forerunner 970",
+      "width": 454,
+      "height": 454,
+      "display": "AMOLED",
+      "shape": "round",
+      "status": "candidate-uncompiled",
+      "phaseOne": true
+    },
+    {
+      "id": "venu3",
+      "name": "Venu 3",
+      "width": 454,
+      "height": 454,
+      "display": "AMOLED",
+      "shape": "round",
+      "status": "candidate-uncompiled",
+      "phaseOne": true
+    },
+    {
+      "id": "venu3s",
+      "name": "Venu 3S",
+      "width": 390,
+      "height": 390,
+      "display": "AMOLED",
+      "shape": "round",
+      "status": "candidate-uncompiled",
+      "phaseOne": true
+    },
+    {
+      "id": "fenix847mm",
+      "name": "f\u0113nix 8 47mm / 51mm",
+      "width": 454,
+      "height": 454,
+      "display": "AMOLED",
+      "shape": "round",
+      "status": "candidate-uncompiled",
+      "phaseOne": true
     }
   ]
 }
