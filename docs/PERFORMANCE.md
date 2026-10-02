@@ -53,16 +53,56 @@ is described in Garmin's [graphics documentation](https://developer.garmin.com/c
 - New tests guard cache invalidation/retry, wake/startup read paths, fixed dial
   geometry and absence of new timers/sensor activation. Python models are
   independent fixtures, not execution of Monkey C or a Garmin emulator
-- The remote base commit reports a successful FR265 build. This review's cloud
-  environment still lacks the official FR265 compiler profile, so **this new
-  revision has not been natively compiled, simulator-tested or watch-tested**
+- `6747f6b` compiles for `fr265` with official SDK 9.2.0 and the FR265 profile
+  (warnings only) and runs in the FR265 simulator without crashing. It has
+  **not been watch-tested**; see the simulator profile below
 - The compile workflow is owner/manual/main-only. No PR-triggered native build
   is expected; a draft PR is not a green native CI result
 
+## Simulator profile, 1 October 2026
+
+Local Linux run, official SDK 9.2.0 FR265 simulator. Throwaway copies of the
+baseline (`7b1ac81`) and this revision (`6747f6b`) were wrapped with identical
+`System.getTimer()`/`getSystemStats()` logging; the repository source is not
+instrumented. Garmin's GUI profiler was not used. Each figure is the mean of
+three alternating 120-frame runs. One measurement ran per frame, because the
+watchdog tripped ("Code Executed Too Long") on both builds when one full
+redraw plus four extra `drawTemperature` calls shared a callback.
+
+| Metric | `7b1ac81` | `6747f6b` | Change |
+|---|---|---|---|
+| Full awake `onUpdate` | 25.9 ms | 25.7 ms | within noise (about ±1 ms between runs) |
+| `drawTemperature` | 6.29 ms | 5.90 ms | about 6% faster |
+| `onExitSleep` (wrist wake) | 1.07 ms | ~0.02 ms | forced refresh removed |
+| `data.refresh(false)` within a cached minute | 0.188 ms | 0.237 ms | +0.05 ms from solar-cache checks |
+| App heap used while running | 31,168 B | 32,424 B | +1,256 B (cached band vertices) |
+
+Reference faces under the same `onUpdate` timer, two 60-frame runs each:
+
+| Build | `onUpdate` | App heap used |
+|---|---|---|
+| Prismelier with `onUpdate` reduced to `dc.clear()` | 2.3–2.8 ms | 31.7 KB |
+| Garmin SDK `Analog` sample, retargeted to `fr265` | 16.8–17.1 ms | 13.0 KB |
+| Prismelier, vector theme (`Palette=0`, no bitmap) | 26.6–26.7 ms | 31.8 KB |
+| Prismelier, Foundry bitmap theme | 26.4–26.5 ms | 31.8 KB |
+
+Interpretation:
+
+- The full-screen Foundry bitmap costs no more than the vector theme's
+  artwork. Redraw time is dominated by many small vector calls, each resolving
+  a color through `PrismelierPalette.color()`. Removing per-call palette lookups
+  is the likeliest next CPU saving (not yet measured)
+- Wake and temperature-dial savings are real but small relative to a full
+  redraw; the cached-minute refresh became slightly slower
+- These are host-CPU simulator timings, valid only for comparing builds. They
+  do not predict watch timing or battery life. The SDK `AnimationWatchFace`
+  (no FR265 animation mapping) and `ConfigurableWatchFace` (`WatchFaceConfig`
+  unsupported on FR265) samples could not serve as references
+
 ## Acceptance checks before release
 
-1. Compile this exact revision for FR265 with the official profile, then inspect
-   heap/graphics-pool usage and active `onUpdate` timing in Garmin's profiler
+1. Done in the simulator for heap and `onUpdate` timing (above). Still to do:
+   inspect graphics-pool usage in Garmin's memory viewer
 2. Check all themes and unit/time settings; repeated gestures in one minute;
    awake/ambient transitions and interruptions; midnight/DST/timezone changes;
    clock rollback; location changes; expired/missing weather; polar events and

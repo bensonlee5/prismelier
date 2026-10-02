@@ -6,7 +6,7 @@ A futuristic-steampunk digital watch face for the **Garmin Forerunner 265**. The
 
 *Source-backed design render with illustrative readings, not a Garmin simulator or watch screenshot.*
 
-> **Development project.** The history records a successful FR265 compile in [7b1ac81](https://github.com/bensonlee5/prismelier/commit/7b1ac81b4a5427f47e087c29b294af84496ca59f). The subsequent performance revision still needs an FR265 build, simulator and hardware validation. See [performance review](docs/PERFORMANCE.md) and [validation history](docs/QA.md).
+> **Development project.** The history records a successful FR265 compile in [7b1ac81](https://github.com/bensonlee5/prismelier/commit/7b1ac81b4a5427f47e087c29b294af84496ca59f). The performance revision has been compiled and profiled in the FR265 simulator, but still needs hardware validation. See [performance review](docs/PERFORMANCE.md) and [validation history](docs/QA.md).
 
 ## Features
 

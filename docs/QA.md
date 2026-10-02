@@ -9,8 +9,8 @@ declaration. The checkpoints below predate that external build report.
 
 **56 local tests passed** with official SDK 9.2.0/Pillow; **47 passed and 9 skipped**
 without optional dependencies. Startup/wake reads, solar caching and fixed dial
-geometry were optimized without changing the design. This latest revision has
-not been compiled for FR265 or tested in the simulator/on hardware by this review.
+geometry were optimized without changing the design. A later local run compiled
+`6747f6b` for FR265 and profiled it in the simulator; it is not hardware-tested.
 See [the complete review and acceptance plan](PERFORMANCE.md). Historical
 fingerprints and counts below do not describe the new source revision.
 
