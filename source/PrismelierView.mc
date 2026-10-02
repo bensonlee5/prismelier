@@ -323,17 +323,18 @@ class PrismelierView extends WatchUi.WatchFace {
 
     function drawBodyBattery(dc) {
         // Original monoline person + energy bolt; a score, never a percentage.
-        var dy = 6;
+        // Compact person stays within the top pocket, centered on the score.
+        var y = 60;
         paint(dc, pink, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(2);
-        dc.drawCircle(235, 47 + dy, 3);
+        dc.drawCircle(235, y - 7, 3);
         dc.setPenWidth(1);
-        stroke(dc, 235, 53 + dy, 235, 60 + dy, pink, 2);
-        stroke(dc, 230, 55 + dy, 240, 55 + dy, pink, 2);
-        stroke(dc, 235, 60 + dy, 231, 66 + dy, pink, 2);
-        stroke(dc, 235, 60 + dy, 239, 66 + dy, pink, 2);
-        trace(dc, [[246, 48 + dy], [242, 55 + dy], [247, 55 + dy], [243, 62 + dy]], copper, 1);
-        text(dc, 280, 42 + dy, smallFont, data.bodyBattery == null ? "--" : data.bodyBattery.format("%d"), ink);
+        stroke(dc, 235, y - 1, 235, y + 3, pink, 2);
+        stroke(dc, 230, y, 240, y, pink, 2);
+        stroke(dc, 235, y + 3, 231, y + 9, pink, 2);
+        stroke(dc, 235, y + 3, 239, y + 9, pink, 2);
+        trace(dc, [[246, y - 7], [242, y], [247, y], [243, y + 7]], copper, 1);
+        text(dc, 280, 48, smallFont, data.bodyBattery == null ? "--" : data.bodyBattery.format("%d"), ink);
     }
 
     function drawTemperature(dc) {
