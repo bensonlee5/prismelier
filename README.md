@@ -2,21 +2,21 @@
 
 A futuristic-steampunk digital watch face for the **Garmin Forerunner 265**. The default **Foundry** theme combines ebony-inspired wood grain, patinated copper, raised material relief and intricate robotics details.
 
-![Selected A source-based rendering](docs/screenshots/selected-a-source-preview.png)
+![Latest FR265 simulator rendering](docs/screenshots/merged-native-fr265.png)
 
-*Selected-A source-based fixture preview, not a Garmin simulator capture or live readings. [Compare with the selected reference](docs/screenshots/selected-a-comparison.png).*
+*Official FR265 simulator capture of the current build, using simulated weather and health data.*
 
 ## Status
 
 This section is the project's single status record; other documents link here.
 
-**Selected A is implemented:** paired vertical rails show relative humidity on the left and today’s precipitation chance on the right. Body Battery is restored upper-right, separate from device battery. The new selected material, shifted dial/vitals, thick daily forecast arc and awake HR refresh are included. Native compilation, simulator checks and watch validation remain pending.
+**Selected A is implemented:** paired vertical rails show relative humidity on the left and today’s precipitation chance on the right. Body Battery is restored upper-right, separate from device battery. The new selected material, shifted dial/vitals, thick daily forecast arc and awake HR refresh are included. The current FR265 build passes native compilation and visual simulator review; physical rendering and battery-life validation remain pending.
 
 | Check | State |
 |---|---|
-| FR265 compile (SDK 9.2.0, official profile) | Previous release passes; HR/humidity/forecast revision **not compiled here** (SDK/profile/key unavailable) |
-| FR265 simulator | Previous release [profiled](docs/PERFORMANCE.md#simulator-profile-1-october-2026); HR/humidity/forecast revision and retained-frame redraw need native validation |
-| Source, layout and asset tests | 79 pass, 6 optional SDK checks skipped (`python -m unittest discover -s tests`) |
+| FR265 compile (SDK 9.2.0, official profile) | Current revision passes |
+| FR265 simulator | Current Foundry layout reviewed: icons/text, weather rails, forecast arc, 12/24-hour time, AOD/wake |
+| Source, layout and asset tests | 105 pass, including SDK checks (`python -m unittest discover -s tests`) |
 | CI workflow | Prepared; no runner provisioned, so no CI build yet ([CI](docs/CI.md)) |
 | Physical FR265 | **Not yet tested**: fonts on AMOLED, AOD transitions, weather sync, battery drain |
 
@@ -43,7 +43,7 @@ The target is the **416 × 416 AMOLED Forerunner 265** (`fr265`). Compatibility 
 
 **[Download Prismelier for Forerunner 265 (.prg)](https://github.com/bensonlee5/prismelier/raw/refs/heads/main/dist/Prismelier-fr265.prg)** — ready to copy to the watch's existing `GARMIN/APPS` folder. This build is for the **265 only, not the 265S**. It uses the Foundry theme, Fahrenheit and the watch's time format. No SDK is needed to install the download; start at [USB installation](docs/INSTALL.md#4-copy-the-prg-over-usb), then select Prismelier on the watch.
 
-**The download and older simulator screenshots still represent the previous release, without the source revision’s HR/humidity/forecast changes.** The committed release build uses SDK 9.2.0 and passed all 59 automated checks plus FR265 simulator checks for the full weather label and always-on/wake transitions. Physical-watch rendering and battery life remain unverified. [Build details](dist/build-info.json) and [SHA-256 checksum](dist/SHA256SUMS) accompany the binary.
+The download includes the current HR/humidity/forecast revision, built with SDK 9.2.0 from `d4d1e45`. It passed 105 automated checks and FR265 visual simulator review. Older theme screenshots show the previous release. Physical-watch rendering and battery life remain unverified. [Build details](dist/build-info.json) and [SHA-256 checksum](dist/SHA256SUMS) accompany the binary.
 
 To build from source instead:
 
@@ -59,8 +59,7 @@ Sideloading requires a computer. The iPhone Connect IQ app cannot import a raw d
 
 For repeatable per-model packages and public GitHub releases, see the
 [multi-device build guide and compatibility matrix](docs/MULTI_DEVICE.md).
-Ten round AMOLED profiles across 360/390/416/454px have build tooling and size
-variants; additional models remain uncompiled candidates, not verified downloads.
+All 14 configured round AMOLED profiles across 360/390/416/454px compile with SDK 9.2.0. Only FR265 has current simulator review; other models remain compile-only candidates. See the [build matrix record](docs/build-matrix-results.json).
 
 ## Settings and data
 

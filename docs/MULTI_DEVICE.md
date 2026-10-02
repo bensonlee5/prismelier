@@ -1,8 +1,10 @@
 # Build and download packages for multiple Garmin models
 
-The current public [FR265 download](https://github.com/bensonlee5/prismelier/raw/abf7fd44a5ec74b8b697d260f2a0913826f19de4/dist/Prismelier-fr265.prg)
+The current public [FR265 download](https://github.com/bensonlee5/prismelier/raw/refs/heads/main/dist/Prismelier-fr265.prg)
 remains the only simulator-tested model. Its [build record](../dist/build-info.json)
-and [checksums](../dist/SHA256SUMS) are unchanged. It has not been tested on hardware.
+and [checksums](../dist/SHA256SUMS) identify source `d4d1e45`. It has not been tested on hardware.
+
+All 14 configured targets compiled successfully from `d4d1e45`; [machine-readable results](build-matrix-results.json) record each PRG checksum. Other-model binaries remain local build outputs pending their exact-device simulator review.
 
 ## Compatibility and validation matrix
 
@@ -17,27 +19,27 @@ The default build covers ten phase-one product profiles:
 
 | Product ID | Model | Round AMOLED size | Actual compile / simulator evidence |
 |---|---|---|---|
-| `fr265` | Forerunner 265 | 416px | Historical SDK 9.2.0 build and simulator review at `abf7fd4` |
-| `fr265s` | Forerunner 265S | 360px | Adapted candidate; not compiled or simulated |
-| `fr165` | Forerunner 165 | 390px | Adapted candidate; not compiled or simulated |
-| `fr165m` | Forerunner 165 Music | 390px | Adapted candidate; not compiled or simulated |
-| `fr965` | Forerunner 965 | 454px | Adapted candidate; not compiled or simulated |
-| `fr970` | Forerunner 970 | 454px | Adapted candidate; not compiled or simulated |
-| `venu3` | Venu 3 | 454px | Adapted candidate; not compiled or simulated |
-| `venu3s` | Venu 3S | 390px | Adapted candidate; not compiled or simulated |
-| `fenix843mm` | fēnix 8 43mm | 416px | Candidate; not compiled or simulated |
-| `fenix847mm` | fēnix 8 47mm / 51mm | 454px | Adapted candidate; not compiled or simulated |
+| `fr265` | Forerunner 265 | 416px | SDK 9.2.0 compile and Foundry visual simulator review at `d4d1e45` |
+| `fr265s` | Forerunner 265S | 360px | SDK 9.2.0 compiled; not simulated |
+| `fr165` | Forerunner 165 | 390px | SDK 9.2.0 compiled; not simulated |
+| `fr165m` | Forerunner 165 Music | 390px | SDK 9.2.0 compiled; not simulated |
+| `fr965` | Forerunner 965 | 454px | SDK 9.2.0 compiled; not simulated |
+| `fr970` | Forerunner 970 | 454px | SDK 9.2.0 compiled; not simulated |
+| `venu3` | Venu 3 | 454px | SDK 9.2.0 compiled; not simulated |
+| `venu3s` | Venu 3S | 390px | SDK 9.2.0 compiled; not simulated |
+| `fenix843mm` | fēnix 8 43mm | 416px | SDK 9.2.0 compiled; not simulated |
+| `fenix847mm` | fēnix 8 47mm / 51mm | 454px | SDK 9.2.0 compiled; not simulated |
 
 The initial six candidates were `fr265`, `epix2`, `epix2pro47mm`, `venu2`,
 `venu2plus`, `fenix843mm`, selected to reuse the existing 416px layout. The other
 four remain explicit optional 416px targets via `--devices`; they are not default
-builds and have no new native validation. The broader default now covers the
+builds; all four now compile with SDK 9.2.0 but have not been simulated. The broader default now covers the
 mainstream shortlist across four resolutions rather than limiting selection to
 one convenient screen size. There is no claim these are the ten best-selling watches.
 
 ### Source and resource adaptation
 
-The 416px master and existing FR265 binary remain unchanged. `tools/scale_layout.py`
+The 416px master is the source for the current FR265 binary. `tools/scale_layout.py`
 generates separate 360/390/454 bitmap-font atlases and indexed opaque textures in
 `packaging/variants/`. Each glyph is independently resized with antialiasing and
 repacked, preserving the original glyph coverage, proportional placement and font

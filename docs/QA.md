@@ -96,7 +96,7 @@ Before release, use simulated FIT HR to exercise 100 → 99 → missing; confirm
 one current-value read per awake callback, no retained current value after loss,
 and history expiry at 120/121 seconds. Exercise forecast midnight/DST/year and timezone changes, missing/inverted/equal bounds, both partial and fully off-scale ranges, and Celsius/Fahrenheit. Confirm unchanged condition/solar panels, Body Battery at 0/100/null and native change/unavailable callbacks, subscription cleanup on hide/sleep/stop, and shared gauges at 0/50/100/missing in their selected positions. Check unchanged frames, minute rollover,
 weather expiry inside a minute, wake/show/layout/settings invalidation, all four
-themes and texture-loss recovery. Confirm the 71×27 HR restore at (114,333) leaves no ghost
+themes and texture-loss recovery. Confirm the 71×27 HR restore at (114,343) leaves no ghost
 digits or damage to adjacent artwork and survives framebuffer transitions.
 
 ### Remaining checks
@@ -117,3 +117,11 @@ API 5.0+ firmware enforces a less-than-10% AOD luminance rule according to
 Garmin's [System 7 announcement](https://forums.garmin.com/developer/connect-iq/b/news-announcements/posts/welcome-to-system-7).
 The sparse, moving ambient time is designed to stay well under it, but only
 firmware can confirm this.
+
+### Merged native validation — 2 October 2026
+
+Built source `d4d1e45` with SDK 9.2.0 and ran all 105 tests successfully. Native compilation exposed a missing ComplicationSubscriber permission; the size adapter also needed clipping/fill operations and both gauge fonts. These are corrected and size assets regenerated.
+
+The native Foundry background retains its lower metric panel: restored heart/steps to that panel (10px below the merged coordinates), including the HR restoration rectangle. Reviewed battery, Body Battery, heart, steps, weekday/date, time, solar icon/time, full PARTLY CLOUDY label, 100% humidity, 27% daily precipitation and forecast arc. Reviewed 12/24-hour layouts, stale weather, missing forecast, AOD and a clean wake redraw. Simulator memory status was approximately 35.3/123.8 kB. [Native capture](screenshots/merged-native-fr265.png).
+
+The exhaustive HR transition, all-theme, weather boundary and hardware checks above remain follow-up validation; this visual pass does not attest those cases.

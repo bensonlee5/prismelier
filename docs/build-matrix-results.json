@@ -1,0 +1,77 @@
+{
+  "sourceCommit": "d4d1e4562396625f7616d7eea3d26c6197f407f9",
+  "packagerSha256": "7f12ce2dce833ca3b3a5863f6188c6cecb3c01703c61ce0dc89d77439a593d0a",
+  "matrixSha256": "8a19efdd3386ca55e24efab46671530657afbd4b997e029378c03175bb9d2903",
+  "devices": [
+    {
+      "device": "fr265",
+      "status": "compiled",
+      "programSha256": "fa4334a26d0ceb8ae157f53fd4f4b0c9ad5a5edd6829d7ba64229255d5586a73"
+    },
+    {
+      "device": "epix2",
+      "status": "compiled",
+      "programSha256": "fa4334a26d0ceb8ae157f53fd4f4b0c9ad5a5edd6829d7ba64229255d5586a73"
+    },
+    {
+      "device": "epix2pro47mm",
+      "status": "compiled",
+      "programSha256": "fa4334a26d0ceb8ae157f53fd4f4b0c9ad5a5edd6829d7ba64229255d5586a73"
+    },
+    {
+      "device": "venu2",
+      "status": "compiled",
+      "programSha256": "dbe72903d3bc94f903392b17c2d22bc589298b094c9b81879efc79bcd923520a"
+    },
+    {
+      "device": "venu2plus",
+      "status": "compiled",
+      "programSha256": "dbe72903d3bc94f903392b17c2d22bc589298b094c9b81879efc79bcd923520a"
+    },
+    {
+      "device": "fenix843mm",
+      "status": "compiled",
+      "programSha256": "fa4334a26d0ceb8ae157f53fd4f4b0c9ad5a5edd6829d7ba64229255d5586a73"
+    },
+    {
+      "device": "fr265s",
+      "status": "compiled",
+      "programSha256": "69e091b44980033ea13b1e6059147e73bcf8e1033971acade8702a80a17e5a5a"
+    },
+    {
+      "device": "fr165",
+      "status": "compiled",
+      "programSha256": "0aa92626a44b12797d10cd7d42f596aee35aa48fb4ad2e25e5184941f07afab2"
+    },
+    {
+      "device": "fr165m",
+      "status": "compiled",
+      "programSha256": "0aa92626a44b12797d10cd7d42f596aee35aa48fb4ad2e25e5184941f07afab2"
+    },
+    {
+      "device": "fr965",
+      "status": "compiled",
+      "programSha256": "7fd7fe6ebbfa53f82a740f4883ec02d10ee1804de663a3e789b0ec3ed37b98e0"
+    },
+    {
+      "device": "fr970",
+      "status": "compiled",
+      "programSha256": "7fd7fe6ebbfa53f82a740f4883ec02d10ee1804de663a3e789b0ec3ed37b98e0"
+    },
+    {
+      "device": "venu3",
+      "status": "compiled",
+      "programSha256": "e002f833f1058dca5d981e715cc5912f37f286d75c96e27fec7b79da77899a1d"
+    },
+    {
+      "device": "venu3s",
+      "status": "compiled",
+      "programSha256": "102edeef015df893127664737b21a7948e41432402666447cec81e2c26b27757"
+    },
+    {
+      "device": "fenix847mm",
+      "status": "compiled",
+      "programSha256": "7fd7fe6ebbfa53f82a740f4883ec02d10ee1804de663a3e789b0ec3ed37b98e0"
+    }
+  ]
+}
