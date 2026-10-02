@@ -1,0 +1,7 @@
+<resources>
+  <font id="Time" filename="Time.fnt" antialias="true" />
+  <font id="Value" filename="Value.fnt" antialias="true" />
+  <font id="Small" filename="Small.fnt" antialias="true" />
+  <font id="Label" filename="Label.fnt" antialias="true" />
+  <font id="Ambient" filename="Ambient.fnt" antialias="true" />
+</resources>

@@ -1,0 +1,20 @@
+{
+  "size": 360,
+  "masterSize": 416,
+  "masterSha256": {
+    "resources/fonts/Ambient.fnt": "5d9c4bcdbf94efcf6e429309e91deea5c0aca0383ee34854a8ae884bb4c633f2",
+    "resources/fonts/Ambient.png": "5518c70f3465bce1068f021c2db5afe9bcc9c3a28813778f36de7e716d90c66c",
+    "resources/fonts/LICENSE-DejaVu.txt": "63d3ba759d12804c5b31a9d5940d855c1820d1f5999e6b0872eb1c7ff045fbc9",
+    "resources/fonts/Label.fnt": "c81695444b42b2510921b0c88013c5aec59e575b55386806127bac9e39e754dc",
+    "resources/fonts/Label.png": "1bd530add365032be780cc44cd74379ff30b83dd048ae3b4c1cbfd019c291255",
+    "resources/fonts/Small.fnt": "66386ed80a27cfd366495cbe491450e6488005f67ec1df664db4b6020e57b130",
+    "resources/fonts/Small.png": "45eb31d05d1b74475060f2e27b74b7f3ce72fce24e358878c926cd0ce58f29d5",
+    "resources/fonts/Time.fnt": "e5565c9a2e240dca0979a2f6402c6853191aa3d18837ab31bf4eb67134228c79",
+    "resources/fonts/Time.png": "3a27cdaa1c5de8bfccf2e97a62f1145d1ad041d18249d69469e099679c818259",
+    "resources/fonts/Value.fnt": "f446794fabb5fb9a1d1b078e130205db7dc573b142c6f19d6019de96be3b629a",
+    "resources/fonts/Value.png": "d66f6783981d82ab2a379ebe57b63e132e331436b407cd92c1164e3f03ab7884",
+    "resources/fonts/fonts.xml": "c7d0544acc6871bff28cf9750e04043f3876c0f8f3b2c2f24c0ad5229a3bcd6c",
+    "resources/textures/foundry-background-indexed.png": "f9da729f8e2a1c66d35960f19ae08a2609bbae42428d4e2b6c44a4051b808ff4",
+    "resources/textures/textures.xml": "32046cb3f6ec8fda663a73c482255c6b5b82f84f9c1b99f2659d046d608690f7"
+  }
+}
