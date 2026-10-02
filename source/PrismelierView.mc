@@ -307,7 +307,8 @@ class PrismelierView extends WatchUi.WatchFace {
 
     function drawBattery(dc) {
         var dx = -5;
-        var dy = 6;
+        // Icon center matches the Small font's visible digits (y=52..67).
+        var dy = 3;
         paint(dc, cyan, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(2);
         dc.drawRoundedRectangle(121 + dx, 51 + dy, 17, 10, 2);
@@ -317,7 +318,7 @@ class PrismelierView extends WatchUi.WatchFace {
             stroke(dc, 125 + dx, 56 + dy, 125 + dx + (9 * clamp(data.battery, 0, 100) / 100).toNumber(), 56 + dy, cyan, 2);
         }
         var reading = data.battery == null ? "--%" : data.battery.format("%d") + "%";
-        text(dc, 174 + dx, 42 + dy, smallFont, reading, data.battery != null && data.battery <= 15 ? pink : cyan);
+        text(dc, 174 + dx, 48, smallFont, reading, data.battery != null && data.battery <= 15 ? pink : cyan);
     }
 
     function drawBodyBattery(dc) {
