@@ -418,23 +418,21 @@ class PrismelierView extends WatchUi.WatchFace {
 
     function drawWeatherRails(dc) {
         // Selected A: matched left RH and right daily precipitation rails.
-        // BMFont bases: Gauge=9, GaugeScale=8; source reference uses baselines.
-        text(dc, 42, 219, gaugeFont, "RH", cyan);
+        // Keep labels inside the narrow dark wells, clear of the copper frame.
+        text(dc, 42, 225, gaugeFont, "RH", cyan);
         // Miniature rain cloud; intentionally distinct from the current icon.
-        trace(dc, [[371, 226], [371, 224], [373, 223], [375, 223],
-            [376, 220], [379, 220], [381, 223], [383, 224], [383, 227],
-            [371, 227]], cyan, 1);
-        stroke(dc, 374, 229, 373, 231, cyan, 1);
-        stroke(dc, 378, 229, 377, 231, cyan, 1);
-        stroke(dc, 382, 229, 381, 231, cyan, 1);
+        trace(dc, [[371, 231], [371, 229], [373, 228], [375, 228],
+            [376, 225], [379, 225], [381, 228], [383, 229], [383, 232],
+            [371, 232]], cyan, 1);
+        stroke(dc, 374, 234, 373, 236, cyan, 1);
+        stroke(dc, 378, 234, 377, 236, cyan, 1);
+        stroke(dc, 382, 234, 381, 236, cyan, 1);
         drawWeatherRail(dc, 42, data.humidity, cyan);
         drawWeatherRail(dc, 377, data.precipitationChance, copper);
     }
 
     function drawWeatherRail(dc, x, value, fillColor) {
         var color = data.weatherStale ? copper : fillColor;
-        text(dc, x, 231, gaugeScaleFont, "100", 0x74ACA0);
-        text(dc, x, 281, gaugeScaleFont, "0", 0x74ACA0);
         paint(dc, 0x224142, Graphics.COLOR_TRANSPARENT);
         dc.fillRectangle(x - 2.5, 244, 5, 34);
         if (value != null) {
@@ -449,10 +447,9 @@ class PrismelierView extends WatchUi.WatchFace {
             stroke(dc, x - 3, 257, x + 3, 265, muted, 1);
             stroke(dc, x - 3, 265, x + 3, 257, muted, 1);
         }
-        // The longest reading uses 8px type to stay inside the round edge;
-        // both fonts share baseline 301, preserving the selected alignment.
-        text(dc, x, value == 100 ? 293 : 292, value == 100 ? gaugeScaleFont : gaugeFont,
-            value == null ? "--%" : value.format("%d") + "%", color);
+        // A separate unit line keeps every 0..100 reading within the 16px well.
+        text(dc, x, 286, gaugeScaleFont, value == null ? "--" : value.format("%d"), color);
+        text(dc, x, 296, gaugeScaleFont, "%", color);
     }
 
     function drawTemperature(dc) {

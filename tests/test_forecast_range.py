@@ -87,7 +87,7 @@ class ForecastSourceTests(unittest.TestCase):
         self.assertIn('if (height > 0)', draw)
         self.assertIn('dc.fillRectangle(x - 2.5, 278 - height, 5, height)', draw)
         self.assertIn('stroke(dc, x - 4, 278 - height, x + 4, 278 - height, ink, 1)', draw)
-        self.assertIn('value == null ? "--%"', draw)
+        self.assertIn('value == null ? "--"', draw)
         self.assertIn('stroke(dc, x - 3, 257, x + 3, 265, muted, 1)', draw)
 
 

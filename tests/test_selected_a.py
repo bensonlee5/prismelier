@@ -22,17 +22,14 @@ class SelectedAssetTests(unittest.TestCase):
         for name,base in [('Gauge',9),('GaugeScale',8)]:
             self.assertEqual(font_metadata(name)['common']['base'],base)
         self.assertEqual(spec['temperatureDial']['center'],[133,263])
-        for value in ['RH','--%']+[str(n)+'%' for n in range(101)]:
-            for center in (42,377):
-                for x0,y0,x1,y1 in bounds('GaugeScale' if value=='100%' else 'Gauge',value,center,293 if value=='100%' else 292):
-                    for x in (x0,x1):
-                        for y in (y0,y1):
-                            self.assertLess(math.hypot(x-208,y-208),204,(value,center,x,y))
-        for value,top in [('100',231),('0',281)]:
-            for center in (42,377):
-                for x0,y0,x1,y1 in bounds('GaugeScale',value,center,top):
-                    self.assertLessEqual(x1-x0,16)
-                    self.assertLessEqual(y1,top+8)
+        # Test the actual dark wells, not only the outer circular screen.
+        for center in (42,377):
+            for value,top,font in [('RH',225,'Gauge'),('%',296,'GaugeScale')]+[(str(n),286,'GaugeScale') for n in range(101)]+[('--',286,'GaugeScale')]:
+                for x0,y0,x1,y1 in bounds(font,value,center,top):
+                    self.assertGreaterEqual(x0,center-8,(value,x0))
+                    self.assertLessEqual(x1,center+8,(value,x1))
+                    self.assertGreaterEqual(y0,225)
+                    self.assertLessEqual(y1,304)
 
 
 @unittest.skipUnless(commands is not None and shutil.which('node'), 'Pillow and Node required for source-drawing fixtures')
@@ -48,8 +45,8 @@ class SelectedDrawingTests(unittest.TestCase):
 
     def test_missing_rails_show_placeholders_without_zero_markers(self):
         calls=commands({'humidity':None,'precipitationChance':None})
-        placeholders=[c for c in calls if c['name']=='drawText' and c['args'][3]=='--%']
-        self.assertEqual([c['args'][:2] for c in placeholders],[[42,292],[377,292]])
+        placeholders=[c for c in calls if c['name']=='drawText' and c['args'][3]=='--' and c['args'][2]=='GaugeScale']
+        self.assertEqual([c['args'][:2] for c in placeholders],[[42,286],[377,286]])
         self.assertFalse(any(c['name']=='drawLine' and c['args'] in ([38,278,46,278],[373,278,381,278]) for c in calls))
 
     def test_dial_hub_and_vitals_use_selected_centers_and_origins(self):

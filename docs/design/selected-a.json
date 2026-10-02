@@ -254,5 +254,6 @@
     "The self-contained reference SVG embeds the exact new background, all static illustrative UI shapes, and text positions. It is an authoritative visual reference, not live watch source code.",
     "Match today's daily forecast by local date; missing/stale data behavior belongs in production code. Do not treat absent humidity or precipitation as zero.",
     "Image generation was used only to create the new blank material layout; the preview interface was rendered deterministically in SVG."
-  ]
+  ],
+  "nativeRailCorrection": "Keep RH/cloud within the dark wells (top225), omit redundant 0/100 scale labels, use GaugeScale numeric reading at drawText y286 and separate percent at y296. Values 0..100 and missing -- fit within centerX +/-8; no text on copper borders."
 }
