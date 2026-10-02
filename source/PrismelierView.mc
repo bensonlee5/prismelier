@@ -28,6 +28,9 @@ class PrismelierView extends WatchUi.WatchFace {
     // arrays for the 72-segment temperature band. No full-screen buffer.
     var bandX = [];
     var bandY = [];
+    // Theme colors resolved once per theme; PrismelierPalette.color() is a
+    // 67-case switch and paint() runs hundreds of times per awake redraw.
+    var colors = {};
 
     function initialize() {
         WatchFace.initialize();
@@ -53,6 +56,7 @@ class PrismelierView extends WatchUi.WatchFace {
     function reloadSettings() {
         data.loadSettings();
         theme = data.palette;
+        colors = {};
         if (laidOut) { refreshTexture(); }
         data.refresh(true);
     }
@@ -86,7 +90,12 @@ class PrismelierView extends WatchUi.WatchFace {
     }
 
     function paint(dc, foreground, background) {
-        dc.setColor(PrismelierPalette.color(foreground, theme), background);
+        var c = colors[foreground];
+        if (c == null) {
+            c = PrismelierPalette.color(foreground, theme);
+            colors[foreground] = c;
+        }
+        dc.setColor(c, background);
     }
 
     function text(dc, x, y, font, s, color) {
@@ -154,9 +163,12 @@ class PrismelierView extends WatchUi.WatchFace {
         drawCalendar(dc);
         drawBattery(dc);
         drawBodyBattery(dc);
-        text(dc, 208, 77, timeFont, time, green);
-        if (!data.is24Hour()) {
-            text(dc, 309, 179, labelFont, clock.hour < 12 ? "AM" : "PM", ink);
+        if (data.is24Hour()) {
+            text(dc, 208, 77, timeFont, time, green);
+        } else {
+            // Suffix sits inside the visor's lower-right corner, beside the digits.
+            text(dc, 192, 77, timeFont, time, green);
+            text(dc, 324, 148, labelFont, clock.hour < 12 ? "AM" : "PM", ink);
         }
         drawTemperature(dc);
         drawVitals(dc);
@@ -285,13 +297,10 @@ class PrismelierView extends WatchUi.WatchFace {
         for (var i = 0; i < 7; i += 1) {
             var pos = point(208, 208, 188, 210 + i * 20);
             var current = data.weekdayIndex != null && data.weekdayIndex == i;
-            paint(dc, current ? 0x27645D : 0x071214, Graphics.COLOR_TRANSPARENT);
+            // Today is an inverted copper plate, distinct from the other T/S.
+            paint(dc, current ? copper : 0x071214, Graphics.COLOR_TRANSPARENT);
             dc.fillCircle(pos[0], pos[1], 12);
-            if (current) {
-                paint(dc, copper, Graphics.COLOR_TRANSPARENT);
-                dc.drawCircle(pos[0], pos[1], 12);
-            }
-            text(dc, pos[0], pos[1] - 12, smallFont, initials[i], current ? 0xF2BF8C : 0x74ACA0);
+            text(dc, pos[0], pos[1] - 12, smallFont, initials[i], current ? 0x091B23 : 0x74ACA0);
         }
         text(dc, 208, 175, smallFont, data.dateLabel, ink);
     }
@@ -349,6 +358,7 @@ class PrismelierView extends WatchUi.WatchFace {
             radial(dc, 137, 267, tick % 4 == 0 ? 48 : 51, 54,
                 135.0 + tick * 22.5, 0x74ACA0, 1);
         }
+        text(dc, 137, 284, labelFont, fahrenheit ? "°F" : "°C", 0x74ACA0);
         var labels = fahrenheit ? ["0", "40", "80", "120"] : ["-20", "0", "20", "40"];
         for (var label = 0; label < 4; label += 1) {
             var lp = point(137, 267, 42, 135 + label * 90);
@@ -372,11 +382,11 @@ class PrismelierView extends WatchUi.WatchFace {
             dc.fillCircle(137, 267, 2);
         }
         drawWeather(dc, 284, 228, data.weatherKind);
-        text(dc, 284, 240, valueFont, fahrenheit ? "°F" : "°C", ink);
+        text(dc, 284, 242, labelFont, data.weatherLabel, data.weatherStale ? copper : ink);
         if (data.weatherStale) {
             paint(dc, copper, Graphics.COLOR_TRANSPARENT);
-            dc.drawCircle(337, 252, 3);
-            stroke(dc, 335, 254, 339, 250, copper, 1);
+            dc.drawCircle(312, 220, 3);
+            stroke(dc, 310, 222, 314, 218, copper, 1);
         }
         drawSolar(dc);
     }
@@ -477,7 +487,12 @@ class PrismelierView extends WatchUi.WatchFace {
             stroke(dc, x + 12, baseY, x + 16, tipY, color, 2);
             stroke(dc, x + 20, baseY, x + 16, tipY, color, 2);
         }
-        text(dc, 307, 278, smallFont, data.solarTime, 0x183B3B);
+        // "5:03 PM" needs the Label font to fit the plate; 24-hour and "--:--" use Small.
+        if (data.solarTime.length() > 5) {
+            text(dc, 307, 281, labelFont, data.solarTime, 0x183B3B);
+        } else {
+            text(dc, 307, 278, smallFont, data.solarTime, 0x183B3B);
+        }
         if (data.solarLabel.find("*") != null) {
             paint(dc, copper, Graphics.COLOR_TRANSPARENT);
             dc.drawCircle(340, 307, 3);

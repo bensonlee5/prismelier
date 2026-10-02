@@ -43,7 +43,8 @@ class RevisionLayoutTests(unittest.TestCase):
         code=(ROOT/'source/PrismelierView.mc').read_text()
         self.assertIn('["S", "M", "T", "W", "T", "F", "S"]',code)
         self.assertIn('data.weekdayIndex != null && data.weekdayIndex == i',code)
-        self.assertIn('current ? 0xF2BF8C : 0x74ACA0',code)
+        self.assertIn('paint(dc, current ? copper : 0x071214, Graphics.COLOR_TRANSPARENT);',code)
+        self.assertIn('current ? 0x091B23 : 0x74ACA0',code)
         centers=[]
         for i,letter in enumerate('SMTWTFS'):
             angle=math.radians(210+i*20)
@@ -57,11 +58,41 @@ class RevisionLayoutTests(unittest.TestCase):
         self.assertNotEqual(centers[0],centers[6])
         self.assertNotEqual(centers[2],centers[4])
 
-    def test_worst_metrics_remain_inside_quiet_wells(self):
+    def test_twelve_hour_clock_and_suffix_share_visor_without_touching(self):
+        code=(ROOT/'source/PrismelierView.mc').read_text()
+        self.assertIn('text(dc, 192, 77, timeFont, time, green);',code)
+        self.assertIn('text(dc, 324, 148, labelFont, clock.hour < 12 ? "AM" : "PM", ink);',code)
+        visor=(74,93,342,168)
+        for suffix in ('AM','PM'):
+            self.inside('Label',suffix,324,148,visor)
+            left=min(b[0] for b in bounds('Label',suffix,324,148))
+            for minute in range(1440):
+                value=clock_text(minute,False)
+                self.inside('Time',value,192,77,visor)
+                self.assertLess(max(b[2] for b in bounds('Time',value,192,77))+2,left,value)
+
+    def test_weather_condition_labels_fit_panel(self):
+        data=(ROOT/'source/PrismelierData.mc').read_text()
+        labels=set(re.findall(r'weatherLabel = "([^"]+)"',data))
+        self.assertIn('SNOW CHANCE',labels)
+        labels.discard('AGED ')
+        labels.update(f'AGED {h}H' for h in range(2,24))
+        for text in labels:
+            self.inside('Label',text,284,242,(225,244,348,270))
+
+    def test_dial_unit_sits_in_needle_free_gap(self):
         for text in ('°F','°C'):
-            self.inside('Value',text,284,240,(225,244,348,270))
-        for text in ('11:59P','23:59','--:--'):
+            for x0,y0,x1,y1 in bounds('Label',text,137,284):
+                for x,y in ((x0,y0),(x1,y0),(x0,y1),(x1,y1)):
+                    angle=math.degrees(math.atan2(y-267,x-137))
+                    self.assertTrue(45<angle<135,(text,angle))
+                    self.assertLess(math.hypot(x-137,y-267),48)
+
+    def test_worst_metrics_remain_inside_quiet_wells(self):
+        for text in ('23:59','--:--'):
             self.inside('Small',text,307,278,(268,281,349,309))
+        for text in ('11:59 AM','12:00 PM'):
+            self.inside('Label',text,307,281,(268,281,349,309))
         self.inside('Value','220',149,338,(115,343,181,367))
         for text in ('100,000','999,999'):
             self.inside('Small',text,284,338,(238,341,332,367))
@@ -79,12 +110,10 @@ class RevisionLayoutTests(unittest.TestCase):
         self.assertNotIn('fullWidth',gauge)
         self.assertNotIn('Math.round(val)',gauge)
         self.assertNotIn('var reading',gauge)
-        self.assertIn('text(dc, 284, 240, valueFont, fahrenheit ? "°F" : "°C", ink);',gauge)
+        self.assertIn('text(dc, 137, 284, labelFont, fahrenheit ? "°F" : "°C", 0x74ACA0);',gauge)
+        self.assertIn('text(dc, 284, 242, labelFont, data.weatherLabel',gauge)
         self.assertIn('["0", "40", "80", "120"]',gauge)
         self.assertIn('text(dc, 208, 77, timeFont, time, green);',code)
-        preview=(ROOT/'tools/render_preview.py').read_text()
-        self.assertIn("c.text(284,240,'Value','°F' if fahrenheit else '°C','ink')",preview)
-        self.assertNotIn('str(temperature)',preview)
         for reading,angle in ((-40,135),(0,135),(60,270),(120,405),(130,405)):
             self.assertEqual(135+270*max(0,min(1,reading/120)),angle)
         for method in ('drawCalendar(dc);','drawTemperature(dc);'):

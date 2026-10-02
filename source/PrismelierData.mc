@@ -40,7 +40,6 @@ class PrismelierData {
     // Local calendar values. Null means no weekday should be highlighted.
     var weekdayIndex as Lang.Number or Null = null;
     var dateLabel as Lang.String = "--";
-    var timeSuffix as Lang.String = "";
     var palette as Lang.Number = 0;
 
     private var _timeFormat as Lang.Number = 0;
@@ -96,7 +95,7 @@ class PrismelierData {
         return System.getDeviceSettings().temperatureUnits == System.UNIT_STATUTE;
     }
 
-    // Pure formatter: formatting a solar event must not overwrite timeSuffix.
+    // Pure formatter shared by the clock and solar events.
     function formatTime(hour as Lang.Number, minute as Lang.Number)
             as Lang.String {
         if (is24Hour()) {
@@ -160,7 +159,6 @@ class PrismelierData {
                 info.day >= 1 && info.day <= 31) {
             dateLabel = months[month - 1] + " " + info.day.format("%d");
         }
-        timeSuffix = is24Hour() ? "" : (info.hour < 12 ? "AM" : "PM");
     }
 
     private function readActivity() as Void {
@@ -464,7 +462,7 @@ class PrismelierData {
         var info = Gregorian.info(best, Time.FORMAT_SHORT);
         solarTime = formatTime(info.hour, info.min);
         if (!is24Hour()) {
-            solarTime += info.hour < 12 ? "A" : "P";
+            solarTime += info.hour < 12 ? " AM" : " PM";
         }
     }
 }
