@@ -37,7 +37,7 @@ class RevisionLayoutTests(unittest.TestCase):
     def test_month_day_lowercase_glyphs_and_plate_fit(self):
         for month in 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split():
             for day in range(1,32):
-                self.inside('Small',f'{month} {day}',208,175,(166,179,250,199))
+                self.inside('Small',f'{month} {day}',208,176,(166,179,250,199))
 
     def test_weekday_order_distinct_positions_and_safe_circle(self):
         code=(ROOT/'source/PrismelierView.mc').read_text()
@@ -91,13 +91,13 @@ class RevisionLayoutTests(unittest.TestCase):
 
     def test_worst_metrics_remain_inside_quiet_wells(self):
         for text in ('23:59','--:--'):
-            self.inside('Small',text,307,278,(268,281,349,309))
+            self.inside('Small',text,307,282,(268,281,349,309))
         for text in ('11:59 AM','12:00 PM'):
-            self.inside('Label',text,307,281,(268,281,349,309))
-        self.inside('Value','220',149,338,(115,343,181,367))
+            self.inside('Label',text,307,285,(268,281,349,309))
+        self.inside('Value','220',149,339,(115,343,181,367))
         for text in ('100,000','999,999'):
-            self.inside('Small',text,284,338,(238,341,332,367))
-        self.inside('Label','1,000,000',284,338,(238,341,332,367))
+            self.inside('Small',text,284,342,(238,341,332,367))
+        self.inside('Label','1,000,000',284,346,(238,341,332,367))
 
     def test_temperature_sweep_missing_and_overflow_contract(self):
         code=without_comments((ROOT/'source/PrismelierView.mc').read_text())

@@ -5,14 +5,16 @@
   "buildPlatform": "macOS",
   "releaseBuild": true,
   "typeCheckLevel": 1,
-  "programBytes": 124460,
-  "programSha256": "a9d575cbd200abc2bf6793fa1c454cd75a993f9dc58ca32307b23439223c2e91",
+  "programBytes": 124588,
+  "programSha256": "c409894621385fff25b28e9c6a6d5cebdc29702096aefe6e5bf5cd49f5a108ae",
   "validation": {
     "automatedTestsPassed": 59,
     "simulator": [
-      "Foundry rendering with full PARTLY CLOUDY label",
-      "Always-on display",
-      "Wake restores full face"
+      "Foundry rendering and full weather label",
+      "12/24-hour time and solar layout",
+      "Battery and Body Battery icon alignment",
+      "Heart, steps, and date alignment",
+      "Snow icon and sunset layout with simulated weather"
     ],
     "hardwareTested": false
   },
@@ -22,7 +24,7 @@
     "source/PrismelierApp.mc": "e8696d7cd4acb9ec2ab2971572a5d1ee5a5d80017d23ff7c345fc0eb3dabbb14",
     "source/PrismelierData.mc": "dfb6b74484706abe3a75bc0069b19a3fab64e1570bd8c20120d4e79ed32f1017",
     "source/PrismelierPalette.mc": "b29b08fb33d06c4c0b3f9b2554db9055a7dc2bd6da7ee1c68ce6f6ab12e3c2f4",
-    "source/PrismelierView.mc": "faed03cac067ab0c562882b8f160a236597027ed68586ebf761ca961a82ff0b5",
+    "source/PrismelierView.mc": "e1ed8ce07ffe44aa948ab76f06f3653386b435e9958c00a7a5ce3911987eaee2",
     "resources/drawables/drawables.xml": "6582f0224535b6ebd515d2db0eefb2c0070d5d1781c651b6ceea688fe07a5717",
     "resources/drawables/icon.svg": "fea0cd9d66f4730697392eff83ff15e32c3d41aa6eee2cd50431404b3a393969",
     "resources/fonts/Ambient.fnt": "5d9c4bcdbf94efcf6e429309e91deea5c0aca0383ee34854a8ae884bb4c633f2",

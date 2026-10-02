@@ -69,6 +69,20 @@ unverified.
 
 ## Open validation
 
+### Alignment pass — 1 October 2026
+
+Reviewed the Foundry face in the official FR265 simulator at native resolution:
+
+- Battery logo raised 3px to align with its percentage; Body Battery person shortened to clear the lower frame.
+- Solar time lowered 4px in both formats; rise/set icons use separate origins so their different silhouettes share a visual center.
+- Heart raised 2px; metric digits lowered 1px, with separate origins for smaller step-count fonts. Date lowered 1px while retaining room for month-name descenders.
+- Precipitation marks shortened to leave a gap above weather text. Fixed string comparisons that had caused condition-specific weather icons to fall back to a plain cloud; verified the snow symbol in the simulator.
+- Reviewed the clock, AM/PM marker, weekday rim, gauge ticks/unit, steps icon and weather label. The 59 source/asset checks pass, including updated glyph bounds and the official SDK method audit.
+
+[Final simulator capture](screenshots/alignment-final.png) uses simulated snow/sunset data and 24-hour time; it is not watch data. Physical-watch appearance still needs confirmation.
+
+### Remaining checks
+
 1. **Simulator, manual:** missing/disconnected weather, observations at the
    2-hour and 24-hour boundaries, Body Battery at 0/100/missing, midnight, DST
    and timezone changes, clock rollback, location changes, polar or failed

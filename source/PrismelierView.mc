@@ -302,7 +302,7 @@ class PrismelierView extends WatchUi.WatchFace {
             dc.fillCircle(pos[0], pos[1], 12);
             text(dc, pos[0], pos[1] - 12, smallFont, initials[i], current ? 0x091B23 : 0x74ACA0);
         }
-        text(dc, 208, 177, smallFont, data.dateLabel, ink);
+        text(dc, 208, 176, smallFont, data.dateLabel, ink);
     }
 
     function drawBattery(dc) {
@@ -422,7 +422,7 @@ class PrismelierView extends WatchUi.WatchFace {
         var color = data.weatherStale ? copper : cyan;
         paint(dc, color, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(2);
-        if (kind == "sun") {
+        if (kind.equals("sun")) {
             if (data.solarLabel.find("RISE") != null) {
                 trace(dc, [[x - 4, y - 11], [x - 10, y - 7], [x - 12, y],
                     [x - 9, y + 8], [x - 2, y + 11], [x + 6, y + 8], [x + 10, y + 3],
@@ -431,16 +431,16 @@ class PrismelierView extends WatchUi.WatchFace {
                 dc.drawCircle(x, y, 7);
                 for (var r = 0; r < 8; r += 1) { radial(dc, x, y, 11, 14, r * 45, color, 2); }
             }
-        } else if (kind == "wind") {
+        } else if (kind.equals("wind")) {
             trace(dc, [[x - 14, y - 5], [x + 7, y - 5], [x + 10, y - 8], [x + 8, y - 11], [x + 5, y - 11]], color, 2);
             trace(dc, [[x - 10, y + 1], [x + 14, y + 1], [x + 16, y + 4], [x + 13, y + 7]], color, 2);
             stroke(dc, x - 14, y + 7, x + 5, y + 7, color, 2);
-        } else if (kind == "fog") {
+        } else if (kind.equals("fog")) {
             stroke(dc, x - 14, y - 5, x + 14, y - 5, color, 2);
             stroke(dc, x - 10, y + 1, x + 10, y + 1, color, 2);
             stroke(dc, x - 14, y + 7, x + 14, y + 7, color, 2);
         } else {
-            if (kind == "partly") {
+            if (kind.equals("partly")) {
                 trace(dc, [[x + 3, y - 13], [x + 7, y - 16], [x + 12, y - 15],
                     [x + 15, y - 11], [x + 14, y - 6]], copper, 2);
                 radial(dc, x + 8, y - 10, 8, 10, 270, copper, 2);
@@ -451,20 +451,20 @@ class PrismelierView extends WatchUi.WatchFace {
                 [x - 7, y - 5], [x - 5, y - 10], [x, y - 13], [x + 6, y - 11],
                 [x + 9, y - 6], [x + 10, y - 2], [x + 14, y], [x + 16, y + 4],
                 [x + 13, y + 7], [x - 12, y + 7]], color, 2);
-            if (kind == "rain") {
+            if (kind.equals("rain")) {
                 stroke(dc, x - 7, y + 9, x - 10, y + 13, color, 2);
                 stroke(dc, x + 2, y + 9, x - 1, y + 13, color, 2);
                 stroke(dc, x + 11, y + 9, x + 8, y + 13, color, 2);
-            } else if (kind == "storm") {
+            } else if (kind.equals("storm")) {
                 trace(dc, [[x + 3, y + 8], [x - 2, y + 12], [x + 5, y + 12], [x, y + 14]], color, 2);
-            } else if (kind == "snow") {
+            } else if (kind.equals("snow")) {
                 stroke(dc, x, y + 9, x, y + 14, color, 2);
                 stroke(dc, x - 4, y + 9, x + 4, y + 14, color, 2);
                 stroke(dc, x - 4, y + 14, x + 4, y + 9, color, 2);
             }
         }
         dc.setPenWidth(1);
-        if (kind == "unknown" || data.weatherStale) {
+        if (kind.equals("unknown") || data.weatherStale) {
             stroke(dc, x - 17, y + 16, x + 17, y - 17, copper, 2);
         }
     }
@@ -474,7 +474,7 @@ class PrismelierView extends WatchUi.WatchFace {
         var up = data.solarLabel.find("RISE") != null;
         // Rise and set have different icon extents; both center at y=294.
         var y = up ? 303 : 296;
-        var color = data.solarTime == "--:--" ? 0x777F70 : (up ? 0x27645D : 0xA04D30);
+        var color = data.solarTime.equals("--:--") ? 0x777F70 : (up ? 0x27645D : 0xA04D30);
         var sunY = up ? y - 4 : y;
         // Open upper semicircle preserves the material texture underneath.
         for (var a = 180; a < 360; a += 15) {
@@ -486,7 +486,7 @@ class PrismelierView extends WatchUi.WatchFace {
         radial(dc, x, sunY, 11, 14, 220, color, 2);
         radial(dc, x, sunY, 11, 14, 270, color, 2);
         radial(dc, x, sunY, 11, 14, 320, color, 2);
-        if (data.solarTime != "--:--") {
+        if (!data.solarTime.equals("--:--")) {
             var tipY = up ? y - 12 : y + 10;
             var baseY = up ? tipY + 5 : tipY - 5;
             stroke(dc, x + 16, up ? y - 12 : y + 1, x + 16, up ? y - 3 : y + 10, color, 2);

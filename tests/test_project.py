@@ -574,6 +574,7 @@ class OfficialSdkChecks(unittest.TestCase):
             "sample.when": ["Time.Moment"], "wx.observationTime": ["Time.Moment"],
             "data.solarLabel": ["Lang.String"],
             "data.solarTime": ["Lang.String"],
+            "kind": ["Lang.String"],
             "data.battery": ["Lang.Number"], "data.heartRate": ["Lang.Number"],
             "data.bodyBattery": ["Lang.Number"],
             "h": ["Lang.Number"], "hour": ["Lang.Number"], "minute": ["Lang.Number"],
