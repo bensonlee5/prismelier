@@ -394,12 +394,12 @@ class PrismelierView extends WatchUi.WatchFace {
     }
 
     function drawVitals(dc) {
-        var dy = 24;
+        var dy = 22;
         // Heart outline and two footprint outlines share a 2px monoline weight.
         trace(dc, [[101, 341 + dy], [92, 332 + dy], [92, 327 + dy],
             [95, 324 + dy], [99, 324 + dy], [101, 327 + dy], [103, 324 + dy],
             [107, 324 + dy], [110, 327 + dy], [110, 332 + dy], [101, 341 + dy]], pink, 2);
-        text(dc, 149, 338, valueFont, data.heartRate == null ? "--" : data.heartRate.format("%d"), ink);
+        text(dc, 149, 339, valueFont, data.heartRate == null ? "--" : data.heartRate.format("%d"), ink);
         paint(dc, cyan, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(2);
         dc.drawEllipse(220, 350, 6, 9);
@@ -407,7 +407,10 @@ class PrismelierView extends WatchUi.WatchFace {
         dc.drawCircle(223, 346, 2);
         dc.drawCircle(232, 352, 2);
         dc.setPenWidth(1);
-        text(dc, 284, 338, data.steps != null && data.steps >= 1000000 ? labelFont : (data.steps != null && data.steps >= 10000 ? smallFont : valueFont), data.steps == null ? "--" : formatSteps(data.steps), ink);
+        // Smaller fonts need lower origins to keep their visible ink centered.
+        var stepY = data.steps != null && data.steps >= 1000000 ? 346 :
+            (data.steps != null && data.steps >= 10000 ? 342 : 339);
+        text(dc, 284, stepY, data.steps != null && data.steps >= 1000000 ? labelFont : (data.steps != null && data.steps >= 10000 ? smallFont : valueFont), data.steps == null ? "--" : formatSteps(data.steps), ink);
     }
 
     function formatSteps(n) {
