@@ -7,7 +7,7 @@
 workflow for a dedicated, officially provisioned Linux runner. Adding the workflow
 alone does not install a runner or provide Garmin's device profiles.
 
-The first CI build is still outstanding; see the [README status](../README.md#status) for local build and simulator results.
+The first CI build is still outstanding; see the [validation status](STATUS.md) for local build and simulator results.
 Preflight and Python source/asset checks are not compilation.
 
 ### Why a pre-provisioned runner?

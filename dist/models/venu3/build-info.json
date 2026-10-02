@@ -1,0 +1,21 @@
+{
+  "application": "Prismelier",
+  "device": "venu3",
+  "deviceName": "Venu 3",
+  "applicationId": "81c2a924768f4b9eb6ac52e438d0517f",
+  "sourceCommit": "b9ed8745867c131058337575c6eb3cfa3867d306",
+  "sdkVersion": "9.2.0",
+  "compilerSha256": "46e9bfce45cf49486a35955b6495516cce6b675f810df2def62c456aa219249a",
+  "deviceProfileSha256": "573f266347cbcd8a0baa2157ab0ed080ed495832ef5f94e923b0a5d7a8c2cb82",
+  "buildInputsSha256": "dbaf88164e2a28ab250f1ed7cda23276e55d51a003d7eed09a60b429a1381993",
+  "layout": "round-454-amoled",
+  "layoutAdapterSha256": "bae1e6394c727ca6fd81333822c6a1992fc19f2e52379c54fa453485ddc2b80d",
+  "program": "Prismelier-venu3.prg",
+  "programBytes": 150764,
+  "programSha256": "bae86e5bea7708917df3398d8d28cfbe53bc9a550d35fd6321de384d935e8ae6",
+  "releaseBuild": true,
+  "typeCheckLevel": 1,
+  "simulatorTested": false,
+  "hardwareTested": false,
+  "validation": "experimental compile-only; exact-device visual review pending"
+}

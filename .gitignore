@@ -9,6 +9,7 @@ build/
 bin/
 *.prg
 !dist/Prismelier-fr265.prg
+!dist/models/*/*.prg
 *.iq
 *.debug.xml
 *.mir

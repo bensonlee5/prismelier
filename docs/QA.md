@@ -1,6 +1,6 @@
 # QA
 
-Current build and test status lives in the [README](../README.md#status). This
+Current build and test status lives in the [validation status](STATUS.md). This
 page explains what the automated checks cover and what still needs validating.
 
 ## Running the checks

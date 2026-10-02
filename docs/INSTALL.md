@@ -2,7 +2,7 @@
 
 ## Current release status
 
-A prebuilt **Forerunner 265-only** `.prg` is available from the [README download link](../README.md#build-and-install). Download it and skip to [USB installation](#4-copy-the-prg-over-usb), or build your own using the steps below. See the [README status](../README.md#status) for validation limits. There is no Connect IQ Store listing.
+Model-specific `.prg` files are available in the [README download table](../README.md#download). Choose your exact watch model. Download it and skip to [USB installation](#4-copy-the-prg-over-usb), or build your own using the steps below. See the [validation status](STATUS.md) for validation limits. There is no Connect IQ Store listing.
 
 ## 1. Set up Garmin's official tools
 

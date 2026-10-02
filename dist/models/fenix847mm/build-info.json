@@ -1,0 +1,21 @@
+{
+  "application": "Prismelier",
+  "device": "fenix847mm",
+  "deviceName": "f\u0113nix 8 47mm / 51mm",
+  "applicationId": "81c2a924768f4b9eb6ac52e438d0517f",
+  "sourceCommit": "b9ed8745867c131058337575c6eb3cfa3867d306",
+  "sdkVersion": "9.2.0",
+  "compilerSha256": "46e9bfce45cf49486a35955b6495516cce6b675f810df2def62c456aa219249a",
+  "deviceProfileSha256": "0a85fbcefa4f69e7787c7fb73fb18a95cccf1a268b4377740aa2759cc6d1f6d1",
+  "buildInputsSha256": "12f88bf8887bf60cf46b93ae6e3ad03b1e07215384c30998a4440bfcea496060",
+  "layout": "round-454-amoled",
+  "layoutAdapterSha256": "bae1e6394c727ca6fd81333822c6a1992fc19f2e52379c54fa453485ddc2b80d",
+  "program": "Prismelier-fenix847mm.prg",
+  "programBytes": 149964,
+  "programSha256": "ef621728088b47f80b29609b629db7398854768aea7838bd0ed49407524f6654",
+  "releaseBuild": true,
+  "typeCheckLevel": 1,
+  "simulatorTested": false,
+  "hardwareTested": false,
+  "validation": "experimental compile-only; exact-device visual review pending"
+}

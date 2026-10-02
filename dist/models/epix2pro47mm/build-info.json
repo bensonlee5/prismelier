@@ -1,0 +1,21 @@
+{
+  "application": "Prismelier",
+  "device": "epix2pro47mm",
+  "deviceName": "epix Pro (Gen 2) 47mm",
+  "applicationId": "81c2a924768f4b9eb6ac52e438d0517f",
+  "sourceCommit": "b9ed8745867c131058337575c6eb3cfa3867d306",
+  "sdkVersion": "9.2.0",
+  "compilerSha256": "46e9bfce45cf49486a35955b6495516cce6b675f810df2def62c456aa219249a",
+  "deviceProfileSha256": "8ce2e258898f761c795e6ed93142467d25b193feb673918e241173231b631c6f",
+  "buildInputsSha256": "c129ea7a319927a4ddecbb4bb1900afc81df0779266c5dcbdee4c8ccd891721f",
+  "layout": "round-416-amoled",
+  "layoutAdapterSha256": "bae1e6394c727ca6fd81333822c6a1992fc19f2e52379c54fa453485ddc2b80d",
+  "program": "Prismelier-epix2pro47mm.prg",
+  "programBytes": 127212,
+  "programSha256": "1ae3970cfc3d761a8313945656f80792b43e55e5ce7288067b30ec69a2bc4b50",
+  "releaseBuild": true,
+  "typeCheckLevel": 1,
+  "simulatorTested": false,
+  "hardwareTested": false,
+  "validation": "experimental compile-only; exact-device visual review pending"
+}

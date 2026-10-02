@@ -1,0 +1,21 @@
+{
+  "application": "Prismelier",
+  "device": "fr265s",
+  "deviceName": "Forerunner 265S",
+  "applicationId": "81c2a924768f4b9eb6ac52e438d0517f",
+  "sourceCommit": "b9ed8745867c131058337575c6eb3cfa3867d306",
+  "sdkVersion": "9.2.0",
+  "compilerSha256": "46e9bfce45cf49486a35955b6495516cce6b675f810df2def62c456aa219249a",
+  "deviceProfileSha256": "19b56fa915d30acff37f56b64a815df77c200e7b2588620fa659f22af5c40099",
+  "buildInputsSha256": "8ab5692285a8925efbfe78d18becdf7497cc2c63c45a3e1d80912b12d1b347cc",
+  "layout": "round-360-amoled",
+  "layoutAdapterSha256": "bae1e6394c727ca6fd81333822c6a1992fc19f2e52379c54fa453485ddc2b80d",
+  "program": "Prismelier-fr265s.prg",
+  "programBytes": 112908,
+  "programSha256": "23298ce63bdd7ef9894938393c346959a342b7688e71fb1f073f5a789fa2593e",
+  "releaseBuild": true,
+  "typeCheckLevel": 1,
+  "simulatorTested": false,
+  "hardwareTested": false,
+  "validation": "experimental compile-only; exact-device visual review pending"
+}

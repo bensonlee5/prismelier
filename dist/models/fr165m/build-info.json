@@ -1,0 +1,21 @@
+{
+  "application": "Prismelier",
+  "device": "fr165m",
+  "deviceName": "Forerunner 165 Music",
+  "applicationId": "81c2a924768f4b9eb6ac52e438d0517f",
+  "sourceCommit": "b9ed8745867c131058337575c6eb3cfa3867d306",
+  "sdkVersion": "9.2.0",
+  "compilerSha256": "46e9bfce45cf49486a35955b6495516cce6b675f810df2def62c456aa219249a",
+  "deviceProfileSha256": "20a2a9077d229f22f4a0d32a4d7a4f79418eade2f208e264c079d193b7c69e3a",
+  "buildInputsSha256": "180a7af6c883db6bda633e0f6dd03b23d683264e89b058e1fd9baa90bc841f1d",
+  "layout": "round-390-amoled",
+  "layoutAdapterSha256": "bae1e6394c727ca6fd81333822c6a1992fc19f2e52379c54fa453485ddc2b80d",
+  "program": "Prismelier-fr165m.prg",
+  "programBytes": 128444,
+  "programSha256": "d79fdb598759154cae2e70843d70ae02423384e790bbdef3f680bf6e1b9fad19",
+  "releaseBuild": true,
+  "typeCheckLevel": 1,
+  "simulatorTested": false,
+  "hardwareTested": false,
+  "validation": "experimental compile-only; exact-device visual review pending"
+}

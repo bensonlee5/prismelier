@@ -1,0 +1,21 @@
+{
+  "application": "Prismelier",
+  "device": "fr970",
+  "deviceName": "Forerunner 970",
+  "applicationId": "81c2a924768f4b9eb6ac52e438d0517f",
+  "sourceCommit": "b9ed8745867c131058337575c6eb3cfa3867d306",
+  "sdkVersion": "9.2.0",
+  "compilerSha256": "46e9bfce45cf49486a35955b6495516cce6b675f810df2def62c456aa219249a",
+  "deviceProfileSha256": "5260908e22e615a8bf3c1bc12c876d7517875219b1098379e514a830d676cba1",
+  "buildInputsSha256": "83cd26c9c8321a871fec7fda5cf3bb0c9c9b7f89d0f68cd7175859b465d5d3d8",
+  "layout": "round-454-amoled",
+  "layoutAdapterSha256": "bae1e6394c727ca6fd81333822c6a1992fc19f2e52379c54fa453485ddc2b80d",
+  "program": "Prismelier-fr970.prg",
+  "programBytes": 149964,
+  "programSha256": "ef621728088b47f80b29609b629db7398854768aea7838bd0ed49407524f6654",
+  "releaseBuild": true,
+  "typeCheckLevel": 1,
+  "simulatorTested": false,
+  "hardwareTested": false,
+  "validation": "experimental compile-only; exact-device visual review pending"
+}

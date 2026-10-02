@@ -1,7 +1,7 @@
 # Battery and performance review
 
 CPU and memory work on the watch face, measured in the FR265 simulator. These
-are not battery-life measurements; see the [README status](../README.md#status).
+are not battery-life measurements; see the [validation status](STATUS.md).
 
 ## Awake HR, humidity and forecast revision — 2 October 2026
 

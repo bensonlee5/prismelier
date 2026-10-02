@@ -1,0 +1,21 @@
+{
+  "application": "Prismelier",
+  "device": "fr165",
+  "deviceName": "Forerunner 165",
+  "applicationId": "81c2a924768f4b9eb6ac52e438d0517f",
+  "sourceCommit": "b9ed8745867c131058337575c6eb3cfa3867d306",
+  "sdkVersion": "9.2.0",
+  "compilerSha256": "46e9bfce45cf49486a35955b6495516cce6b675f810df2def62c456aa219249a",
+  "deviceProfileSha256": "95c2d433d7bccd245673284d806567291fb2362c22e34dae77949c3418e00cc4",
+  "buildInputsSha256": "90b5e01f6243dc94c3bca481e939c2e3827356dd69f85b5c8893ec8be6fbaca5",
+  "layout": "round-390-amoled",
+  "layoutAdapterSha256": "bae1e6394c727ca6fd81333822c6a1992fc19f2e52379c54fa453485ddc2b80d",
+  "program": "Prismelier-fr165.prg",
+  "programBytes": 128444,
+  "programSha256": "d79fdb598759154cae2e70843d70ae02423384e790bbdef3f680bf6e1b9fad19",
+  "releaseBuild": true,
+  "typeCheckLevel": 1,
+  "simulatorTested": false,
+  "hardwareTested": false,
+  "validation": "experimental compile-only; exact-device visual review pending"
+}

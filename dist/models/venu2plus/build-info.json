@@ -1,0 +1,21 @@
+{
+  "application": "Prismelier",
+  "device": "venu2plus",
+  "deviceName": "Venu 2 Plus",
+  "applicationId": "81c2a924768f4b9eb6ac52e438d0517f",
+  "sourceCommit": "b9ed8745867c131058337575c6eb3cfa3867d306",
+  "sdkVersion": "9.2.0",
+  "compilerSha256": "46e9bfce45cf49486a35955b6495516cce6b675f810df2def62c456aa219249a",
+  "deviceProfileSha256": "33cf21df5053fe874a3905fdd806a20749bf7f55fa6dab576866638de2aee4d8",
+  "buildInputsSha256": "f3032843e6dd01ee8617ac7185dbabbb89732f34250cca4da16b5961ce7ac96b",
+  "layout": "round-416-amoled",
+  "layoutAdapterSha256": "bae1e6394c727ca6fd81333822c6a1992fc19f2e52379c54fa453485ddc2b80d",
+  "program": "Prismelier-venu2plus.prg",
+  "programBytes": 130732,
+  "programSha256": "dfc064560e1a4786519e1d955e60109d5a058f0fc324290be611672599462af3",
+  "releaseBuild": true,
+  "typeCheckLevel": 1,
+  "simulatorTested": false,
+  "hardwareTested": false,
+  "validation": "experimental compile-only; exact-device visual review pending"
+}

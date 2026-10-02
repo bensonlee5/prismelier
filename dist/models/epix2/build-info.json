@@ -1,0 +1,21 @@
+{
+  "application": "Prismelier",
+  "device": "epix2",
+  "deviceName": "epix (Gen 2)",
+  "applicationId": "81c2a924768f4b9eb6ac52e438d0517f",
+  "sourceCommit": "b9ed8745867c131058337575c6eb3cfa3867d306",
+  "sdkVersion": "9.2.0",
+  "compilerSha256": "46e9bfce45cf49486a35955b6495516cce6b675f810df2def62c456aa219249a",
+  "deviceProfileSha256": "9d4ff195e45007baf3215a95fd168a2422dddafccae3cae8098c922d7caf7a4f",
+  "buildInputsSha256": "85f24fae3597fe65c93860ef1555d8481de9cbd51175f8a1978cb121cdc9cfdd",
+  "layout": "round-416-amoled",
+  "layoutAdapterSha256": "bae1e6394c727ca6fd81333822c6a1992fc19f2e52379c54fa453485ddc2b80d",
+  "program": "Prismelier-epix2.prg",
+  "programBytes": 127212,
+  "programSha256": "1ae3970cfc3d761a8313945656f80792b43e55e5ce7288067b30ec69a2bc4b50",
+  "releaseBuild": true,
+  "typeCheckLevel": 1,
+  "simulatorTested": false,
+  "hardwareTested": false,
+  "validation": "experimental compile-only; exact-device visual review pending"
+}
