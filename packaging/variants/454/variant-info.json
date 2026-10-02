@@ -2,8 +2,8 @@
   "size": 454,
   "masterSize": 416,
   "masterSha256": {
-    "resources/fonts/Ambient.fnt": "5d9c4bcdbf94efcf6e429309e91deea5c0aca0383ee34854a8ae884bb4c633f2",
-    "resources/fonts/Ambient.png": "5518c70f3465bce1068f021c2db5afe9bcc9c3a28813778f36de7e716d90c66c",
+    "resources/fonts/Ambient.fnt": "36c6aadcce7c5a5b9ba783275df3cb8f72f3377031fc507479f01e53ec738a06",
+    "resources/fonts/Ambient.png": "7c1cb3eeb2df9771bdbebd82ef075e1a684d46e1008e38774136c4e2f5a56170",
     "resources/fonts/Gauge.fnt": "a2552d08332d98742eeb5d01ba06ecfed95a42ad3c8f56bcf50c662f82505693",
     "resources/fonts/Gauge.png": "b2895f9e5b836daf783da5ee1181ddc9c95ef6c7c4f90c97e4abd72845f24071",
     "resources/fonts/GaugeScale.fnt": "df2933ca54354fac51ddaaad205c2836c1cd3ec539e23f0e0320c5f3d21bf05d",

@@ -44,6 +44,7 @@ class PrismelierData {
     // Local calendar values. Null means no weekday should be highlighted.
     var weekdayIndex as Lang.Number or Null = null;
     var dateLabel as Lang.String = "--";
+    var glanceDateLabel as Lang.String = "--";
     var palette as Lang.Number = 0;
 
     private var _timeFormat as Lang.Number = 0;
@@ -173,6 +174,7 @@ class PrismelierData {
         // calendar values must not preserve a stale date or select Sunday.
         weekdayIndex = null;
         dateLabel = "--";
+        glanceDateLabel = "--";
         _localDateKey = 0;
         if (weekday instanceof Lang.Number && weekday >= 1 && weekday <= 7) {
             weekdayIndex = weekday - 1;
@@ -181,6 +183,9 @@ class PrismelierData {
                 info.day >= 1 && info.day <= 31) {
             _localDateKey = info.year * 10000 + month * 100 + info.day;
             dateLabel = months[month - 1] + " " + info.day.format("%d");
+            var upperMonths = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+                "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+            glanceDateLabel = upperMonths[month - 1] + " " + info.day.format("%02d");
         }
     }
 

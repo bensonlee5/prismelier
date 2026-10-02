@@ -74,8 +74,8 @@ class SelectedDrawingTests(unittest.TestCase):
         sleeping=commands({},action='sleep')
         self.assertEqual(sleeping[0]['name'],'clear')
         labels=[c for c in sleeping if c['name']=='drawText']
-        self.assertEqual([c['args'][2] for c in labels],['Label','Ambient','Small'])
-        self.assertEqual([c['args'][3] for c in labels],['FRIDAY','10:08','Oct 2'])
+        self.assertEqual([c['args'][2] for c in labels],['Ambient','Label'])
+        self.assertEqual([c['args'][3] for c in labels],['10:08','FRIDAY  OCT 02'])
         self.assertFalse(any(c['name']=='drawBitmap' for c in sleeping))
         waking=commands({},action='wake')
         self.assertTrue(any(c['name']=='drawBitmap' for c in waking))

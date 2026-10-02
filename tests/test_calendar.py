@@ -92,12 +92,16 @@ class CalendarSourceContractTests(unittest.TestCase):
                          r"month <= 12 &&\s*info.day >= 1 && info.day <= 31\)\s*\{\s*"
                          r'_localDateKey = info.year \* 10000 \+ month \* 100 \+ info.day;\s*'
                          r'dateLabel = months\[month - 1\] \+ " " \+ '
-                         r'info.day.format\("%d"\);\s*\}')
+                         r'info.day.format\("%d"\);\s*var upperMonths = \[[^;]+\];\s*'
+                         r'glanceDateLabel = upperMonths\[month - 1\] \+ " " \+ info.day.format\("%02d"\);\s*\}')
         self.assertLess(self.labels.index('dateLabel = "--";'),
                         self.labels.index("if (month instanceof"))
         self.assertEqual(self.labels.count("months["), 1)
         self.assertEqual(self.labels.count("dateLabel ="), 2)
-        self.assertNotIn('format("%02d")', self.labels)
+        self.assertEqual(self.labels.count('glanceDateLabel ='), 2)
+        self.assertLess(self.labels.index('glanceDateLabel = "--";'), self.labels.index('if (month instanceof'))
+        upper = re.search(r'var upperMonths = \[(.*?)\];', self.labels, re.S)
+        self.assertEqual(tuple(re.findall(r'"([A-Z]+)"', upper.group(1))), tuple(m.upper() for m in ENGLISH_MONTHS))
         self.assertNotIn("days[", self.labels)
 
     def test_am_pm_is_drawn_by_view_and_solar_suffix_matches(self):

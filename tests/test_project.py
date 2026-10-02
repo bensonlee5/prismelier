@@ -367,7 +367,7 @@ class DataSourceContractTests(unittest.TestCase):
     def test_sleep_branch_is_sparse_time_and_calendar(self):
         view = without_comments(source_text("PrismelierView.mc"))
         branch = view.split("if (sleeping) {", 1)[1].split("data.refresh(false);", 1)[0]
-        self.assertEqual(len(re.findall(r"\btext\(", branch)), 3)
+        self.assertEqual(len(re.findall(r"\btext\(", branch)), 2)
         self.assertIn("ambientFont, time", branch)
         self.assertIn("return;", branch)
         self.assertNotIn("data.refresh(", branch)

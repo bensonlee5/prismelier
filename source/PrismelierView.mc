@@ -151,19 +151,14 @@ class PrismelierView extends WatchUi.WatchFace {
             dc.clear();
             // Refresh only local calendar labels; no weather or sensor reads.
             data.refreshCalendar();
-            // Move the whole group between disjoint bands, including corners.
+            // Move both lines together between non-overlapping safe bands.
             var slot = (Time.now().value() / 60).toNumber() % 3;
-            var y = 72 + slot * 108;
+            var y = 60 + slot * 100;
             var weekdays = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY",
                 "THURSDAY", "FRIDAY", "SATURDAY"];
-            text(dc, 208, y - 24, labelFont,
-                data.weekdayIndex == null ? "--" : weekdays[data.weekdayIndex], 0x84644C);
+            var weekday = data.weekdayIndex == null ? "--" : weekdays[data.weekdayIndex];
             text(dc, 208, y, ambientFont, time, 0xA09785);
-            text(dc, 208, y + 56, smallFont, data.dateLabel, 0x84644C);
-            trace(dc, [[122, y - 22], [112, y - 22], [112, y - 12]], 0x84644C, 1);
-            trace(dc, [[294, y - 22], [304, y - 22], [304, y - 12]], 0x84644C, 1);
-            trace(dc, [[112, y + 72], [112, y + 82], [122, y + 82]], 0x84644C, 1);
-            trace(dc, [[304, y + 72], [304, y + 82], [294, y + 82]], 0x84644C, 1);
+            text(dc, 208, y + 85, labelFont, weekday + "  " + data.glanceDateLabel, 0x84644C);
             return;
         }
         data.refresh(false);
